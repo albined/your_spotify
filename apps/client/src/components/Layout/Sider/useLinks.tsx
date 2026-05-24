@@ -78,6 +78,13 @@ export function useLinks() {
               iconOn: <MusicNote />,
               restrict: "guest",
             },
+            {
+              label: "Competition",
+              link: "/collaborative/compete",
+              icon: <BarChartOutlined />,
+              iconOn: <BarChart />,
+              restrict: "guest",
+            },
           ],
         }
       : undefined,

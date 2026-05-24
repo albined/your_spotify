@@ -21,6 +21,7 @@ import CollaborativeAlbums from "./scenes/Collaborative/Affinity/Albums";
 import CollaborativeArtists from "./scenes/Collaborative/Affinity/Artists";
 import RegistrationsDisabled from "./scenes/Error/RegistrationsDisabled";
 import Affinity from "./scenes/Collaborative/Affinity";
+import Compete from "./scenes/Collaborative/Compete/Compete";
 import { useTheme } from "./services/theme";
 import { selectDarkMode } from "./services/redux/modules/user/selector";
 import PlaylistDialog from "./components/PlaylistDialog";
@@ -121,6 +122,14 @@ function App() {
                   element={
                     <PrivateRoute>
                       <Affinity />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/collaborative/compete"
+                  element={
+                    <PrivateRoute>
+                      <Compete />
                     </PrivateRoute>
                   }
                 />
