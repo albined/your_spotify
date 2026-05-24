@@ -487,6 +487,29 @@ export const api = {
         mode,
       },
     ),
+  competeTimePer: (
+    ids: string[],
+    start: Date,
+    end: Date,
+    timeSplit: Timesplit,
+    artistId?: string,
+  ) =>
+    get<
+      {
+        _id: DateId | null;
+        owner: string;
+        durationMs: number;
+        count: number;
+        differentTracks: number;
+        differentArtists: number;
+      }[]
+    >("/spotify/collaborative/time_per", {
+      userIds: ids,
+      start,
+      end,
+      timeSplit,
+      artistId,
+    }),
   generatePublicToken: () => post<string>("/generate-public-token"),
   deletePublicToken: () => post<string>("/delete-public-token"),
   getBestSongsOfHour: (start: Date, end: Date) =>
