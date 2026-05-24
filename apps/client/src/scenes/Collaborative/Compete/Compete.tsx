@@ -183,12 +183,17 @@ export default function Compete() {
 
       filledData.forEach(point => {
         userIds.forEach(uId => {
-          currentSums[`durationMs_${uId}`] +=
-            (point[`durationMs_${uId}`] as number) || 0;
-          currentSums[`count_${uId}`] += (point[`count_${uId}`] as number) || 0;
+          const currentDuration = currentSums[`durationMs_${uId}`] ?? 0;
+          const currentCount = currentSums[`count_${uId}`] ?? 0;
 
-          point[`durationMs_${uId}`] = currentSums[`durationMs_${uId}`];
-          point[`count_${uId}`] = currentSums[`count_${uId}`];
+          const nextDuration = currentDuration + ((point[`durationMs_${uId}`] as number) || 0);
+          const nextCount = currentCount + ((point[`count_${uId}`] as number) || 0);
+
+          currentSums[`durationMs_${uId}`] = nextDuration;
+          currentSums[`count_${uId}`] = nextCount;
+
+          point[`durationMs_${uId}`] = nextDuration;
+          point[`count_${uId}`] = nextCount;
         });
       });
     }
