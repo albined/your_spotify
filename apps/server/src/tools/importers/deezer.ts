@@ -11,6 +11,7 @@ import {
   getCloseTrackId,
   storeFirstListenedAtIfLess,
 } from "../../database";
+import { InfosModel } from "../../database/Models";
 import { setImporterStateCurrent } from "../../database/queries/importer";
 import { RecentlyPlayedTrack } from "../../database/schemas/track";
 import { User } from "../../database/schemas/user";
@@ -228,6 +229,18 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
     for (let i = this.currentItem; i < this.elements.length; i += 1) {
       this.currentItem = i;
       const content = this.elements[i]!;
+
+      const date = new Date(content.playedAtStr);
+      const alreadyImported = await InfosModel.findOne({
+        owner: this.userId,
+        played_at: date,
+      });
+      if (alreadyImported) {
+        if (i % 100 === 0 || i === this.elements.length - 1) {
+          await setImporterStateCurrent(this.id, i + 1);
+        }
+        continue;
+      }
 
       let item = getFromCache(
         this.userId.toString(),
