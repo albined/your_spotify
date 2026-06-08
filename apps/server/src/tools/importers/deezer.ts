@@ -1,6 +1,8 @@
+import { readFileSync } from "fs";
 import { unlink } from "fs/promises";
 // @ts-ignore
 import * as XLSX from "xlsx/xlsx.mjs";
+
 
 
 
@@ -128,7 +130,8 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
       const allItems: DeezerItem[] = [];
 
       for (const filePath of filePaths) {
-        const workbook = XLSX.readFile(filePath);
+        const fileBuffer = readFileSync(filePath);
+        const workbook = XLSX.read(fileBuffer, { type: "buffer" });
         const sheetName = '10_listeningHistory';
         const worksheet = workbook.Sheets[sheetName];
 
