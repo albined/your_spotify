@@ -7,6 +7,7 @@ export type ImporterStateStatus =
 export enum ImporterStateType {
   privacy = "privacy",
   fullPrivacy = "full-privacy",
+  deezer = "deezer",
 }
 
 export interface BaseImporterState {
@@ -29,4 +30,13 @@ export interface FullPrivacyImporterState extends BaseImporterState {
   metadata: string[];
 }
 
-export type ImporterState = PrivacyImporterState;
+export interface DeezerImporterState extends BaseImporterState {
+  type: ImporterStateType.deezer;
+  metadata: string[];
+}
+
+export type ImporterState =
+  | PrivacyImporterState
+  | FullPrivacyImporterState
+  | DeezerImporterState;
+

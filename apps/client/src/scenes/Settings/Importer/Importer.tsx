@@ -18,6 +18,7 @@ import ImportHistory from "./ImportHistory";
 import s from "./index.module.css";
 import Privacy from "./Privacy";
 import FullPrivacy from "./FullPrivacy";
+import Deezer from "./Deezer";
 
 const ImportTypeToComponent: Record<ImporterStateType, any> = {
   privacy: { label: "Account data", component: Privacy },
@@ -25,7 +26,12 @@ const ImportTypeToComponent: Record<ImporterStateType, any> = {
     label: "Extended streaming history",
     component: FullPrivacy,
   },
+  deezer: {
+    label: "Deezer listening history",
+    component: Deezer,
+  },
 };
+
 
 const REFRESH_IF_RUNNING_INTERVAL = 2000;
 
