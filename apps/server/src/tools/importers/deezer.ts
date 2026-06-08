@@ -1,8 +1,8 @@
 import { unlink } from "fs/promises";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const xlsxName = "xlsx";
-const XLSX = require(xlsxName);
+// @ts-ignore
+import * as XLSX from "xlsx/xlsx.mjs";
+
+
 
 import {
   addTrackIdsToUser,
