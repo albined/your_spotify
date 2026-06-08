@@ -13,7 +13,7 @@ export interface Infos {
 
 export const InfosSchema = new Schema<Infos>(
   {
-    owner: { type: Schema.Types.ObjectId, ref: "User" },
+    owner: { type: Schema.Types.ObjectId, ref: "User", index: true },
 
     id: { type: String, index: true },
     albumId: { type: String, index: true },

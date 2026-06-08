@@ -226,16 +226,25 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
     if (!this.elements) {
       return false;
     }
+
+    logger.info(`Fetching existing play history for user ${this.userId} to optimize deduplication...`);
+    const existingPlays = await InfosModel.find(
+      { owner: this.userId },
+      { played_at: 1 }
+    ).lean();
+    const existingPlayedAtTimes = new Set<number>(
+      existingPlays
+        .map(p => p.played_at?.getTime())
+        .filter((t): t is number => typeof t === "number")
+    );
+    logger.info(`Loaded ${existingPlayedAtTimes.size} existing plays for deduplication.`);
+
     for (let i = this.currentItem; i < this.elements.length; i += 1) {
       this.currentItem = i;
       const content = this.elements[i]!;
 
       const date = new Date(content.playedAtStr);
-      const alreadyImported = await InfosModel.findOne({
-        owner: this.userId,
-        played_at: date,
-      });
-      if (alreadyImported) {
+      if (existingPlayedAtTimes.has(date.getTime())) {
         if (i % 100 === 0 || i === this.elements.length - 1) {
           await setImporterStateCurrent(this.id, i + 1);
         }
@@ -271,11 +280,17 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
       items.push({ track: item.track, played_at: content.playedAtStr });
       if (items.length >= 20) {
         await this.storeItems(this.userId, items);
+        for (const it of items) {
+          existingPlayedAtTimes.add(new Date(it.played_at).getTime());
+        }
         items = [];
       }
     }
     if (items.length > 0) {
       await this.storeItems(this.userId, items);
+      for (const it of items) {
+        existingPlayedAtTimes.add(new Date(it.played_at).getTime());
+      }
       items = [];
     }
     return true;
