@@ -57,6 +57,7 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
 
   searchISRC = async (isrc: string) => {
     const isrcQuery = `isrc:${isrc}`;
+    logger.info(`Querying Spotify API by ISRC: "${isrc}"`);
     const res = await retryPromise(
       () => this.spotifyApi.raw(`/search?q=${encodeURIComponent(isrcQuery)}&type=track&limit=1`),
       10,
@@ -69,6 +70,7 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
   };
 
   searchText = async (track: string, artist: string) => {
+    logger.info(`Querying Spotify API by text: "${track}" - "${artist}"`);
     const res = await retryPromise(
       () => this.spotifyApi.search(track, artist),
       10,
@@ -78,6 +80,7 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
   };
 
   storeItems = async (userId: string, items: RecentlyPlayedTrack[]) => {
+    logger.info(`Saving batch of ${items.length} resolved tracks to the database...`);
     const { tracks, albums, artists } = await getTracksAlbumsArtists(
       userId,
       items.map(it => it.track),
@@ -98,7 +101,7 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
       );
       if (duplicate.length > 0 || currentImportDuplicate) {
         logger.info(
-          `${item.track.name} - ${item.track.artists[0]?.name} was duplicate`,
+          `Skipping duplicate track in batch: "${item.track.name}" - "${item.track.artists[0]?.name}" (already exists in user plays)`,
         );
         continue;
       }
@@ -245,6 +248,9 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
 
       const date = new Date(content.playedAtStr);
       if (existingPlayedAtTimes.has(date.getTime())) {
+        if (i % 1000 === 0) {
+          logger.info(`Skipping already imported plays... Progress: ${i}/${this.elements.length} tracks.`);
+        }
         if (i % 100 === 0 || i === this.elements.length - 1) {
           await setImporterStateCurrent(this.id, i + 1);
         }
@@ -270,6 +276,8 @@ export class DeezerImporter implements HistoryImporter<"deezer"> {
           );
           continue;
         }
+      } else {
+        logger.info(`Cache hit for "${content.title}" - "${content.artist}" (avoiding search query)`);
       }
       if (!item.exists) {
         continue;

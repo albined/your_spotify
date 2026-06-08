@@ -1,3 +1,5 @@
+import { logger } from "../logger";
+
 export type RequestPriority = "normal" | "high";
 
 interface HttpClientRequestConfig {
@@ -201,7 +203,9 @@ export class QueuedHttpClient {
       this.requeue(queueItem);
 
       const retryAfterMs = this.parseRetryAfterHeader(response);
+      logger.info(`[API Rate Limit] Sleeping for ${Math.round(retryAfterMs / 1000)}s due to Retry-After...`);
       await this.sleep(retryAfterMs);
+      logger.info(`[API Rate Limit] Waking up and resuming requests.`);
     }
 
     const data = await response.json();
