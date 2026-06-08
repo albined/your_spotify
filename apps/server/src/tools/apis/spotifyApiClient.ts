@@ -80,8 +80,9 @@ export class RetryAfterAwareAxiosClient {
 		const delay =
 			RetryAfterAwareAxiosClient.sharedRetryAfterUntil - Date.now();
 		if (delay > 0) {
-      logger.info(`Delaying request for ${delay}ms due to Retry-After`);
+			logger.info(`[Spotify API Rate Limit] Sleeping for ${Math.round(delay / 1000)}s due to Retry-After...`);
 			await wait(delay);
+			logger.info(`[Spotify API Rate Limit] Waking up and resuming requests.`);
 		}
 	}
 
