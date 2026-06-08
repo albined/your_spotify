@@ -95,6 +95,42 @@ router.post(
   },
 );
 
+router.post(
+  "/import/deezer",
+  logged,
+  notAlreadyImporting,
+  upload.array("imports", 50),
+  async (req, res) => {
+    const { files, user } = req as LoggedRequest;
+
+    if (!files) {
+      res.status(400).end();
+      return;
+    }
+
+    if (!canUserImport(user._id.toString())) {
+      res.status(400).send({ code: "ALREADY_IMPORTING" });
+      return;
+    }
+
+    runImporter(
+      null,
+      "deezer",
+      user._id.toString(),
+      (files as Express.Multer.File[]).map(f => f.path),
+      success => {
+        if (success) {
+          res.status(200).send({ code: "IMPORT_STARTED" });
+          return;
+        }
+        res.status(400).send({ code: "IMPORT_INIT_FAILED" });
+        return;
+      },
+    ).catch(logger.error);
+  },
+);
+
+
 const retrySchema = z.object({
   existingStateId: z.string(),
 });

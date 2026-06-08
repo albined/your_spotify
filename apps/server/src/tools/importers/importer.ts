@@ -11,6 +11,7 @@ import { Metrics } from "../metrics";
 import { clearCache } from "./cache";
 import { FullPrivacyImporter } from "./full_privacy";
 import { PrivacyImporter } from "./privacy";
+import { DeezerImporter } from "./deezer";
 import {
   HistoryImporter,
   ImporterStateFromType,
@@ -22,7 +23,9 @@ const importers: {
 } = {
   privacy: (user: User) => new PrivacyImporter(user),
   "full-privacy": (user: User) => new FullPrivacyImporter(user),
+  deezer: (user: User) => new DeezerImporter(user),
 } as const;
+
 
 const userImporters: {
   [userId: string]: HistoryImporter<any>;

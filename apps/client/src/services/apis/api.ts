@@ -435,6 +435,18 @@ export const api = {
       },
     });
   },
+  doImportDeezer: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append("imports", file);
+    });
+    return axios.post("/import/deezer", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
   retryImport: (existingStateId: string) =>
     post("/import/retry", {
       existingStateId,

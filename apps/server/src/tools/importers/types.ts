@@ -35,8 +35,17 @@ export interface FullPrivacyImporterState extends BaseImporterState {
   metadata: string[];
 }
 
-export type ImporterState = PrivacyImporterState | FullPrivacyImporterState;
+export interface DeezerImporterState extends BaseImporterState {
+  type: "deezer";
+  metadata: string[];
+}
+
+export type ImporterState =
+  | PrivacyImporterState
+  | FullPrivacyImporterState
+  | DeezerImporterState;
 export type ImporterStateType = ImporterState["type"]
+
 
 export type ImporterStateFromType<T extends ImporterStateType> = Extract<
   ImporterState,
