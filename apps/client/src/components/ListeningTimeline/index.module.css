@@ -1,0 +1,99 @@
+.chart {
+  width: 100%;
+  height: 280px;
+  min-width: 0;
+}
+
+.hovercard {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  background: var(--background);
+  color: var(--text-on-light);
+  border: var(--content-border);
+  border-radius: 6px;
+}
+
+.race {
+  margin-bottom: 24px;
+  min-width: 0;
+}
+
+.legendlabel {
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+
+.legendlabel small {
+  opacity: 0.8;
+}
+
+.controls,
+.legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.legend {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.legenditem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  max-width: 100%;
+}
+
+.legenditem[aria-pressed="true"],
+.legenditem:focus-visible {
+  border-color: currentColor;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.description {
+  opacity: 0.8;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 16px;
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  color: var(--text-on-light);
+}
+
+.events {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.events li + li {
+  margin-top: 10px;
+}

@@ -16,6 +16,7 @@ import FirstAndLast from "./FirstAndLast";
 import ArtistRank from "./ArtistRank/ArtistRank";
 import DayRepartition from "./DayRepartition";
 import s from "./index.module.css";
+import ListeningHistory from "./ListeningHistory";
 import { MostListenedTracksContextMenuButton } from "./mostListenedTracksContextMenuButton/mostListenedTracksContextMenuButton";
 
 interface ArtistStatsProps {
@@ -63,6 +64,9 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
           sx={{ justifyContent: "flex-start", alignItems: "flex-start" }}
           spacing={2}
           style={{ marginTop: 0 }}>
+          <Grid size={{ xs: 12 }}>
+            <ListeningHistory artistId={artistId} />
+          </Grid>
           <Grid
             container
             size={{ xs: 12, lg: 6 }}

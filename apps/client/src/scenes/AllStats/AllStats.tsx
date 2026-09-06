@@ -2,6 +2,7 @@ import { Grid } from "@mui/material";
 import { useSelector } from "react-redux";
 import Header from "../../components/Header";
 import ArtistListeningRepartition from "../../components/ImplementedCharts/ArtistListeningRepartition";
+import ArtistListeningTimeline from "../../components/ImplementedCharts/ArtistListeningRepartition/ArtistListeningTimeline";
 import AverageAlbumReleaseDate from "../../components/ImplementedCharts/AverageAlbumReleaseDate";
 import AverageNumberArtistPer from "../../components/ImplementedCharts/AverageNumberArtistPer";
 import BestArtistsBar from "../../components/ImplementedCharts/BestArtistsBar";
@@ -40,6 +41,9 @@ export default function AllStats() {
           </Grid>
           <Grid size={{ xs: 12, md: 12, lg: 6 }}>
             <BestOfHour className={s.chart} />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <ArtistListeningTimeline />
           </Grid>
           <Grid size={{ xs: 12, md: 12, lg: 6 }}>
             <SongsListenedPer className={s.chart} />
