@@ -17,6 +17,7 @@ import {
   getRankOf,
   ItemType,
 } from "../database";
+import { getArtistTimeline } from "../database/queries/listeningTimeline";
 import { isLoggedOrGuest, logged, validate } from "../tools/middleware";
 import { LoggedRequest } from "../tools/types";
 
@@ -35,6 +36,12 @@ router.get("/:ids", isLoggedOrGuest, async (req, res) => {
 });
 
 const getArtistStats = z.object({ id: z.string() });
+
+router.get("/:id/listening-timeline", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { id } = validate(req.params, getArtistStats);
+  res.status(200).send(await getArtistTimeline(user, id));
+});
 
 router.get("/:id/stats", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;

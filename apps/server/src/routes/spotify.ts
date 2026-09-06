@@ -27,6 +27,11 @@ import {
   getCollaborativeBestSongs,
   getCollaborativeTimePer,
 } from "../database/queries/collaborative";
+import { getListeningDistribution } from "../database/queries/listeningTimeline";
+import {
+  getCompetitionTimeline,
+  getTopTimeline,
+} from "../database/queries/raceTimeline";
 import { DateFormatter, intervalToDisplay } from "../tools/date";
 import { logger } from "../tools/logger";
 import {
@@ -102,6 +107,29 @@ const intervalPerSchema = z.object({
     z.date().default(() => new Date()),
   ),
   timeSplit: z.nativeEnum(Timesplit).default(Timesplit.day),
+});
+
+const listeningDistributionSchema = interval.refine(
+  ({ start, end }) => start < end,
+  { message: "Start must be before end" },
+);
+
+router.get("/listening-distribution", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end } = validate(req.query, listeningDistributionSchema);
+  res.status(200).send(await getListeningDistribution(user, start, end));
+});
+
+const topTimelineSchema = interval
+  .extend({ kind: z.enum(["songs", "albums", "artists"]) })
+  .refine(({ start, end }) => start < end, {
+    message: "Start must be before end",
+  });
+
+router.get("/top/listening-timeline", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end, kind } = validate(req.query, topTimelineSchema);
+  res.status(200).send(await getTopTimeline(user, start, end, kind));
 });
 
 router.get("/listened_to", isLoggedOrGuest, async (req, res) => {
@@ -329,6 +357,46 @@ const competeTimePerSchema = intervalPerSchema.merge(
     userIds: z.array(z.string()).min(1),
     artistId: z.string().optional(),
   }),
+);
+
+const competitionTimelineSchema = interval
+  .extend({
+    userIds: z
+      .array(z.string().regex(/^[a-f\d]{24}$/i))
+      .min(1)
+      .max(100),
+    metric: z
+      .enum(["hours", "count", "differentTracks", "differentArtists"])
+      .default("hours"),
+    artistId: z.string().min(1).optional(),
+  })
+  .refine(({ start, end }) => start < end, {
+    message: "Start must be before end",
+  });
+
+router.get(
+  "/collaborative/listening-timeline",
+  logged,
+  affinityAllowed,
+  async (req, res) => {
+    const { user } = req as LoggedRequest;
+    const { start, end, userIds, metric, artistId } = validate(
+      normalizeUserIdsQuery(req.query),
+      competitionTimelineSchema,
+    );
+    res
+      .status(200)
+      .send(
+        await getCompetitionTimeline(
+          user,
+          userIds,
+          start,
+          end,
+          metric,
+          artistId,
+        ),
+      );
+  },
 );
 
 router.get(

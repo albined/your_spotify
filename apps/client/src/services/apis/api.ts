@@ -1,4 +1,12 @@
 import Axios from "axios";
+import {
+  ArtistTimeline,
+  CompetitionMetric,
+  CompetitionTimeline,
+  ListeningDistribution,
+  TopTimeline,
+  TopTimelineKind,
+} from "../listeningTimeline";
 import { AdminAccount } from "../redux/modules/admin/reducer";
 import { ImporterState } from "../redux/modules/import/types";
 import { Playlist, PlaylistContext } from "../redux/modules/playlist/types";
@@ -240,6 +248,12 @@ export const api = {
       results: { id: string; count: number }[];
     }>(`/album/${id}/rank`),
   getArtists: (ids: string[]) => get<Artist[]>(`/artist/${ids.join(",")}`),
+  getListeningDistribution: (start: Date, end: Date) =>
+    get<ListeningDistribution>("/spotify/listening-distribution", { start, end }),
+
+  getArtistTimeline: (id: string) =>
+    get<ArtistTimeline | null>(`/artist/${id}/listening-timeline`),
+
   getArtistStats: (id: string) =>
     get<ArtistStatsResponse | { code: "NEVER_LISTENED" }>(
       `/artist/${id}/stats`,
@@ -357,6 +371,24 @@ export const api = {
       "/spotify/collaborative/top/artists",
       { otherIds: ids, start, end, mode },
     ),
+  getTopTimeline: (kind: TopTimelineKind, start: Date, end: Date) =>
+    get<TopTimeline>("/spotify/top/listening-timeline", { kind, start, end }),
+
+  getCompetitionTimeline: (
+    userIds: string[],
+    start: Date,
+    end: Date,
+    metric: CompetitionMetric,
+    artistId?: string,
+  ) =>
+    get<CompetitionTimeline>("/spotify/collaborative/listening-timeline", {
+      userIds,
+      start,
+      end,
+      metric,
+      artistId,
+    }),
+
   competeTimePer: (
     ids: string[],
     start: Date,
