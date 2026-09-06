@@ -2,6 +2,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { useSelector } from "react-redux";
 import { GridWrapper } from "../../../components/Grid";
 import Header from "../../../components/Header";
+import TopListeningRace from "../../../components/ListeningTimeline/TopListeningRace";
 import Loader from "../../../components/Loader";
 import TitleCard from "../../../components/TitleCard";
 import { api } from "../../../services/apis/api";
@@ -25,6 +26,7 @@ export default function Artists() {
         subtitle="Here are the artists you listened to the most"
       />
       <div className={s.content}>
+        <TopListeningRace kind="artists" />
         <TitleCard title="Top artists" noBorder>
           <InfiniteScroll
             next={onNext}

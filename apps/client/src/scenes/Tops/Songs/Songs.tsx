@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import AddToPlaylist from "../../../components/AddToPlaylist";
 import { GridWrapper } from "../../../components/Grid";
 import Header from "../../../components/Header";
+import TopListeningRace from "../../../components/ListeningTimeline/TopListeningRace";
 import Loader from "../../../components/Loader";
 import { DEFAULT_PLAYLIST_NB } from "../../../components/PlaylistDialog/PlaylistDialog";
 import TitleCard from "../../../components/TitleCard";
@@ -46,6 +47,7 @@ export default function Songs() {
           subtitle="Here are the songs you listened to the most"
         />
         <div className={s.content}>
+          <TopListeningRace kind="songs" />
           <TitleCard
             noBorder
             title="Top songs"

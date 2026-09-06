@@ -1,109 +1,56 @@
-.root {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .content {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 24px;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+  padding: var(--page-padding);
+  color: var(--text-on-light);
 }
 
-@media (max-width: 900px) {
-  .content {
-    grid-template-columns: 1fr;
-  }
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  background-color: var(--background-card);
-  border-radius: 16px;
-  padding: 20px;
-  height: fit-content;
-}
-
-.sidebarSection {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.sidebar,
+.controls {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
 .usersList {
   display: flex;
   flex-direction: column;
-  max-height: 250px;
+  max-height: 280px;
   overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding-left: 8px;
+  overflow-wrap: anywhere;
 }
 
-.userRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-  color: var(--text);
+.chartContent {
+  min-width: 0;
 }
 
-.userRow:last-child {
-  border-bottom: none;
+.description {
+  margin: 0 0 16px;
+  line-height: 1.5;
+  opacity: 0.8;
 }
 
-.userRow:hover {
-  background-color: var(--background-hover);
+.leaderboard {
+  margin: 20px 0 0;
+  padding-left: 24px;
 }
 
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.leaderboard li {
+  padding: 8px;
+  border-bottom: var(--content-border);
+  overflow-wrap: anywhere;
 }
 
-.chartContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background-color: var(--background-card);
-  border-radius: 16px;
-  padding: 20px;
-  min-height: 500px;
+.leaderboard strong {
+  display: inline-block;
+  margin-left: 16px;
 }
 
-.chartHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.chartWrapper {
-  flex-grow: 1;
-  height: 400px;
-  width: 100%;
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 48px;
-  color: var(--text);
+@media (max-width: 900px) {
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
