@@ -1,3 +1,4 @@
+import { Alert, Button } from "@mui/material";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useSelector } from "react-redux";
 import { GridWrapper } from "../../../components/Grid";
@@ -14,7 +15,7 @@ import s from "./index.module.css";
 
 export default function Artists() {
   const { interval } = useSelector(selectRawIntervalDetail);
-  const { items, hasMore, onNext } = useInfiniteScroll(
+  const { items, hasMore, onNext, error, loading, retry } = useInfiniteScroll(
     interval,
     api.getBestArtists,
   );
@@ -48,6 +49,17 @@ export default function Artists() {
               ))}
             </GridWrapper>
           </InfiniteScroll>
+          {error && (
+            <Alert
+              severity="error"
+              action={
+                <Button onClick={() => void retry()} disabled={loading}>
+                  Retry
+                </Button>
+              }>
+              Could not load more artists. Your loaded rows are still here.
+            </Alert>
+          )}
         </TitleCard>
       </div>
     </div>
