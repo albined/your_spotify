@@ -1,6 +1,12 @@
 import { useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
-import { startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
+import {
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  subDays,
+} from "date-fns";
 import { getAppropriateTimesplitFromRange } from "./date";
 import { selectAccounts } from "./redux/modules/admin/selector";
 import { selectUser } from "./redux/modules/user/selector";
@@ -75,6 +81,24 @@ export const presetIntervals = [
     name: "This year",
     unit: "year",
     interval: { timesplit: Timesplit.month, start: startOfThisYear, end: now },
+  },
+  {
+    type: "preset",
+    name: "Last 7 days",
+    unit: "period",
+    interval: { timesplit: Timesplit.day, start: subDays(now, 7), end: now },
+  },
+  {
+    type: "preset",
+    name: "Last 30 days",
+    unit: "period",
+    interval: { timesplit: Timesplit.day, start: subDays(now, 30), end: now },
+  },
+  {
+    type: "preset",
+    name: "Last 365 days",
+    unit: "period",
+    interval: { timesplit: Timesplit.month, start: subDays(now, 365), end: now },
   },
 ] as const satisfies PresetIntervalDetail[];
 
