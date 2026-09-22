@@ -1,5 +1,7 @@
 import { Schema, Types } from "mongoose";
 
+import { allTimeStartAt, statisticsTimezone } from "../../tools/allTimeStart";
+
 export type DarkModeType = "follow" | "dark" | "light";
 
 export interface User {
@@ -20,6 +22,7 @@ export interface User {
     darkMode: DarkModeType;
     timezone: string | undefined;
     dateFormat: string;
+    allTimeStartDate?: string | null;
     blacklistedArtists: string[];
   };
   lastImport: string | null;
@@ -59,6 +62,7 @@ export const UserSchema = new Schema<User>(
       blacklistedArtists: [{ type: String }],
       timezone: { type: String, default: undefined, required: false },
       dateFormat: { type: String, required: true },
+      allTimeStartDate: { type: String, default: null },
     },
     lastImport: { type: String, default: null },
     publicToken: { type: String, default: null, index: true },
@@ -66,3 +70,11 @@ export const UserSchema = new Schema<User>(
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
+
+UserSchema.virtual("allTimeStartAt").get(function () {
+  return allTimeStartAt(this);
+});
+
+UserSchema.virtual("statisticsTimezone").get(function () {
+  return statisticsTimezone(this);
+});
