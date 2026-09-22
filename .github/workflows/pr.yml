@@ -1,0 +1,58 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      NODE_ENV: development
+      API_ENDPOINT: http://127.0.0.1:8082
+      CLIENT_ENDPOINT: http://127.0.0.1:3002
+      MONGO_ENDPOINT: mongodb://127.0.0.1:27017/pr_tests
+      TIMELINE_TEST_MONGO_URI: mongodb://127.0.0.1:27017
+      SPOTIFY_PUBLIC: test
+      SPOTIFY_SECRET: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 25
+      - name: Install dependencies
+        run: |
+          npm install --global pnpm@12.3.4
+          pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: |
+          pnpm --filter @your_spotify/client typecheck
+          pnpm --filter @your_spotify/server typecheck
+      - name: Source lint
+        run: |
+          pnpm --filter @your_spotify/client exec oxlint -c ../dev/.oxlintrc.json src
+          pnpm --filter @your_spotify/server exec oxlint -c ../dev/.oxlintrc.json src
+      - name: Regression tests
+        working-directory: apps/server
+        run: pnpm exec node --test --test-concurrency=1 test/*.test.cjs
+      - name: Production builds
+        env:
+          NODE_ENV: production
+        run: |
+          pnpm --filter @your_spotify/client build
+          pnpm --filter @your_spotify/server build
