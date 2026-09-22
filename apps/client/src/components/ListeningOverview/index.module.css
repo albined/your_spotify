@@ -1,0 +1,56 @@
+.card {
+  height: 300px;
+  min-width: 0;
+}
+
+.content {
+  min-height: 0;
+  min-width: 0;
+}
+
+.plot {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+}
+
+.reference {
+  color: var(--text-on-light);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  opacity: 0.65;
+  margin-left: 8px;
+}
+
+.dash {
+  width: 16px;
+  border-top: 1.5px dashed currentColor;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--primary);
+  opacity: 0.35;
+}
+
+.tooltip {
+  background: var(--background);
+  color: var(--text-on-light);
+  border: var(--content-border);
+  box-shadow: var(--shadow);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  max-width: min(340px, 80vw);
+}
+
+.referenceValue {
+  opacity: 0.7;
+}

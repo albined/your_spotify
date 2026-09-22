@@ -3,37 +3,15 @@ import { Types } from "mongoose";
 import { statisticsTimezone } from "../../tools/allTimeStart";
 import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
+import {
+  artistDiversity,
+  artistDiversityStages,
+  DIVERSITY_WINDOW_MS,
+} from "./artistDiversity";
 import { requireCompetitionParticipants } from "./competitionParticipants";
-import { DAY_MS, timelineBounds } from "./listeningTimelineTools";
+import { timelineBounds } from "./listeningTimelineTools";
 
-export const DIVERSITY_WINDOW_MS = 30 * DAY_MS;
-
-// Changes are grouped by artist and sample: add listening when it enters the
-// trailing window, subtract it when it expires. Only active artists remain in
-// the map. Recompute squares from their integer millisecond totals to avoid
-// cancellation errors when a heavily played artist leaves the window.
-export function artistDiversity(
-  count: number,
-  changes: { artist: string; bucket: number; durationMs: number }[],
-) {
-  const grouped = Array.from({ length: count + 1 }, () => [] as typeof changes);
-  for (const change of changes) grouped[change.bucket]?.push(change);
-  const totals = new Map<string, number>();
-  return grouped.map((bucket) => {
-    for (const { artist, durationMs } of bucket) {
-      const next = (totals.get(artist) ?? 0) + durationMs;
-      if (next > 0) totals.set(artist, next);
-      else totals.delete(artist);
-    }
-    let total = 0;
-    let squares = 0;
-    for (const duration of totals.values()) {
-      total += duration;
-      squares += duration * duration;
-    }
-    return squares ? (total * total) / squares : 0;
-  });
-}
+export { artistDiversity, DIVERSITY_WINDOW_MS } from "./artistDiversity";
 
 export async function getCompetitionInsights(
   user: User,
@@ -48,27 +26,6 @@ export async function getCompetitionInsights(
   const load = async (account: (typeof accounts)[number]) => {
     // Hour-of-day uses each participant's local clock, for comparing habits.
     const timezone = statisticsTimezone(account);
-    // A play at s belongs to the sample at t exactly when t - 30d <= s < t.
-    // Derive entry/expiry indices from actual timestamps, independently of the
-    // display resolution: no approximation using wide multi-year chart bins.
-    const changeAt = (offset: number) => ({
-      $max: [
-        0,
-        {
-          $add: [
-            1,
-            {
-              $floor: {
-                $divide: [
-                  { $add: [{ $subtract: ["$played_at", start] }, offset] },
-                  bounds.width,
-                ],
-              },
-            },
-          ],
-        },
-      ],
-    });
     const [result] = await StatisticsInfosModel.aggregate<{
       artists: {
         _id: { artist: string; bucket: number };
@@ -93,29 +50,7 @@ export async function getCompetitionInsights(
       },
       {
         $facet: {
-          artists: [
-            { $match: { primaryArtistId: { $type: "string", $ne: "" } } },
-            {
-              $project: {
-                artist: "$primaryArtistId",
-                changes: [
-                  { bucket: changeAt(0), durationMs: "$durationMs" },
-                  {
-                    bucket: changeAt(DIVERSITY_WINDOW_MS),
-                    durationMs: { $multiply: ["$durationMs", -1] },
-                  },
-                ],
-              },
-            },
-            { $unwind: "$changes" },
-            { $match: { "changes.bucket": { $lte: bounds.count } } },
-            {
-              $group: {
-                _id: { artist: "$artist", bucket: "$changes.bucket" },
-                durationMs: { $sum: "$changes.durationMs" },
-              },
-            },
-          ],
+          artists: artistDiversityStages(bounds, start),
           hours: [
             // The warm-up history belongs only to diversity, not this histogram.
             { $match: { played_at: { $gte: start } } },
