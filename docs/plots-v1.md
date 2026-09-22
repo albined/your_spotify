@@ -95,6 +95,32 @@ with up to 64 columns and roughly 4,096 cells. Long track lists scroll inside
 the card with sticky column headings and song labels. No settings, info buttons,
 data tables or explanatory text are added.
 
+Artist pages also have Album eras and Song eras, covering the artist's lifetime.
+Albums need at least 2% of the artist's recorded listening time and are capped at
+ten. Song selection keeps the five highest lifetime listening-time totals, then
+fills up to five rows with local favorites from less-represented periods. Local
+periods are calendar months for histories of at least 180 days, Monday weeks
+otherwise, in the statistics timezone. The minimum period activity is 10% of
+median active-period listening, bounded between ten and thirty minutes; a huge
+burst cannot raise that threshold indefinitely. Local top-three songs need three
+plays.
+Each period has equal influence. Greedy selection adds the song that most improves
+coverage beyond the strongest already-selected song in each period, using local
+listening time relative to that period's leader. Ties and any unfilled rows use
+lifetime listening time, then ID. This preserves older phases even when a later
+burst dominates total hours, without filling every era row from one phase.
+
+Both artist matrices use the album matrix component: aligned 21px rounded cells,
+up to 64 columns, hover/touch details and keyboard navigation. Rows sort by peak
+date, and colors blend 80% row-relative and 20% global square-root intensity.
+Selection considers every recorded song before querying 256 display bins for
+the selected rows. Artist attribution, blacklisting and lifetime behavior match
+the other detail charts. No settings or explanation text are added; empty eras
+are omitted. `test/artistItemEras.test.cjs` covers phase coverage, the album share
+threshold and caps, fallbacks, timezone/DST boundaries, owner/item isolation and
+exact duration totals. Existing album matrices retain track order and global
+color scaling.
+
 The main artist history chart is now a lifetime listening-rate curve in h/day.
 It uses a duration-weighted Gaussian KDE with automatic bandwidth of about five
 days per year of history, capped at 28 days. Short histories use a smaller
@@ -177,7 +203,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/artistItemEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 

@@ -7,7 +7,14 @@ export interface DetailListeningData extends TimelineBounds {
   days: { date: string; hours: number }[];
   activity: [number, number][];
   tracks: { id: string; name: string; bins: [number, number][] }[];
+  eras: ArtistItemErasData | null;
   timeOfDay: { artist: number[]; overall: number[] } | null;
+}
+
+export interface ArtistItemErasData extends TimelineBounds {
+  timezone: string;
+  albums: DetailListeningData["tracks"];
+  songs: DetailListeningData["tracks"];
 }
 
 const DAY = 86_400_000;

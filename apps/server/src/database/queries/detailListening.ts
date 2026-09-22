@@ -7,6 +7,7 @@ import {
 } from "../../tools/allTimeStart";
 import { InfosModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import { getArtistItemEras } from "./artistItemEras";
 import {
   bucketExpression,
   HOUR_MS,
@@ -97,7 +98,7 @@ export async function getDetailListening(
       },
     ];
   }
-  const [[result], overall] = await Promise.all([
+  const [[result], overall, eras] = await Promise.all([
     InfosModel.aggregate<{
       days: { _id: string; hours: number }[];
       activity?: { _id: number; hours: number }[];
@@ -119,6 +120,7 @@ export async function getDetailListening(
           ...hoursGroup,
         ]).option({ maxTimeMS: 15_000, allowDiskUse: true })
       : [],
+    kind === "artist" ? getArtistItemEras(user, id, start, end) : null,
   ]);
   const trackRows = result?.tracks ?? [];
   const metadata =
@@ -172,6 +174,7 @@ export async function getDetailListening(
       .map((row): [number, number] => [row._id, row.hours])
       .sort(([a], [b]) => a - b),
     tracks,
+    eras,
     timeOfDay:
       kind === "artist"
         ? {

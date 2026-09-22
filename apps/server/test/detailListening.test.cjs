@@ -245,7 +245,17 @@ test(
             19,
           );
           assert.deepEqual(data.tracks, []);
-        } else assert.equal(data.timeOfDay, null);
+          assert.equal(data.eras.start, data.start);
+          assert.equal(data.eras.end, data.end);
+          assert.deepEqual(
+            new Set(data.eras.songs.map((song) => song.id)),
+            new Set(["song-a", "song-b", "song-c", "missing-metadata"]),
+          );
+          assert.equal(data.eras.albums.length, 2);
+        } else {
+          assert.equal(data.timeOfDay, null);
+          assert.equal(data.eras, null);
+        }
         if (kind === "album") {
           assert.deepEqual(
             data.tracks.map((track) => track.id),
