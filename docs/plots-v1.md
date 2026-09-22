@@ -183,22 +183,29 @@ of its exact trailing window across short, long and overlapping date ranges. It
 also covers warm-up history, expiry boundaries, empty windows, future dates and
 keeping the warm-up history out of the selected-period hourly histogram.
 
-Home and All stats now share zero-based, rounded listening-volume bars, with no
-gridlines or chart controls. One `/spotify/listening-overview` request supplies
-both hours and play counts on All stats. Daily/hourly/monthly/yearly buckets use
-the statistics timezone; missing buckets remain zero, and partial buckets are
-muted. All history uses monthly bars up to four years and annual bars thereafter.
+Home and All stats share zero-based listening-volume lines with gentle
+interpolation through the actual totals and a faint fill. There are no gridlines
+or chart controls. One `/spotify/listening-overview` request supplies both hours
+and play counts on All stats. Daily/hourly/monthly/yearly buckets use the
+statistics timezone; missing buckets remain zero, and hollow points identify
+partial periods. Long histories use monthly points up to 200 calendar months;
+larger ranges fall back to annual totals without truncating the selected range.
 
 Today compares local hours with their mean over the preceding 365 complete local
-days. Week/month/last-7/last-30 views use daily bars and a dashed daily average
-from the 365 days before the selection. Quiet days count in that denominator;
-the selected period never contributes to its own baseline. The reference is
-omitted when that full year predates recorded history or the saved All start.
-Partial bars' tooltips compare the same fraction of the average. This year uses
-monthly bars with wider, faint bars for the corresponding months last year,
-ending at the same local date/time for the incomplete current month (Feb 29 is
-clamped to Feb 28). Last 365 days uses 53 elapsed-week buckets, the last partial,
-compared with matching elapsed positions in the immediately preceding period.
+days, drawn as a faint second line. Week/month/last-7/last-30 views use daily
+points and an `avg` notch on the Y-axis, with the exact daily average from the
+365 days before the selection available on hover or keyboard focus. The notch
+avoids overlapping tick labels and replaces the horizontal line and header key.
+Quiet days count in that denominator; the selected period never contributes to
+its own baseline. The reference is omitted when that full year predates recorded
+history or the saved All start.
+Partial periods' tooltips compare the same fraction of the average. This year
+uses monthly points with a faint unfilled line for the corresponding months last
+year, ending at the same local date/time for the incomplete current month
+(Feb 29 is clamped to Feb 28). Last 365 days uses 53 elapsed-week buckets,
+the last partial,
+compared with a faint line for matching elapsed positions in the immediately
+preceding period.
 Unavailable reference buckets stay absent rather than becoming false zeros.
 All history and long custom ranges have no comparison overlay; short custom
 ranges use the same average defaults.

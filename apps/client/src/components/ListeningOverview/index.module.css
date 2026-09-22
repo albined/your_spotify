@@ -24,17 +24,21 @@
   margin-left: 8px;
 }
 
-.dash {
-  width: 16px;
-  border-top: 1.5px dashed currentColor;
-}
-
 .swatch {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
+  width: 16px;
+  height: 1.5px;
   background: var(--primary);
   opacity: 0.35;
+}
+
+.averageMarker {
+  color: var(--text-on-light);
+  opacity: 0.65;
+}
+
+.averageMarker:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
 }
 
 .tooltip {

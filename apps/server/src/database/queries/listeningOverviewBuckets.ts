@@ -90,6 +90,13 @@ export function overviewPlan(
   if (period === "This month") start = midnight(`${today.slice(0, 7)}-01`);
   if (period === "This year") start = midnight(`${today.slice(0, 4)}-01-01`);
   const days = (end - start) / DAY_MS;
+  const firstDate = calendarDate(start, timezone);
+  const lastDate = calendarDate(Math.max(start, end - 1), timezone);
+  const months =
+    (Number(lastDate.slice(0, 4)) - Number(firstDate.slice(0, 4))) * 12 +
+    Number(lastDate.slice(5, 7)) -
+    Number(firstDate.slice(5, 7)) +
+    1;
   const unit: OverviewUnit =
     period === "Today" || (period === "custom" && days <= 2)
       ? Timesplit.hour
@@ -99,7 +106,7 @@ export function overviewPlan(
           ? "week"
           : days <= 60
             ? Timesplit.day
-            : days <= 4 * 366
+            : months <= 200
               ? Timesplit.month
               : Timesplit.year;
   const comparison =
@@ -112,7 +119,6 @@ export function overviewPlan(
           : days <= 60
             ? "average"
             : null;
-  const firstDate = calendarDate(start, timezone);
   let date =
     unit === Timesplit.year
       ? `${firstDate.slice(0, 4)}-01-01`
