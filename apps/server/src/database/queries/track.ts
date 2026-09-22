@@ -1,15 +1,27 @@
 import { Timesplit } from "../../tools/types";
 import { InfosModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import {
+  normalizeArtistCredits,
+  populateStatisticsArtists,
+} from "./artistGroups";
 import { getGroupByDateProjection, getGroupingByTimeSplit } from "./statsTools";
 
 export const getTracks = (tracksId: string[]) =>
   TrackModel.find({ id: { $in: tracksId } });
 
-export const searchTrack = (str: string) =>
-  TrackModel.find({ name: { $regex: new RegExp(str, "i") } })
-    .populate("full_album")
-    .populate("full_artists");
+export const getStatisticsTracks = async (tracksId: string[]) =>
+  normalizeArtistCredits(
+    await TrackModel.find({ id: { $in: tracksId } }).lean(),
+  );
+
+export const searchTrack = async (str: string) => {
+  return populateStatisticsArtists(
+    await TrackModel.find({ name: { $regex: new RegExp(str, "i") } })
+      .populate("full_album")
+      .lean(),
+  );
+};
 
 export const getTrackListenedCount = (user: User, trackId: string) =>
   InfosModel.where({ owner: user._id, id: trackId }).countDocuments();

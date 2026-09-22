@@ -5,8 +5,9 @@ import {
   startOfCalendarDate,
   statisticsTimezone,
 } from "../../tools/allTimeStart";
-import { InfosModel, TrackModel } from "../Models";
+import { TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 import { getArtistItemEras } from "./artistItemEras";
 import {
   bucketExpression,
@@ -38,7 +39,7 @@ export async function getDetailListening(
     [field]: id,
     durationMs: { ...base.durationMs, $type: "number" },
   };
-  const first = await InfosModel.findOne({ ...base, [field]: id })
+  const first = await StatisticsInfosModel.findOne({ ...base, [field]: id })
     .sort({ played_at: 1 })
     .select("played_at")
     .maxTimeMS(15_000)
@@ -99,7 +100,7 @@ export async function getDetailListening(
     ];
   }
   const [[result], overall, eras] = await Promise.all([
-    InfosModel.aggregate<{
+    StatisticsInfosModel.aggregate<{
       days: { _id: string; hours: number }[];
       activity?: { _id: number; hours: number }[];
       hours?: { _id: number; hours: number }[];
@@ -109,7 +110,7 @@ export async function getDetailListening(
       allowDiskUse: true,
     }),
     kind === "artist"
-      ? InfosModel.aggregate<{ _id: number; hours: number }>([
+      ? StatisticsInfosModel.aggregate<{ _id: number; hours: number }>([
           {
             $match: {
               ...base,

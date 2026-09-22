@@ -16,11 +16,20 @@ import {
   getRankOf,
   ItemType,
 } from "../database";
+import {
+  artistMemberIds,
+  resolveArtistId,
+} from "../database/queries/artistGroups";
 import { getArtistTimeline } from "../database/queries/listeningTimeline";
 import { isLoggedOrGuest, logged, validate } from "../tools/middleware";
 import { LoggedRequest } from "../tools/types";
 
 export const router = Router();
+
+router.param("id", async (req, _res, next, id) => {
+  req.params.id = await resolveArtistId(id);
+  next();
+});
 
 const getArtistsSchema = z.object({ ids: z.string() });
 
@@ -104,8 +113,10 @@ router.post("/blacklist/:id", logged, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { id } = validate(req.params, blacklist);
 
-  await blacklistArtist(user._id.toString(), id);
-  await blacklistByArtist(user._id.toString(), id);
+  for (const member of await artistMemberIds(id)) {
+    await blacklistArtist(user._id.toString(), member);
+    await blacklistByArtist(user._id.toString(), member);
+  }
   res.status(204).end();
 });
 
@@ -113,7 +124,9 @@ router.post("/unblacklist/:id", logged, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { id } = validate(req.params, blacklist);
 
-  await unblacklistArtist(user._id.toString(), id);
-  await unblacklistByArtist(user._id.toString(), id);
+  for (const member of await artistMemberIds(id)) {
+    await unblacklistArtist(user._id.toString(), member);
+    await unblacklistByArtist(user._id.toString(), member);
+  }
   res.status(204).end();
 });

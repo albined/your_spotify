@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
 
 import { statisticsTimezone } from "../../tools/allTimeStart";
-import { InfosModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 import { requireCompetitionParticipants } from "./competitionParticipants";
 import { DAY_MS, timelineBounds } from "./listeningTimelineTools";
 
@@ -69,7 +69,7 @@ export async function getCompetitionInsights(
         },
       ],
     });
-    const [result] = await InfosModel.aggregate<{
+    const [result] = await StatisticsInfosModel.aggregate<{
       artists: {
         _id: { artist: string; bucket: number };
         durationMs: number;

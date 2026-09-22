@@ -1,0 +1,60 @@
+.list {
+  display: grid;
+  gap: 16px;
+}
+.group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.names {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.names > span {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  opacity: 0.7;
+}
+.disabled {
+  font-size: 12px;
+  font-weight: normal;
+  opacity: 0.7;
+}
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 12px !important;
+}
+.imageLabel {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.imageChoices {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.imageChoice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 112px;
+  text-transform: none;
+}
+.imageChoice span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+.actions {
+  padding: 12px 24px;
+  flex-wrap: wrap;
+}
+.delete {
+  margin-right: auto !important;
+}

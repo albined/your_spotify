@@ -45,6 +45,7 @@ import { up as add_metadata_to_infos } from "./migrations/1708973485301-add_meta
 import { up as add_language_to_user } from "./migrations/1708973485302-add_language_to_user";
 import { up as add_all_time_start_date } from "./migrations/1790035200000-add_all_time_start_date";
 import { up as add_competition_preference } from "./migrations/1790035200001-add_competition_preference";
+import { up as add_artist_groups } from "./migrations/1790121600000-add_artist_groups";
 
 function noop() {}
 
@@ -86,6 +87,10 @@ export function runMigrations() {
         },
         "1790035200001-add_competition_preference.js": {
           up: add_competition_preference,
+          down: noop,
+        },
+        "1790121600000-add_artist_groups.js": {
+          up: add_artist_groups,
           down: noop,
         },
       },

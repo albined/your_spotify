@@ -38,6 +38,8 @@ export interface SpotifyImage {
 }
 
 export interface Artist {
+  memberIds?: string[];
+  members?: Pick<Artist, "id" | "name" | "images">[];
   _id: string;
   external_urls: any;
   genres: string[];

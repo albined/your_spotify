@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 import { Timesplit } from "../../tools/types";
-import { InfosModel } from "../Models";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
   basicMatchUsers,
@@ -36,7 +36,7 @@ export const getCollaborativeBestSongs = (
   limit: number,
 ) => {
   const users = _users.map((u) => new mongoose.Types.ObjectId(u));
-  return InfosModel.aggregate([
+  return StatisticsInfosModel.aggregate([
     { $match: basicMatchUsers(_users, start, end) },
     {
       $addFields: fromPairs(
@@ -118,7 +118,7 @@ export const getCollaborativeBestAlbums = (
   mode: CollaborativeMode,
 ) => {
   const users = _users.map((u) => new mongoose.Types.ObjectId(u));
-  return InfosModel.aggregate([
+  return StatisticsInfosModel.aggregate([
     { $match: basicMatchUsers(_users, start, end) },
     {
       $addFields: fromPairs(
@@ -200,7 +200,7 @@ export const getCollaborativeBestArtists = (
   mode: CollaborativeMode,
 ) => {
   const users = _users.map((u) => new mongoose.Types.ObjectId(u));
-  return InfosModel.aggregate([
+  return StatisticsInfosModel.aggregate([
     { $match: basicMatchUsers(_users, start, end) },
     {
       $addFields: fromPairs(
@@ -286,7 +286,7 @@ export const getCollaborativeTimePer = async (
   if (artistId) {
     match.primaryArtistId = artistId;
   }
-  return InfosModel.aggregate([
+  return StatisticsInfosModel.aggregate([
     { $match: match },
     {
       $project: {

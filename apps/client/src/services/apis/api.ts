@@ -1,6 +1,11 @@
 import Axios from "axios";
 
 import type { ArtistDistribution } from "../artistDistribution";
+import type {
+  ArtistGroup,
+  ArtistGroupInput,
+  ArtistGroupsData,
+} from "../artistGroups";
 import type { CompetitionInsights } from "../competitionInsights";
 import type {
   DetailListeningData,
@@ -161,6 +166,18 @@ export type AlbumStatsResponse = {
 };
 
 export const api = {
+  getArtistGroups: () => get<ArtistGroupsData>("/artist-groups"),
+  searchGroupArtists: (query: string) =>
+    get<Artist[]>("/artist-groups/search", { query }),
+  createArtistGroup: (input: ArtistGroupInput) =>
+    post<ArtistGroup>("/artist-groups", input),
+  updateArtistGroup: (group: ArtistGroup) =>
+    put<ArtistGroup>(`/artist-groups/${group.id}`, group),
+  deleteArtistGroup: (group: ArtistGroup) =>
+    axios.delete(`/artist-groups/${group.id}`, {
+      data: { revision: group.revision },
+      params: { token: api.publicToken },
+    }),
   publicToken: null as string | null,
 
   version: () => get<{ update: boolean; version: string }>("/version"),

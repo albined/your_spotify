@@ -2,6 +2,7 @@ import { model } from "mongoose";
 
 import { AlbumSchema } from "./schemas/album";
 import { ArtistSchema } from "./schemas/artist";
+import { ArtistGroupSchema } from "./schemas/artistGroup";
 import { GlobalPreferencesSchema } from "./schemas/globalPreference";
 import { ImporterStateSchema } from "./schemas/import";
 import { InfosSchema } from "./schemas/info";
@@ -13,6 +14,7 @@ import { UserSchema } from "./schemas/user";
 export const UserModel = model("User", UserSchema);
 export const InfosModel = model("Infos", InfosSchema);
 export const ArtistModel = model("Artist", ArtistSchema);
+export const ArtistGroupModel = model("ArtistGroup", ArtistGroupSchema);
 export const AlbumModel = model("Album", AlbumSchema);
 export const TrackModel = model("Track", TrackSchema);
 export const MigrationModel = model("Migration", MigrationSchema);
