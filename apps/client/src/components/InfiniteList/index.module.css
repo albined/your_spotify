@@ -1,0 +1,16 @@
+.root {
+  overflow: auto;
+}
+
+.footer {
+  min-height: 1px;
+}
+
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+}
