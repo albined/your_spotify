@@ -14,6 +14,7 @@ import {
   type ArtistDistribution as Distribution,
   buildArtistStream,
 } from "../../services/artistDistribution";
+import { calendarAxis } from "../../services/calendarAxis";
 import { useListeningRequest } from "../../services/listeningTimeline";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import ArtistEras from "../ListeningPatterns/ArtistEras";
@@ -34,6 +35,25 @@ function Stream({ data }: { data: Distribution }) {
   const stream = useMemo(() => buildArtistStream(data), [data]);
   const { bands, maximum, samples } = stream;
   const activeBand = hover?.band;
+  const axis = useMemo(() => {
+    const span = data.end - data.start;
+    const { ticks, format } = calendarAxis(
+      data.start,
+      data.end,
+      span <= 2 * 86400000 ? "hour" : span <= 62 * 86400000 ? "day" : "month",
+      data.timezone,
+      size.width,
+    );
+    const formatter = new Intl.DateTimeFormat(undefined, {
+      ...format,
+      timeZone: data.timezone,
+    });
+    return ticks.map((timestamp) => ({
+      timestamp,
+      x: ((timestamp - data.start) / span) * size.width,
+      label: formatter.format(timestamp),
+    }));
+  }, [data, size.width]);
   const date = useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -93,7 +113,7 @@ function Stream({ data }: { data: Distribution }) {
   }, [bands, maximum, samples, size, activeBand]);
 
   const selected = hover ? bands[hover.band] : undefined;
-  const timestamp = hover
+  const hoveredTimestamp = hover
     ? data.start + (hover.sample / (samples - 1)) * (data.end - data.start)
     : data.start;
   const interpolate = (values: Float64Array, sample: number) => {
@@ -176,13 +196,20 @@ function Stream({ data }: { data: Distribution }) {
           }}
         />
       </div>
-      <div className={s.axis} aria-hidden="true">
-        {[0, 0.25, 0.5, 0.75, 1].map((position) => (
-          <span key={position}>
-            {date.format(data.start + position * (data.end - data.start))}
-          </span>
+      <svg className={s.axis} width="100%" height={32} aria-hidden="true">
+        {axis.map(({ timestamp, x, label }) => (
+          <text
+            key={timestamp}
+            data-timestamp={timestamp}
+            x={x}
+            y={24}
+            textAnchor={
+              x < 40 ? "start" : x > size.width - 40 ? "end" : "middle"
+            }>
+            {label}
+          </text>
         ))}
-      </div>
+      </svg>
       {selected && hover && (
         <div
           className={s.tooltip}
@@ -200,7 +227,7 @@ function Stream({ data }: { data: Distribution }) {
           {selected.artist.image && <img src={selected.artist.image} alt="" />}
           <div>
             <strong>{selected.artist.name}</strong>
-            <span>{date.format(timestamp)}</span>
+            <span>{date.format(hoveredTimestamp)}</span>
             <span>
               {density > 0 && density < 0.01
                 ? "<0.01"
