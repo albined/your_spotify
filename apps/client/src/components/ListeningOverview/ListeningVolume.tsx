@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Area,
@@ -11,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { calendarAxis } from "../../services/calendarAxis";
 import { ListeningOverview } from "../../services/listeningOverview";
 import { selectUser } from "../../services/redux/modules/user/selector";
 import { RequestState } from "../ListeningPatterns/shared";
@@ -54,26 +56,25 @@ function VolumePlot({
   metric: "hours" | "songs";
 }) {
   const user = useSelector(selectUser);
+  const [width, setWidth] = useState(640);
+  const first = data.buckets[0]!;
+  const last = data.buckets.at(-1)!;
+  const axis = calendarAxis(
+    first.start,
+    last.start,
+    data.unit,
+    data.timezone,
+    width,
+  );
+  const singlePadding =
+    first.start === last.start ? Math.max(1, first.end - first.start) / 2 : 0;
   const locale =
     user?.settings.dateFormat === "default"
       ? undefined
       : user?.settings.dateFormat;
   const format = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(locale, { timeZone: data.timezone, ...options });
-  const tick = format(
-    data.unit === "hour"
-      ? { hour: "2-digit", hourCycle: "h23" }
-      : data.unit === "year"
-        ? { year: "numeric" }
-        : data.unit === "month"
-          ? {
-              month: "short",
-              ...(data.end - data.start > 366 * 86400000
-                ? ({ year: "2-digit" } as const)
-                : {}),
-            }
-          : { month: "short", day: "numeric" },
-  );
+  const tick = format(axis.format);
   const date = format({
     year: "numeric",
     month: "short",
@@ -106,18 +107,25 @@ function VolumePlot({
       className={s.plot}
       role="img"
       aria-label={`${metric === "hours" ? "Listening time" : "Songs listened"} by ${data.unit}, starting at zero`}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        onResize={(nextWidth) => setWidth(Math.round(nextWidth))}>
         <ComposedChart
           data={points}
           margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
           accessibilityLayer>
           <XAxis
             dataKey="start"
+            type="number"
+            scale="time"
+            domain={[first.start - singlePadding, last.start + singlePadding]}
+            ticks={axis.ticks}
+            interval={0}
             tickFormatter={(value: number) => tick.format(value)}
             tick={{ fill: "var(--text-on-light)", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            minTickGap={22}
             padding={{ left: 4, right: 4 }}
           />
           <YAxis
