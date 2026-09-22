@@ -1,3 +1,22 @@
+import type { ArtistDistribution } from "./artistDistribution";
+
+export interface ArtistErasData extends ArtistDistribution {
+  selections: Record<10 | 20, string[]>;
+}
+
+export function heatmapIntensity(
+  value: number,
+  maximum: number,
+  rowMaximum: number,
+  rowWeight = 0,
+) {
+  if (value <= 0 || maximum <= 0 || rowMaximum <= 0) return 0;
+  return (
+    rowWeight * Math.sqrt(value / rowMaximum) +
+    (1 - rowWeight) * Math.sqrt(value / maximum)
+  );
+}
+
 export interface ListeningHeatmapsData {
   start: number;
   end: number;

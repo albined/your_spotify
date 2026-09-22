@@ -1,24 +1,27 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useSelector } from "react-redux";
 
-import { ArtistDistribution } from "../../services/artistDistribution";
+import { api } from "../../services/apis/api";
 import { formatHours } from "../../services/listeningPatterns";
+import { useListeningRequest } from "../../services/listeningTimeline";
 import { timelineMatrixLayout } from "../../services/matrixLayout";
+import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import TitleCard from "../TitleCard";
 import { Heatmap, RequestState, usePlotWidth } from "./shared";
 
 import s from "./index.module.css";
 
-export default function ArtistEras({
-  data,
-  error,
-  retry,
-}: {
-  data?: ArtistDistribution;
-  error?: boolean;
-  retry: () => void;
-}) {
-  const [limit, setLimit] = useState(10);
+export default function ArtistEras() {
+  const [limit, setLimit] = useState<10 | 20>(10);
+  const { interval } = useSelector(selectRawIntervalDetail);
+  const start = interval.start.getTime();
+  const end = interval.end.getTime();
+  const request = useCallback(
+    () => api.getArtistEras(new Date(start), new Date(end)),
+    [start, end],
+  );
+  const { data, error, retry } = useListeningRequest(request);
   const { ref, width } = usePlotWidth();
   const { columns: count, pitch } = timelineMatrixLayout(
     width,
@@ -35,7 +38,7 @@ export default function ArtistEras({
       : {}),
   });
   const rows = data?.series
-    .slice(0, limit)
+    .filter((artist) => data.selections[limit].includes(artist.id))
     .map((artist) => {
       const values = Array<number>(count).fill(0);
       for (const [bin, hours] of artist.bins) {
@@ -52,14 +55,14 @@ export default function ArtistEras({
         label: artist.name,
         peak,
         cells: values.map((value, col) => {
-          const start =
+          const cellStart =
             data.start + Math.floor((col * data.count) / count) * data.width;
-          const end =
+          const cellEnd =
             data.start +
             Math.floor(((col + 1) * data.count) / count) * data.width;
           return {
             value,
-            label: `${artist.name} · ${date.format(start)} – ${date.format(end - 1)} · ${formatHours(value)}`,
+            label: `${artist.name} · ${date.format(cellStart)} – ${date.format(cellEnd - 1)} · ${formatHours(value)}`,
           };
         }),
       };
@@ -80,7 +83,7 @@ export default function ArtistEras({
           size="small"
           exclusive
           value={limit}
-          onChange={(_, value: number | null) => {
+          onChange={(_, value: 10 | 20 | null) => {
             if (value !== null) setLimit(value);
           }}
           aria-label="Number of artists">
@@ -92,11 +95,13 @@ export default function ArtistEras({
         {data ? (
           rows?.length ? (
             <Heatmap
+              key={`${start}:${end}:${limit}`}
               label="Artist eras"
               rows={rows}
               labelWidth={112}
               minPitch={pitch}
               maxPitch={pitch}
+              rowWeight={0.8}
               columns={Array.from({ length: count }, (_, col) =>
                 col % tickEvery === 0
                   ? axisDate.format(

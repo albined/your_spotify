@@ -3,6 +3,7 @@ import Axios from "axios";
 import type { ArtistDistribution } from "../artistDistribution";
 import type {
   ArtistActivityData,
+  ArtistErasData,
   ListeningHeatmapsData,
 } from "../listeningPatterns";
 import {
@@ -269,6 +270,8 @@ export const api = {
     get<ListeningHeatmapsData>("/spotify/listening-heatmaps", { start, end }),
   getArtistActivity: (start: Date, end: Date) =>
     get<ArtistActivityData>("/spotify/artist-activity", { start, end }),
+  getArtistEras: (start: Date, end: Date) =>
+    get<ArtistErasData>("/spotify/artist-eras", { start, end }),
 
   getArtistTimeline: (id: string) =>
     get<ArtistTimeline | null>(`/artist/${id}/listening-timeline`),

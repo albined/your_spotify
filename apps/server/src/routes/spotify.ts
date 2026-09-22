@@ -21,6 +21,7 @@ import {
   getArtists,
 } from "../database";
 import { getArtistDistribution } from "../database/queries/artistDistribution";
+import { getArtistEras } from "../database/queries/artistEras";
 import {
   CollaborativeMode,
   getCollaborativeBestAlbums,
@@ -154,6 +155,12 @@ router.get("/artist-activity", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { start, end } = validate(req.query, patternsSchema);
   res.status(200).send(await getArtistActivity(user, start, end));
+});
+
+router.get("/artist-eras", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end } = validate(req.query, patternsSchema);
+  res.status(200).send(await getArtistEras(user, start, end));
 });
 
 const topTimelineSchema = interval

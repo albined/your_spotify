@@ -244,7 +244,7 @@ export default function ArtistDistribution() {
           </div>
         )}
       </TitleCard>
-      <ArtistEras data={data} error={error} retry={retry} />
+      <ArtistEras />
     </div>
   );
 }
