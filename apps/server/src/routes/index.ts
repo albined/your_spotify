@@ -12,6 +12,7 @@ import {
   setUserPublicToken,
   storeInUser,
 } from "../database";
+import { calendarDate, statisticsTimezone } from "../tools/allTimeStart";
 import { GithubAPI } from "../tools/apis/githubApi";
 import { getWithDefault } from "../tools/env";
 import {
@@ -56,11 +57,25 @@ const settingsSchema = z.object({
     .nullable()
     .transform((e) => e ?? undefined)
     .optional(),
+  allTimeStartDate: z.iso
+    .date()
+    .refine((date) => date >= "1900-01-01", "Choose 1900 or later.")
+    .nullable()
+    .optional(),
 });
 
 router.post("/settings", logged, async (req, res) => {
   const { user } = req as LoggedRequest;
   const payload = validate(req.body, settingsSchema);
+
+  if (
+    payload.allTimeStartDate &&
+    payload.allTimeStartDate >
+      calendarDate(Date.now(), statisticsTimezone(user))
+  ) {
+    res.status(400).send({ message: "Choose today or an earlier date." });
+    return;
+  }
 
   await changeSetting("_id", user._id, payload);
   res.status(200).end();

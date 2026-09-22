@@ -19,10 +19,13 @@ export interface User {
     darkMode: DarkModeType;
     timezone: string | null | undefined;
     dateFormat: string;
+    allTimeStartDate?: string | null;
     blacklistedArtists: string[] | undefined;
   };
   publicToken: string | null;
   firstListenedAt: string;
+  allTimeStartAt?: string | null;
+  statisticsTimezone?: string;
   isGuest: boolean;
 }
 

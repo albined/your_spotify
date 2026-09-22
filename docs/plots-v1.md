@@ -57,6 +57,17 @@ time, then ID. The compact legend sits on the right on desktop and below the
 chart in two columns on narrow screens. Detailed totals remain in the existing
 table and chart tooltip.
 
+Settings → Statistics now offers an optional All-time start date. It changes
+the shared All preset (including comparisons) without changing stored plays or
+the import-maintained first-listen timestamp. Clearing it restores full history;
+other presets and custom ranges stay unchanged. The date is saved per user as
+`settings.allTimeStartDate` (YYYY-MM-DD or null), and the profile exposes its
+derived UTC `allTimeStartAt` using the statistics timezone. Future/invalid dates
+are rejected. Migration `1790035200000` initializes missing preferences to null
+without overwriting existing choices; the optional field also works before the
+migration runs. `test/allTimeStart.test.cjs` covers range selection, timezone/DST
+boundaries, authenticated persistence, reset, migration, and historical imports.
+
 The isolated preview uses the copied Mongo volume and loopback-only ports:
 
 - original stack: `http://127.0.0.1:3000`, API `8080`

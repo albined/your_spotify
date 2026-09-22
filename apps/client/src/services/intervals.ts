@@ -1,5 +1,3 @@
-import { useSelector } from "react-redux";
-import { useSearchParams } from "react-router-dom";
 import {
   startOfDay,
   startOfMonth,
@@ -7,6 +5,9 @@ import {
   startOfYear,
   subDays,
 } from "date-fns";
+import { useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
+
 import { getAppropriateTimesplitFromRange } from "./date";
 import { selectAccounts } from "./redux/modules/admin/selector";
 import { selectUser } from "./redux/modules/user/selector";
@@ -42,7 +43,12 @@ export interface CustomIntervalDetail {
 export interface UserBasedIntervalDetails {
   type: "userbased";
   name: string;
-  interval: (user: { firstListenedAt: string } | null) => Interval;
+  interval: (user: AllTimeUser | null) => Interval;
+}
+
+interface AllTimeUser {
+  firstListenedAt: string;
+  allTimeStartAt?: string | null;
 }
 
 export type IntervalDetail =
@@ -98,7 +104,11 @@ export const presetIntervals = [
     type: "preset",
     name: "Last 365 days",
     unit: "period",
-    interval: { timesplit: Timesplit.month, start: subDays(now, 365), end: now },
+    interval: {
+      timesplit: Timesplit.month,
+      start: subDays(now, 365),
+      end: now,
+    },
   },
 ] as const satisfies PresetIntervalDetail[];
 
@@ -107,13 +117,22 @@ export const userBasedIntervals: UserBasedIntervalDetails[] = [
     type: "userbased",
     name: "All",
     interval: (user) => {
-      const start = getFirstListenedAt(
-        user ? new Date(user.firstListenedAt) : new Date(2010),
-      );
+      const end = now;
+      const customStart = user?.allTimeStartAt
+        ? new Date(user.allTimeStartAt)
+        : null;
+      const start =
+        customStart &&
+        Number.isFinite(customStart.getTime()) &&
+        customStart < end
+          ? customStart
+          : getFirstListenedAt(
+              user ? new Date(user.firstListenedAt) : new Date(2010),
+            );
       return {
-        timesplit: getAppropriateTimesplitFromRange(start, now),
+        timesplit: getAppropriateTimesplitFromRange(start, end),
         start,
-        end: now,
+        end,
       };
     },
   },
@@ -145,7 +164,7 @@ export function optimisticGetIntervalDetailFromName(name: string) {
 
 export function getRawIntervalDetail(
   detail: IntervalDetail,
-  user: { firstListenedAt: string } | undefined,
+  user: AllTimeUser | undefined,
 ): RawIntervalDetail {
   if (detail.type === "preset") {
     return {
@@ -234,6 +253,10 @@ export function useOldestListenedAtFromUsers(
   const [query] = useSearchParams();
 
   const detail = queryToIntervalDetail(query, prefix);
+
+  if (detail.type === "userbased" && user?.allTimeStartAt) {
+    return getRawIntervalDetail(detail, user);
+  }
 
   const filtered = users.filter((us) =>
     [user?._id, ...userIds].includes(us.id),
