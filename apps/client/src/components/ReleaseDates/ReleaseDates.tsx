@@ -11,6 +11,7 @@ import {
   releaseMatrix,
   type ReleaseDistribution,
 } from "../../services/releaseDistribution";
+import CellTooltip from "../ListeningPatterns/CellTooltip";
 import TitleCard from "../TitleCard";
 
 import s from "./index.module.css";
@@ -146,37 +147,38 @@ function DecadeMatrix({
       </p>
     );
   return (
-    <div
-      className={s.matrix}
-      role="group"
-      aria-label="Release decades over listening time"
-      style={{
-        gridTemplateColumns: `${HEATMAP_LABEL_WIDTH}px repeat(${columns}, ${pitch}px)`,
-      }}>
-      {rows.map((row, rowIndex) => {
-        const rowMaximum = Math.max(0, ...row.values);
-        return (
-          <Fragment key={row.decade}>
-            <span className={s.rowLabel}>{row.decade}s</span>
-            {row.values.map((value, col) => {
-              // Emphasize phases within each decade, retaining a little of the
-              // overall volume difference. Empty cells keep their neutral color.
-              const intensity =
-                value > 0
-                  ? 0.8 * Math.sqrt(value / rowMaximum) +
-                    0.2 * Math.sqrt(value / maximum)
-                  : 0;
-              const index = rowIndex * columns + col;
-              const start =
-                data.start +
-                Math.floor((col * data.count) / columns) * data.width;
-              const end =
-                data.start +
-                Math.floor(((col + 1) * data.count) / columns) * data.width;
-              const label = `${row.decade}s · ${date.format(start)} – ${date.format(end - 1)} · ${hours(value)}`;
-              return (
-                <Tooltip key={col} title={label} arrow enterTouchDelay={0}>
+    <CellTooltip>
+      <div
+        className={s.matrix}
+        role="group"
+        aria-label="Release decades over listening time"
+        style={{
+          gridTemplateColumns: `${HEATMAP_LABEL_WIDTH}px repeat(${columns}, ${pitch}px)`,
+        }}>
+        {rows.map((row, rowIndex) => {
+          const rowMaximum = Math.max(0, ...row.values);
+          return (
+            <Fragment key={row.decade}>
+              <span className={s.rowLabel}>{row.decade}s</span>
+              {row.values.map((value, col) => {
+                // Emphasize phases within each decade, retaining a little of the
+                // overall volume difference. Empty cells keep their neutral color.
+                const intensity =
+                  value > 0
+                    ? 0.8 * Math.sqrt(value / rowMaximum) +
+                      0.2 * Math.sqrt(value / maximum)
+                    : 0;
+                const index = rowIndex * columns + col;
+                const start =
+                  data.start +
+                  Math.floor((col * data.count) / columns) * data.width;
+                const end =
+                  data.start +
+                  Math.floor(((col + 1) * data.count) / columns) * data.width;
+                const label = `${row.decade}s · ${date.format(start)} – ${date.format(end - 1)} · ${hours(value)}`;
+                return (
                   <button
+                    key={col}
                     type="button"
                     className={s.cell}
                     aria-label={label}
@@ -213,24 +215,24 @@ function DecadeMatrix({
                           : "rgba(var(--primary-tuple), 0.06)",
                     }}
                   />
-                </Tooltip>
-              );
-            })}
-          </Fragment>
-        );
-      })}
-      <span />
-      {Array.from({ length: columns }, (_, col) => (
-        <span key={col} className={s.dateLabel}>
-          {col % tickEvery === 0
-            ? axisDate.format(
-                data.start +
-                  Math.floor((col * data.count) / columns) * data.width,
-              )
-            : ""}
-        </span>
-      ))}
-    </div>
+                );
+              })}
+            </Fragment>
+          );
+        })}
+        <span />
+        {Array.from({ length: columns }, (_, col) => (
+          <span key={col} className={s.dateLabel}>
+            {col % tickEvery === 0
+              ? axisDate.format(
+                  data.start +
+                    Math.floor((col * data.count) / columns) * data.width,
+                )
+              : ""}
+          </span>
+        ))}
+      </div>
+    </CellTooltip>
   );
 }
 

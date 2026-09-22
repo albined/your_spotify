@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 
 import { Artist } from "./types";
 
@@ -147,7 +147,8 @@ export function useListeningRequest<T>(request: () => Promise<{ data: T }>) {
     setState(undefined);
     request().then(
       ({ data }) => {
-        if (active) setState({ request, data });
+        // Chart rendering can yield to input while a response is displayed.
+        if (active) startTransition(() => setState({ request, data }));
       },
       () => {
         if (active) setState({ request, error: true });
