@@ -127,9 +127,13 @@ Competition includes Artist diversity and Time of day cards, placed side by
 side when there is room. Diversity uses duration-weighted inverse Simpson,
 `1 / sum(p_i²)`, shown as effective artists. Ten equally weighted artists score
 ten; adding more listening in identical proportions does not change the score.
-It accumulates within the selected range and can decrease when listening becomes
-more concentrated. All primary artists are considered, with no top-artist cap;
-only the display is binned, to at most 200 time bins. The metric definition follows
+Each point uses the preceding 30 × 24 hours, including listening before the
+selected range starts. The window is `[timestamp - 30 days, timestamp)`, so the
+same timestamp has the same score regardless of the selected range. An empty
+window scores zero; future range ends are clamped to the current time. All primary
+artists are considered, with no top-artist cap. Exact play timestamps determine
+entry and expiry changes at up to 201 display samples; long ranges do not widen
+the window. The metric definition follows
 the [vegan diversity reference](https://vegandevs.github.io/vegan/reference/diversity.html).
 The grouped hourly bars show each person's percentage of their selected-period
 listening hours, using that person's local timezone and matching the race colors.
@@ -146,6 +150,10 @@ missing `settings.allowCompetitions` fields to true without overwriting opt-outs
 missing values also work before migration. Tests in `competitionInsights.test.cjs`
 and `sessionBars.test.cjs` cover the metric, timezone/DST behavior, grouped bars,
 artwork cap, session ranking, authenticated settings, migration and API enforcement.
+`rollingDiversity.test.cjs` compares every sample with an independent calculation
+of its exact trailing window across short, long and overlapping date ranges. It
+also covers warm-up history, expiry boundaries, empty windows, future dates and
+keeping the warm-up history out of the selected-period hourly histogram.
 
 The isolated preview uses the copied Mongo volume and loopback-only ports:
 
@@ -169,7 +177,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 

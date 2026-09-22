@@ -44,9 +44,21 @@ export default function CompetitionInsights({
     <p>Select at least one person to start comparing.</p>
   ) : !data ? (
     <RequestState error={error} retry={retry} />
-  ) : !data.series.some((person) => person.hours.some((hours) => hours > 0)) ? (
-    <p>No listening history in this period.</p>
   ) : null;
+  const diversityStatus =
+    status ??
+    (data?.series.some((person) =>
+      person.values.some((value) => value > 0),
+    ) ? null : (
+      <p>No listening in these 30-day windows.</p>
+    ));
+  const hoursStatus =
+    status ??
+    (data?.series.some((person) =>
+      person.hours.some((hours) => hours > 0),
+    ) ? null : (
+      <p>No listening history in this period.</p>
+    ));
   const hourly = Array.from({ length: 24 }, (_, hour) => ({
     hour: String(hour).padStart(2, "0"),
     ...Object.fromEntries(
@@ -58,8 +70,10 @@ export default function CompetitionInsights({
   }));
   return (
     <div className={s.insights}>
-      <TitleCard title="Artist diversity" contentClassName={s.chartContent}>
-        {status ??
+      <TitleCard
+        title="Artist diversity · 30 days"
+        contentClassName={s.chartContent}>
+        {diversityStatus ??
           (data && (
             <TimelineChart
               bounds={data}
@@ -74,7 +88,7 @@ export default function CompetitionInsights({
           ))}
       </TitleCard>
       <TitleCard title="Time of day" contentClassName={s.chartContent}>
-        {status ??
+        {hoursStatus ??
           (data && (
             <div className={s.hourScroll}>
               <div
