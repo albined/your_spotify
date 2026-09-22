@@ -99,6 +99,19 @@ test("rolling-year comparisons use equal elapsed spans; long histories stay boun
   assert.equal(all.unit, "year");
   assert.ok(all.buckets.length <= 127);
   assert.equal(all.comparison, null);
+  const recent = plan("2016-01-01", "2025-07-01", "All", "UTC");
+  assert.equal(recent.unit, "month");
+  assert.equal(recent.buckets.length, 114);
+  assert.equal(recent.buckets.at(-1).end, Date.parse("2025-07-01"));
+  for (const [rangeEnd, unit, count] of [
+    ["2016-09-01", "month", 200],
+    ["2016-10-01", "year", 17],
+  ]) {
+    const bounded = plan("2000-01-01", rangeEnd, "All", "UTC");
+    assert.equal(bounded.unit, unit);
+    assert.equal(bounded.buckets.length, count);
+    assert.equal(bounded.buckets.at(-1).end, Date.parse(rangeEnd));
+  }
   const future = plan("2200-01-01", "2200-02-01");
   assert.equal(future.buckets.length, 0);
   assert.equal(
