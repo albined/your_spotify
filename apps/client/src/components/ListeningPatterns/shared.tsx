@@ -2,6 +2,10 @@ import { Button, CircularProgress, Tooltip, useTheme } from "@mui/material";
 import { Fragment, useEffect, useRef, useState } from "react";
 
 import { HeatRow } from "../../services/listeningPatterns";
+import {
+  HEATMAP_LABEL_WIDTH,
+  HEATMAP_PITCH,
+} from "../../services/matrixLayout";
 
 import s from "./index.module.css";
 
@@ -45,9 +49,10 @@ export function Heatmap({
   rows,
   columns,
   label,
-  labelWidth = 52,
-  minPitch = 18,
-  maxPitch = 32,
+  labelWidth = HEATMAP_LABEL_WIDTH,
+  minPitch = HEATMAP_PITCH,
+  maxPitch = HEATMAP_PITCH,
+  centerColumnLabels = false,
 }: {
   rows: HeatRow[];
   columns: string[];
@@ -55,6 +60,7 @@ export function Heatmap({
   labelWidth?: number;
   minPitch?: number;
   maxPitch?: number;
+  centerColumnLabels?: boolean;
 }) {
   const dark = useTheme().palette.mode === "dark";
   const firstCell =
@@ -77,9 +83,12 @@ export function Heatmap({
           gridTemplateColumns: `${labelWidth}px repeat(${columns.length}, minmax(${minPitch}px, ${maxPitch}px))`,
           minWidth: labelWidth + columns.length * minPitch,
         }}>
-        <span />
+        <span className={s.row} />
         {columns.map((column, index) => (
-          <span key={index} className={s.column}>
+          <span
+            key={index}
+            className={s.column}
+            style={centerColumnLabels ? { textAlign: "center" } : undefined}>
             {column}
           </span>
         ))}

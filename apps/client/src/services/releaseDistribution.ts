@@ -1,4 +1,4 @@
-import { timelineMatrixLayout } from "./matrixLayout";
+import { HEATMAP_LABEL_WIDTH, timelineMatrixLayout } from "./matrixLayout";
 
 export interface ReleaseDistribution {
   start: number;
@@ -33,7 +33,7 @@ export function releaseMatrix(
   );
   const { columns, pitch } = timelineMatrixLayout(
     availableWidth,
-    58,
+    HEATMAP_LABEL_WIDTH,
     data.count,
     limit,
   );

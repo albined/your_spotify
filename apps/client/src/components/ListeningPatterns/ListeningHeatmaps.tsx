@@ -62,9 +62,9 @@ export default function ListeningHeatmaps() {
             key={`${start}:${end}`}
             label="Daily rhythms"
             rows={rhythms}
-            minPitch={12}
+            centerColumnLabels
             columns={Array.from({ length: 24 }, (_, hour) =>
-              hour % 3 === 0 ? `${String(hour).padStart(2, "0")}:00` : "",
+              String(hour).padStart(2, "0"),
             )}
           />
         ) : (

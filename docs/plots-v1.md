@@ -68,6 +68,12 @@ without overwriting existing choices; the optional field also works before the
 migration runs. `test/allTimeStart.test.cjs` covers range selection, timezone/DST
 boundaries, authenticated persistence, reset, migration, and historical imports.
 
+Release decades, listening calendar and daily rhythms share 21px squares with
+3px gaps and a 58px row-label gutter, aligned at the left of their cards. Artist
+eras uses the same squares and left alignment with a wider gutter for names.
+Calendar and rhythm grids scroll within their cards when necessary; hourly
+labels are centered over every rhythm cell, from 00 through 23.
+
 The isolated preview uses the copied Mongo volume and loopback-only ports:
 
 - original stack: `http://127.0.0.1:3000`, API `8080`
