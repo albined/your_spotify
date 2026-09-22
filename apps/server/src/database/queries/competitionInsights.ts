@@ -4,33 +4,35 @@ import { statisticsTimezone } from "../../tools/allTimeStart";
 import { InfosModel } from "../Models";
 import { User } from "../schemas/user";
 import { requireCompetitionParticipants } from "./competitionParticipants";
-import { bucketExpression, timelineBounds } from "./listeningTimelineTools";
+import { DAY_MS, timelineBounds } from "./listeningTimelineTools";
 
-// Inverse Simpson: 1 / sum(p_i²). Expressed as effective artists, weighted by
-// duration. Update squared totals incrementally instead of rescanning artists
-// for each point. Cumulative diversity can fall when listening concentrates.
+export const DIVERSITY_WINDOW_MS = 30 * DAY_MS;
+
+// Changes are grouped by artist and sample: add listening when it enters the
+// trailing window, subtract it when it expires. Only active artists remain in
+// the map. Recompute squares from their integer millisecond totals to avoid
+// cancellation errors when a heavily played artist leaves the window.
 export function artistDiversity(
   count: number,
-  rows: { artist: string; bucket: number; hours: number }[],
+  changes: { artist: string; bucket: number; durationMs: number }[],
 ) {
-  const grouped = Array.from({ length: count }, () => [] as typeof rows);
-  for (const row of rows) grouped[row.bucket]?.push(row);
+  const grouped = Array.from({ length: count + 1 }, () => [] as typeof changes);
+  for (const change of changes) grouped[change.bucket]?.push(change);
   const totals = new Map<string, number>();
-  let total = 0;
-  let squares = 0;
-  return [
-    0,
-    ...grouped.map((bucket) => {
-      for (const { artist, hours } of bucket) {
-        if (!Number.isFinite(hours) || hours <= 0) continue;
-        const previous = totals.get(artist) ?? 0;
-        squares += 2 * previous * hours + hours * hours;
-        total += hours;
-        totals.set(artist, previous + hours);
-      }
-      return squares ? (total * total) / squares : 0;
-    }),
-  ];
+  return grouped.map((bucket) => {
+    for (const { artist, durationMs } of bucket) {
+      const next = (totals.get(artist) ?? 0) + durationMs;
+      if (next > 0) totals.set(artist, next);
+      else totals.delete(artist);
+    }
+    let total = 0;
+    let squares = 0;
+    for (const duration of totals.values()) {
+      total += duration;
+      squares += duration * duration;
+    }
+    return squares ? (total * total) / squares : 0;
+  });
 }
 
 export async function getCompetitionInsights(
@@ -40,20 +42,46 @@ export async function getCompetitionInsights(
   end: Date,
 ) {
   const accounts = await requireCompetitionParticipants(userIds);
-  const bounds = timelineBounds(start, end, 200);
+  const cutoff = new Date(Math.min(end.getTime(), Date.now()));
+  // Do not extrapolate rolling diversity into a future part of a date range.
+  const bounds = timelineBounds(start, cutoff > start ? cutoff : end, 200);
   const load = async (account: (typeof accounts)[number]) => {
     // Hour-of-day uses each participant's local clock, for comparing habits.
     const timezone = statisticsTimezone(account);
+    // A play at s belongs to the sample at t exactly when t - 30d <= s < t.
+    // Derive entry/expiry indices from actual timestamps, independently of the
+    // display resolution: no approximation using wide multi-year chart bins.
+    const changeAt = (offset: number) => ({
+      $max: [
+        0,
+        {
+          $add: [
+            1,
+            {
+              $floor: {
+                $divide: [
+                  { $add: [{ $subtract: ["$played_at", start] }, offset] },
+                  bounds.width,
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
     const [result] = await InfosModel.aggregate<{
-      artists: { _id: { artist: string; bucket: number }; hours: number }[];
+      artists: {
+        _id: { artist: string; bucket: number };
+        durationMs: number;
+      }[];
       hours: { _id: number; hours: number }[];
     }>([
       {
         $match: {
           owner: new Types.ObjectId(account._id),
           played_at: {
-            $gte: start,
-            $lt: new Date(Math.min(end.getTime(), Date.now())),
+            $gte: new Date(start.getTime() - DIVERSITY_WINDOW_MS),
+            $lt: cutoff,
           },
           blacklistedBy: { $exists: false },
           durationMs: {
@@ -68,16 +96,29 @@ export async function getCompetitionInsights(
           artists: [
             { $match: { primaryArtistId: { $type: "string", $ne: "" } } },
             {
+              $project: {
+                artist: "$primaryArtistId",
+                changes: [
+                  { bucket: changeAt(0), durationMs: "$durationMs" },
+                  {
+                    bucket: changeAt(DIVERSITY_WINDOW_MS),
+                    durationMs: { $multiply: ["$durationMs", -1] },
+                  },
+                ],
+              },
+            },
+            { $unwind: "$changes" },
+            { $match: { "changes.bucket": { $lte: bounds.count } } },
+            {
               $group: {
-                _id: {
-                  artist: "$primaryArtistId",
-                  bucket: bucketExpression(bounds),
-                },
-                hours: { $sum: { $divide: ["$durationMs", 3600000] } },
+                _id: { artist: "$artist", bucket: "$changes.bucket" },
+                durationMs: { $sum: "$changes.durationMs" },
               },
             },
           ],
           hours: [
+            // The warm-up history belongs only to diversity, not this histogram.
+            { $match: { played_at: { $gte: start } } },
             {
               $group: {
                 _id: { $hour: { date: "$played_at", timezone } },
@@ -94,14 +135,17 @@ export async function getCompetitionInsights(
     return {
       id: account._id.toHexString(),
       name: account.username,
-      values: artistDiversity(
-        bounds.count,
-        (result?.artists ?? []).map((row) => ({
-          artist: row._id.artist,
-          bucket: row._id.bucket,
-          hours: row.hours,
-        })),
-      ),
+      values:
+        cutoff > start
+          ? artistDiversity(
+              bounds.count,
+              (result?.artists ?? []).map((row) => ({
+                artist: row._id.artist,
+                bucket: row._id.bucket,
+                durationMs: row.durationMs,
+              })),
+            )
+          : Array<number>(bounds.count + 1).fill(0),
       hours,
       percentages: hours.map((value) => (total ? (100 * value) / total : 0)),
     };

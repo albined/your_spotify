@@ -15,36 +15,55 @@ const {
   artistDiversity,
 } = require("../src/database/queries/competitionInsights");
 
-test("effective artists reflect balance, are scale invariant, and can fall after a concentrated phase", () => {
+test("effective artists reflect balance, scale invariance, warm-up and expiring listening", () => {
   const equal = Array.from({ length: 10 }, (_, i) => ({
     artist: String(i),
     bucket: 0,
-    hours: 1,
+    durationMs: 3600000,
   }));
-  assert.deepEqual(artistDiversity(2, equal), [0, 10, 10]);
+  assert.deepEqual(artistDiversity(2, equal), [10, 10, 10]);
   assert.deepEqual(
     artistDiversity(
       2,
-      equal.map((row) => ({ ...row, hours: 100 })),
+      equal.map((row) => ({ ...row, durationMs: row.durationMs * 100 })),
     ),
-    [0, 10, 10],
+    [10, 10, 10],
   );
   assert.deepEqual(
-    artistDiversity(2, [{ artist: "only", bucket: 1, hours: 80 }]),
-    [0, 0, 1],
+    artistDiversity(2, [
+      { artist: "only", bucket: 1, durationMs: 80 * 3600000 },
+    ]),
+    [0, 1, 1],
   );
   const changing = artistDiversity(3, [
     ...equal,
-    { artist: "0", bucket: 1, hours: 90 },
+    { artist: "0", bucket: 1, durationMs: 90 * 3600000 },
   ]);
-  assert.ok(Math.abs(changing[2] - 10000 / 8290) < 1e-12);
-  assert.equal(changing[2], changing[3]);
+  assert.ok(Math.abs(changing[1] - 10000 / 8290) < 1e-12);
+  assert.equal(changing[1], changing[3]);
+  assert.deepEqual(
+    artistDiversity(2, [
+      ...equal,
+      ...equal.map((row) => ({
+        ...row,
+        bucket: 1,
+        durationMs: -row.durationMs,
+      })),
+    ]),
+    [10, 0, 0],
+  );
   assert.deepEqual(artistDiversity(2, []), [0, 0, 0]);
   const split = equal.flatMap((row) => [
-    { ...row, hours: 0.25 },
-    { ...row, hours: 0.75 },
+    { ...row, durationMs: row.durationMs * 0.25 },
+    { ...row, durationMs: row.durationMs * 0.75 },
   ]);
-  assert.deepEqual(artistDiversity(2, split.reverse()), [0, 10, 10]);
+  assert.deepEqual(artistDiversity(2, split.reverse()), [10, 10, 10]);
+  const tiny = artistDiversity(1, [
+    { artist: "big", bucket: 0, durationMs: 1e12 },
+    { artist: "tiny", bucket: 0, durationMs: 1 },
+    { artist: "big", bucket: 1, durationMs: -1e12 },
+  ]);
+  assert.equal(tiny[1], 1);
 });
 
 test(
