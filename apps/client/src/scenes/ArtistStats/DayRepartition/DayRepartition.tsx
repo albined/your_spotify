@@ -1,54 +1,110 @@
-import ChartCard from "../../../components/ChartCard";
-import Bar from "../../../components/charts/Bar";
-import Tooltip from "../../../components/Tooltip";
+import { useTheme } from "@mui/material";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-import { ArtistStatsResponse } from "../../../services/apis/api";
-import { msToMinutes } from "../../../services/stats";
+import { DetailListeningRequest } from "../../../components/ListeningPatterns/DetailListening";
+import { RequestState } from "../../../components/ListeningPatterns/shared";
+import TitleCard from "../../../components/TitleCard";
+import { hourlyComparison } from "../../../services/detailListening";
 
-interface DayRepartitionProps {
-  stats: ArtistStatsResponse["dayRepartition"];
-  className?: string;
-}
+import s from "../../../components/ListeningPatterns/index.module.css";
 
 export default function DayRepartition({
-  stats,
-  className,
-}: DayRepartitionProps) {
-  const total = stats.reduce((acc, curr) => acc + curr.count, 0);
-  const totalDuration = stats.reduce((acc, curr) => acc + curr.duration, 0);
-  const data = Array.from(Array(24).keys()).map((idx) => {
-    const stat = stats.find((st) => st._id === idx);
-
-    return {
-      x: idx,
-      y: stat ? Math.floor((stat.count / total) * 1000) / 10 : 0,
-      count: stat?.count ?? 0,
-      duration: stat?.duration ?? 0,
-    };
-  });
-
-  const tooltipTitle = ({ x }: any) => `${x}h`;
-  const tooltipValue = (payload: any, value: any) => (
-    <div>
-      {`${value}% of your listening`}
-      <br />
-      {`${payload.count} out of ${total} songs`}
-      <br />
-      {`${msToMinutes(payload.duration ?? 0)} out of ${msToMinutes(
-        totalDuration,
-      )} minutes`}
-      <br />
-    </div>
-  );
-
+  request,
+}: {
+  request: DetailListeningRequest;
+}) {
+  const { data, error, retry } = request;
+  const dark = useTheme().palette.mode === "dark";
+  const artistColor = dark ? "#65d6a0" : "#147d50";
   return (
-    <ChartCard title="Day repartition of your listening" className={className}>
-      <Bar
-        data={data}
-        customTooltip={
-          <Tooltip<typeof data> title={tooltipTitle} value={tooltipValue} />
-        }
-      />
-    </ChartCard>
+    <TitleCard title="Time of day">
+      {data?.timeOfDay ? (
+        <>
+          <div
+            className={s.hourChart}
+            role="img"
+            aria-label="Artist and overall listening by hour, as percentages of listening time">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={hourlyComparison(data.timeOfDay)}
+                margin={{ top: 12, right: 10, bottom: 0, left: 0 }}
+                accessibilityLayer>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="currentColor"
+                  strokeOpacity={0.1}
+                />
+                <XAxis
+                  dataKey="hour"
+                  interval={2}
+                  tick={{ fill: "currentColor", fontSize: 11 }}
+                />
+                <YAxis
+                  width={40}
+                  tickFormatter={(value) => `${value}%`}
+                  tick={{ fill: "currentColor", fontSize: 11 }}
+                />
+                <Tooltip
+                  labelFormatter={(hour) =>
+                    `${hour}:00–${String(Number(hour) + 1).padStart(2, "0")}:00`
+                  }
+                  formatter={(value, name) => [
+                    `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`,
+                    name,
+                  ]}
+                  contentStyle={{
+                    background: "var(--background)",
+                    color: "var(--text-on-light)",
+                    borderRadius: 6,
+                  }}
+                  itemStyle={{ color: "var(--text-on-light)" }}
+                  wrapperStyle={{ zIndex: 4 }}
+                />
+                <Bar
+                  dataKey="artist"
+                  name="This artist"
+                  fill={artistColor}
+                  radius={[3, 3, 0, 0]}
+                  isAnimationActive={false}
+                />
+                <Line
+                  dataKey="overall"
+                  name="All listening"
+                  stroke="var(--text-on-light)"
+                  strokeOpacity={0.65}
+                  strokeWidth={2}
+                  strokeDasharray="4 3"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          <div className={s.hourLegend}>
+            <span>
+              <i style={{ background: artistColor }} />
+              This artist
+            </span>
+            <span>
+              <i className={s.overallMark} />
+              All listening
+            </span>
+          </div>
+        </>
+      ) : data === null ? (
+        <p>No recorded listening history.</p>
+      ) : (
+        <RequestState error={error} retry={retry} />
+      )}
+    </TitleCard>
   );
 }

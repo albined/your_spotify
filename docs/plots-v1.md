@@ -82,6 +82,37 @@ eras uses the same squares and left alignment with a wider gutter for names.
 Calendar and rhythm grids scroll within their cards when necessary; hourly
 labels are centered over every rhythm cell, from 00 through 23.
 
+Song, album and artist detail pages now have listening calendars using the same
+adaptive grid, rounded cells, timezone handling and keyboard/touch details as
+`/all`. They always cover the item's first valid listen through today, independent
+of the All-time start preference. The shared `/spotify/detail-listening` endpoint
+uses recorded event durations and primary-artist attribution. Explicitly viewed
+items retain blacklisted listens, matching the existing detail statistics.
+
+Albums also have a Songs over time matrix in disc/track order, including known
+unplayed tracks. It uses global hours color scaling and the same 21px squares,
+with up to 64 columns and roughly 4,096 cells. Long track lists scroll inside
+the card with sticky column headings and song labels. No settings, info buttons,
+data tables or explanatory text are added.
+
+The main artist history chart is now a lifetime listening-rate curve in h/day.
+It uses a duration-weighted Gaussian KDE with automatic bandwidth of about five
+days per year of history, capped at 28 days. Short histories use a smaller
+bandwidth. Input is bounded to 1,024 bins and output to 512 samples; boundary
+normalization preserves the total recorded hours. The vertical scale stays
+linear, so smoothing does not additionally clip or compress large peaks.
+Obsession periods and Rediscoveries, including their backend calculations, are
+removed. Listening milestones retain dates and hours without a description;
+Favourites over time retains its album/song switch and compact side legend.
+
+Artist Time of day compares green artist bars with a dashed overall line.
+Each is independently normalized to a percentage of its lifetime listening
+hours, in the user's statistics timezone. The overall baseline spans the entire
+recorded library and excludes blacklisted plays as global statistics do.
+`test/detailListening.test.cjs` covers duration preservation, smoothing, sparse
+bin merging, hourly normalization, item/owner isolation, DST, album ordering,
+invalid durations and lifetime behavior despite an All-time start preference.
+
 The isolated preview uses the copied Mongo volume and loopback-only ports:
 
 - original stack: `http://127.0.0.1:3000`, API `8080`
@@ -104,7 +135,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 

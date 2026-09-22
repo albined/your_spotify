@@ -69,9 +69,7 @@ export interface ArtistTimeline extends TimelineBounds {
   total: number[];
   albums: ListeningSeries[];
   songs: ListeningSeries[];
-  peaks: { days: number; start: string; end: string; hours: number }[];
   milestones: { hours: number; date: string }[];
-  rediscoveries: { date: string; previous: string; gapDays: number }[];
 }
 
 export type DistributionMode = "hours" | "share" | "cumulative";

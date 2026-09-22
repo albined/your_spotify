@@ -2,6 +2,10 @@ import Axios from "axios";
 
 import type { ArtistDistribution } from "../artistDistribution";
 import type {
+  DetailListeningData,
+  ListeningItemKind,
+} from "../detailListening";
+import type {
   ArtistActivityData,
   ArtistErasData,
   ListeningHeatmapsData,
@@ -129,7 +133,6 @@ export type ArtistStatsResponse = {
   mostListened: { _id: string; count: number; track: TrackWithAlbum }[];
   albumMostListened: { _id: string; count: number; album: Album }[];
   total: { count: number };
-  dayRepartition: { _id: number; count: number; duration: number }[];
 };
 
 export type TrackStatsResponse = {
@@ -272,6 +275,8 @@ export const api = {
     get<ArtistActivityData>("/spotify/artist-activity", { start, end }),
   getArtistEras: (start: Date, end: Date) =>
     get<ArtistErasData>("/spotify/artist-eras", { start, end }),
+  getDetailListening: (kind: ListeningItemKind, id: string) =>
+    get<DetailListeningData | null>("/spotify/detail-listening", { kind, id }),
 
   getArtistTimeline: (id: string) =>
     get<ArtistTimeline | null>(`/artist/${id}/listening-timeline`),

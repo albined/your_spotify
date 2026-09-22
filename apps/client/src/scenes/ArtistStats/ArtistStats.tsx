@@ -1,23 +1,29 @@
 import { CircularProgress, Grid } from "@mui/material";
 import { useSelector } from "react-redux";
+
 import Header from "../../components/Header";
-import TitleCard from "../../components/TitleCard";
-import { ArtistStatsResponse } from "../../services/apis/api";
-import { buildFromDateId } from "../../services/stats";
-import Text from "../../components/Text";
-import InlineTrack from "../../components/InlineTrack";
-import { selectBlacklistedArtist } from "../../services/redux/modules/user/selector";
 import IdealImage from "../../components/IdealImage";
 import ImageTwoLines from "../../components/ImageTwoLines";
 import InlineAlbum from "../../components/InlineAlbum";
+import InlineTrack from "../../components/InlineTrack";
+import {
+  DetailListeningCharts,
+  useDetailListening,
+} from "../../components/ListeningPatterns/DetailListening";
+import Text from "../../components/Text";
+import TitleCard from "../../components/TitleCard";
+import { ArtistStatsResponse } from "../../services/apis/api";
 import { DateFormatter } from "../../services/date";
+import { selectBlacklistedArtist } from "../../services/redux/modules/user/selector";
+import { buildFromDateId } from "../../services/stats";
 import ArtistContextMenu from "./ArtistContextMenu";
-import FirstAndLast from "./FirstAndLast";
 import ArtistRank from "./ArtistRank/ArtistRank";
 import DayRepartition from "./DayRepartition";
-import s from "./index.module.css";
+import FirstAndLast from "./FirstAndLast";
 import ListeningHistory from "./ListeningHistory";
 import { MostListenedTracksContextMenuButton } from "./mostListenedTracksContextMenuButton/mostListenedTracksContextMenuButton";
+
+import s from "./index.module.css";
 
 interface ArtistStatsProps {
   artistId: string;
@@ -26,6 +32,7 @@ interface ArtistStatsProps {
 
 export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
   const blacklisted = useSelector(selectBlacklistedArtist(artistId));
+  const listening = useDetailListening("artist", artistId);
 
   if (!stats) {
     return <CircularProgress />;
@@ -64,6 +71,9 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
           sx={{ justifyContent: "flex-start", alignItems: "flex-start" }}
           spacing={2}
           style={{ marginTop: 0 }}>
+          <Grid size={{ xs: 12 }}>
+            <DetailListeningCharts kind="artist" request={listening} />
+          </Grid>
           <Grid size={{ xs: 12 }}>
             <ListeningHistory artistId={artistId} />
           </Grid>
@@ -135,10 +145,7 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
               </TitleCard>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <DayRepartition
-                stats={stats.dayRepartition}
-                className={s.chart}
-              />
+              <DayRepartition request={listening} />
             </Grid>
           </Grid>
           <Grid container size={{ xs: 12, lg: 6 }} spacing={2}>

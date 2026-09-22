@@ -29,6 +29,7 @@ import {
   getCollaborativeBestSongs,
   getCollaborativeTimePer,
 } from "../database/queries/collaborative";
+import { getDetailListening } from "../database/queries/detailListening";
 import {
   getArtistActivity,
   getListeningHeatmaps,
@@ -161,6 +162,17 @@ router.get("/artist-eras", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { start, end } = validate(req.query, patternsSchema);
   res.status(200).send(await getArtistEras(user, start, end));
+});
+
+const detailListeningSchema = z.object({
+  kind: z.enum(["song", "album", "artist"]),
+  id: z.string().min(1).max(256),
+});
+
+router.get("/detail-listening", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { kind, id } = validate(req.query, detailListeningSchema);
+  res.status(200).json(await getDetailListening(user, kind, id));
 });
 
 const topTimelineSchema = interval

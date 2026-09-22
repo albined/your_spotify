@@ -8,7 +8,6 @@ import {
   bestPeriodOfArtist,
   getTotalListeningOfArtist,
   searchArtist,
-  getDayRepartitionOfArtist,
   blacklistArtist,
   unblacklistArtist,
   blacklistByArtist,
@@ -58,16 +57,9 @@ router.get("/:id/stats", isLoggedOrGuest, async (req, res) => {
     getMostListenedAlbumOfArtist(user, id),
     bestPeriodOfArtist(user, id),
     getTotalListeningOfArtist(user, id),
-    getDayRepartitionOfArtist(user, id),
   ];
-  const [
-    firstLast,
-    mostListened,
-    albumMostListened,
-    bestPeriod,
-    total,
-    dayRepartition,
-  ] = await Promise.all(promises);
+  const [firstLast, mostListened, albumMostListened, bestPeriod, total] =
+    await Promise.all(promises);
   if (!total) {
     res.status(200).send({ code: "NEVER_LISTENED" });
     return;
@@ -81,7 +73,6 @@ router.get("/:id/stats", isLoggedOrGuest, async (req, res) => {
       albumMostListened,
       bestPeriod,
       total,
-      dayRepartition,
     });
 });
 

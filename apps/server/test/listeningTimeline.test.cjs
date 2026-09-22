@@ -212,19 +212,10 @@ test(
       assert.equal(history.albums[0].id, "album-a");
       assert.equal(history.albums[0].hours.at(-1), 11);
       assert.equal(history.songs[0].hours.at(-1), 11);
-      assert.deepEqual(
-        history.peaks.map((peak) => peak.hours),
-        [10, 15],
-      );
-      assert.equal(history.peaks[0].end.toISOString(), at(6).toISOString());
       assert.equal(history.milestones[0].hours, 10);
       assert.equal(
         history.milestones[0].date.toISOString(),
         at(6).toISOString(),
-      );
-      assert.deepEqual(
-        history.rediscoveries.map((event) => event.gapDays),
-        [91, 100],
       );
       assert.ok(
         history.total.every(
