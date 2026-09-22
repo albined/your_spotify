@@ -1,7 +1,15 @@
 import { debounce, useMediaQuery } from "@mui/material";
-import { RefObject, TouchEvent, useEffect, useRef, useState } from "react";
+import {
+  RefObject,
+  startTransition,
+  TouchEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
+
 import { detailIntervalToQuery } from "../intervals";
 import {
   selectIntervalDetail,
@@ -19,13 +27,18 @@ export function useAPI<Fn extends (...ags: any[]) => Promise<{ data: D }>, D>(
     UnboxPromise<ReturnType<Fn>>["data"] | null
   >(null);
   useEffect(() => {
+    let active = true;
     async function fetch() {
       const result = await call(...args);
-      setValue(result.data);
+      // Dense chart updates should not take priority over input/date changes.
+      if (active) startTransition(() => setValue(result.data));
     }
 
     setValue(null);
     fetch().catch(console.error);
+    return () => {
+      active = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...args, call]);
 
@@ -46,10 +59,15 @@ export function useConditionalAPI<
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let active = true;
     async function fetch() {
       const result = await call(...args);
-      setLoading(false);
-      setValue(result.data);
+      if (active) {
+        startTransition(() => {
+          setLoading(false);
+          setValue(result.data);
+        });
+      }
     }
 
     if (condition) {
@@ -57,7 +75,11 @@ export function useConditionalAPI<
       fetch().catch(console.error);
     } else {
       setValue(null);
+      setLoading(false);
     }
+    return () => {
+      active = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...args, condition, call]);
 

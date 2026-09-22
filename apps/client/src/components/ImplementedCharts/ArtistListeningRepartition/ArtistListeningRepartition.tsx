@@ -7,6 +7,7 @@ import {
   Tooltip as ReTooltip,
   Area,
 } from "recharts";
+
 import { api } from "../../../services/apis/api";
 import { getColor } from "../../../services/colors";
 import { useAPI } from "../../../services/hooks/hooks";
@@ -133,6 +134,7 @@ export default function ArtistListeningRepartition({
               stackId={-1}
               stroke={getColor(idx)}
               fill={getColor(idx)}
+              isAnimationActive={false}
             />
           ))}
         </AreaChart>

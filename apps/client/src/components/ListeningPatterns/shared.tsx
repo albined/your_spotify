@@ -1,4 +1,4 @@
-import { Button, CircularProgress, Tooltip, useTheme } from "@mui/material";
+import { Button, CircularProgress, useTheme } from "@mui/material";
 import { Fragment, useEffect, useRef, useState } from "react";
 
 import { heatmapIntensity, HeatRow } from "../../services/listeningPatterns";
@@ -6,6 +6,7 @@ import {
   HEATMAP_LABEL_WIDTH,
   HEATMAP_PITCH,
 } from "../../services/matrixLayout";
+import CellTooltip from "./CellTooltip";
 
 import s from "./index.module.css";
 
@@ -78,42 +79,45 @@ export function Heatmap({
   );
   const floor = dark ? 12 : 8;
   return (
-    <div className={s.scroll} style={{ maxHeight }}>
-      <div
-        className={s.grid}
-        role="group"
-        aria-label={label}
-        style={{
-          gridTemplateColumns: `${labelWidth}px repeat(${columns.length}, minmax(${minPitch}px, ${maxPitch}px))`,
-          minWidth: labelWidth + columns.length * minPitch,
-        }}>
-        <div className={s.columns}>
-          <span className={s.row} />
-          {columns.map((column, index) => (
-            <span
-              key={index}
-              className={s.column}
-              style={centerColumnLabels ? { textAlign: "center" } : undefined}>
-              {column}
-            </span>
-          ))}
-        </div>
-        {rows.map((row, r) => {
-          const rowMaximum = Math.max(
-            0,
-            ...row.cells.map((cell) => cell?.value ?? 0),
-          );
-          return (
-            <Fragment key={row.id}>
-              <span className={s.row} title={row.label}>
-                {row.label}
+    <CellTooltip>
+      <div className={s.scroll} style={{ maxHeight }}>
+        <div
+          className={s.grid}
+          role="group"
+          aria-label={label}
+          style={{
+            gridTemplateColumns: `${labelWidth}px repeat(${columns.length}, minmax(${minPitch}px, ${maxPitch}px))`,
+            minWidth: labelWidth + columns.length * minPitch,
+          }}>
+          <div className={s.columns}>
+            <span className={s.row} />
+            {columns.map((column, index) => (
+              <span
+                key={index}
+                className={s.column}
+                style={
+                  centerColumnLabels ? { textAlign: "center" } : undefined
+                }>
+                {column}
               </span>
-              {row.cells.map((cell, c) => {
-                const index = r * columns.length + c;
-                if (!cell) return <span key={c} className={s.blank} />;
-                return (
-                  <Tooltip key={c} title={cell.label} arrow enterTouchDelay={0}>
+            ))}
+          </div>
+          {rows.map((row, r) => {
+            const rowMaximum = Math.max(
+              0,
+              ...row.cells.map((cell) => cell?.value ?? 0),
+            );
+            return (
+              <Fragment key={row.id}>
+                <span className={s.row} title={row.label}>
+                  {row.label}
+                </span>
+                {row.cells.map((cell, c) => {
+                  const index = r * columns.length + c;
+                  if (!cell) return <span key={c} className={s.blank} />;
+                  return (
                     <button
+                      key={c}
                       type="button"
                       className={s.cell}
                       aria-label={cell.label}
@@ -162,13 +166,13 @@ export function Heatmap({
                             : "rgba(var(--primary-tuple), 0.07)",
                       }}
                     />
-                  </Tooltip>
-                );
-              })}
-            </Fragment>
-          );
-        })}
+                  );
+                })}
+              </Fragment>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </CellTooltip>
   );
 }

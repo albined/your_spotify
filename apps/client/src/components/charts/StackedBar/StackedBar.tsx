@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ContentType } from "recharts/types/component/Tooltip";
+
 import { getColor } from "../../../services/colors";
 
 export interface StackedBarProps {
@@ -43,7 +44,13 @@ export default function Bar({
         />
         <YAxis tickFormatter={yFormat} width="auto" />
         {Array.from(allKeys).map((k, index) => (
-          <RBar key={k} stackId="only" dataKey={k} fill={getColor(index)} />
+          <RBar
+            key={k}
+            stackId="only"
+            dataKey={k}
+            fill={getColor(index)}
+            isAnimationActive={false}
+          />
         ))}
         <Tooltip
           wrapperStyle={{ zIndex: 10 }}

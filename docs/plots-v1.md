@@ -2,6 +2,9 @@
 
 Reversible global artist grouping is documented in [Artist groups](artist-groups.md).
 
+Chart loading measurements, improvements and remaining work are documented in
+[Loading performance review](performance-review.md).
+
 This checkout contains the focused plot pass on `feat/plots-v1`:
 
 1. Artist distribution replaces the cumulative artist timeline on `/all`. It is
