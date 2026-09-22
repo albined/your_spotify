@@ -68,6 +68,19 @@ chart in two columns on narrow screens. Detailed totals remain in the existing
 table and chart tooltip. Race tooltip entries follow the standings at the hovered
 date, from highest to lowest, keeping their original series colors.
 
+Top songs, artists, albums and listening history recheck the list footer after
+each page loads. If it remains visible on a tall screen, they fetch another batch
+without waiting for a scroll, stopping when the footer leaves the preload area or
+the selected range is exhausted. The spinner reflects an active request; failed
+requests show Retry and retain loaded rows.
+
+Browser regressions: `node apps/client/test/infiniteLists.browser.cjs` with
+Playwright available to Node and the offline preview running on 3002/8082. The
+script uses synthetic list responses and checks tall screens, resize, scrolling,
+retries, end-of-list, mobile layout and stale responses after date changes. Set
+`PLAYWRIGHT_MODULE` or `PLAYWRIGHT_CHROMIUM_PATH` if using an external installation;
+`INFINITE_LIST_WEB_URL` and `INFINITE_LIST_API_URL` override the preview addresses.
+
 Settings → Statistics now offers an optional All-time start date. It changes
 the shared All preset (including comparisons) without changing stored plays or
 the import-maintained first-listen timestamp. Clearing it restores full history;

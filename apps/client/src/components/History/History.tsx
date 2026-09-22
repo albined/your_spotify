@@ -1,31 +1,31 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import InfiniteScroll from "react-infinite-scroll-component";
+
 import { api } from "../../services/apis/api";
-import Loader from "../Loader";
-import TitleCard from "../TitleCard";
+import { useInfiniteScroll } from "../../services/hooks/scrolling";
+import { useSelectTracks } from "../../services/hooks/useSelectTrack";
 import {
   selectRawAllInterval,
   selectRawIntervalDetail,
 } from "../../services/redux/modules/user/selector";
-import { GridWrapper } from "../Grid";
-import { useInfiniteScroll } from "../../services/hooks/scrolling";
 import CheckboxWithText from "../CheckboxWithText";
+import { GridWrapper } from "../Grid";
+import InfiniteList from "../InfiniteList";
+import { RightClickable } from "../RightClickable/RightClickable";
 import {
   Selectable,
   SelectableContextProvider,
 } from "../Selectable/Selectable.context";
-import { RightClickable } from "../RightClickable/RightClickable";
-import { useSelectTracks } from "../../services/hooks/useSelectTrack";
-import TrackHeader from "./Track/TrackHeader";
+import TitleCard from "../TitleCard";
 import Track from "./Track";
+import TrackHeader from "./Track/TrackHeader";
 import { TrackSelectionPopup } from "./Track/TrackSelectionPopup";
 
 export default function History() {
   const { interval } = useSelector(selectRawIntervalDetail);
   const { interval: allInterval } = useSelector(selectRawAllInterval);
   const [followInterval, setFollowInterval] = useState(true);
-  const { items, hasMore, onNext } = useInfiniteScroll(
+  const { items, hasMore, onNext, loading, error } = useInfiniteScroll(
     followInterval ? interval : allInterval,
     api.getTracks,
   );
@@ -52,11 +52,12 @@ export default function History() {
         <SelectableContextProvider
           selected={selectedTracks}
           setSelected={setSelectedTracks}>
-          <InfiniteScroll
+          <InfiniteList
             dataLength={items.length}
             next={onNext}
             hasMore={hasMore}
-            loader={<Loader />}>
+            loading={loading}
+            error={error}>
             <GridWrapper>
               <TrackHeader />
               {items.map((item, index) => (
@@ -72,7 +73,7 @@ export default function History() {
                 </Selectable>
               ))}
             </GridWrapper>
-          </InfiniteScroll>
+          </InfiniteList>
         </SelectableContextProvider>
       </TitleCard>
       <TrackSelectionPopup

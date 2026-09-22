@@ -1,21 +1,21 @@
-import { Alert, Button } from "@mui/material";
-import InfiniteScroll from "react-infinite-scroll-component";
 import { useSelector } from "react-redux";
+
 import { GridWrapper } from "../../../components/Grid";
 import Header from "../../../components/Header";
+import InfiniteList from "../../../components/InfiniteList";
 import TopListeningRace from "../../../components/ListeningTimeline/TopListeningRace";
-import Loader from "../../../components/Loader";
 import TitleCard from "../../../components/TitleCard";
 import { api } from "../../../services/apis/api";
 import { useInfiniteScroll } from "../../../services/hooks/scrolling";
 import { selectRawIntervalDetail } from "../../../services/redux/modules/user/selector";
 import Artist from "./Artist";
 import ArtistHeader from "./Artist/ArtistHeader";
+
 import s from "./index.module.css";
 
 export default function Artists() {
   const { interval } = useSelector(selectRawIntervalDetail);
-  const { items, hasMore, onNext, error, loading, retry } = useInfiniteScroll(
+  const { items, hasMore, onNext, error, loading } = useInfiniteScroll(
     interval,
     api.getBestArtists,
   );
@@ -29,11 +29,12 @@ export default function Artists() {
       <div className={s.content}>
         <TopListeningRace kind="artists" />
         <TitleCard title="Top artists" noBorder>
-          <InfiniteScroll
+          <InfiniteList
             next={onNext}
             hasMore={hasMore}
             dataLength={items.length}
-            loader={<Loader />}>
+            loading={loading}
+            error={error}>
             <GridWrapper>
               <ArtistHeader />
               {items.map((item, rank) => (
@@ -48,18 +49,7 @@ export default function Artists() {
                 />
               ))}
             </GridWrapper>
-          </InfiniteScroll>
-          {error && (
-            <Alert
-              severity="error"
-              action={
-                <Button onClick={() => void retry()} disabled={loading}>
-                  Retry
-                </Button>
-              }>
-              Could not load more artists. Your loaded rows are still here.
-            </Alert>
-          )}
+          </InfiniteList>
         </TitleCard>
       </div>
     </div>
