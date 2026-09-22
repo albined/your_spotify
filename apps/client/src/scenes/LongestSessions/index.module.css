@@ -7,3 +7,11 @@
   display: grid;
   gap: 24px;
 }
+.more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}

@@ -581,6 +581,8 @@ export const getLongestListeningSession = async (
   userId: string,
   start: Date,
   end: Date,
+  offset = 0,
+  limit = 5,
 ) => {
   const sessionBreakThreshold = 10 * 60 * 1000;
 
@@ -671,7 +673,8 @@ export const getLongestListeningSession = async (
       },
     },
     { $sort: { sessionLength: -1, firstPlayedAt: 1 } },
-    { $limit: 5 },
+    { $skip: offset },
+    { $limit: limit },
     {
       $project: {
         _id: "$_id.owner",

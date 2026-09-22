@@ -65,7 +65,8 @@ full tied interval, and repeated reigns add together. No crown time is credited
 before the first play or into the future. Crown-duration ties use final listening
 time, then ID. The compact legend sits on the right on desktop and below the
 chart in two columns on narrow screens. Detailed totals remain in the existing
-table and chart tooltip.
+table and chart tooltip. Race tooltip entries follow the standings at the hovered
+date, from highest to lowest, keeping their original series colors.
 
 Settings → Statistics now offers an optional All-time start date. It changes
 the shared All preset (including comparisons) without changing stored plays or
@@ -141,7 +142,10 @@ recorded library and excludes blacklisted plays as global statistics do.
 bin merging, hourly normalization, item/owner isolation, DST, album ordering,
 invalid durations and lifetime behavior despite an All-time start preference.
 
-Longest sessions now shows five horizontal bars on a shared elapsed-time scale.
+Longest sessions starts with five horizontal bars on a shared elapsed-time scale.
+Load 5 more appends the next five, until the selected period is exhausted.
+Pagination happens after session ranking and before metadata lookups. Changing
+the date range or user resets the list; loading and retries retain existing bars.
 Each artist has one combined block, ordered by credited listening time, with
 consistent colors across sessions. Overlapping play tails are clipped at the
 next play; pauses are collected in a neutral remainder. Artwork appears only

@@ -575,14 +575,26 @@ router.get(
   },
 );
 
+const sessionsSchema = interval.extend({
+  offset: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(0),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+
 router.get("/top/sessions", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
-  const { start, end } = validate(req.query, interval);
+  const { start, end, offset, limit } = validate(req.query, sessionsSchema);
 
   const result = await getLongestListeningSession(
     user._id.toString(),
     start,
     end,
+    offset,
+    limit,
   );
   res.status(200).send(result);
 });
