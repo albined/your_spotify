@@ -144,6 +144,7 @@ export default function TimelineChart({
               }
             />
             <Tooltip
+              itemSorter={stacked ? undefined : (item) => -Number(item.value)}
               content={
                 hoverSeriesOnly
                   ? ({ active, payload, label }) => {

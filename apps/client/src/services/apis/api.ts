@@ -542,8 +542,13 @@ export const api = {
   blacklistArtist: (artistId: string) => post(`/artist/blacklist/${artistId}`),
   unblacklistArtist: (artistId: string) =>
     post(`/artist/unblacklist/${artistId}`),
-  getLongestSessions: (start: Date, end: Date) =>
-    get<ListeningSession[]>("/spotify/top/sessions", { start, end }),
+  getLongestSessions: (start: Date, end: Date, offset = 0, limit = 5) =>
+    get<ListeningSession[]>("/spotify/top/sessions", {
+      start,
+      end,
+      offset,
+      limit,
+    }),
 };
 
 export const DEFAULT_ITEMS_TO_LOAD = 20;
