@@ -33,7 +33,7 @@ services:
       CORS: http://127.0.0.1:3002,http://localhost:3002
       SPOTIFY_PUBLIC: snapshot-disabled
       SPOTIFY_SECRET: snapshot-disabled
-      OFFLINE_DEV_ID: 68e663e59acd63a9d7c29e0b
+      OFFLINE_DEV_ID: ${PLOTS_OFFLINE_DEV_ID:?Set PLOTS_OFFLINE_DEV_ID in .env to a user ID from your copied database}
       DISABLE_BACKGROUND_JOBS: "true"
       LOG_LEVEL: warn
     depends_on: [mongo]

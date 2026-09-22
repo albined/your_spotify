@@ -5,6 +5,11 @@ Reversible global artist grouping is documented in [Artist groups](artist-groups
 Chart loading measurements, improvements and remaining work are documented in
 [Loading performance review](performance-review.md).
 
+For the local snapshot stack, set `PLOTS_OFFLINE_DEV_ID` in the ignored `.env`
+file to a user ID from your copied database before starting
+`docker compose -f docker-compose.plots.yml up -d`. The stack uses offline login
+and disables background ingestion; it is for local previews only.
+
 This checkout contains the focused plot pass on `feat/plots-v1`:
 
 1. Artist distribution replaces the cumulative artist timeline on `/all`. It is
