@@ -18,7 +18,7 @@
 
 .grid {
   display: grid;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   color: var(--text-on-light);
 }
@@ -45,6 +45,8 @@
 }
 
 .row {
+  align-self: stretch;
+  align-content: center;
   position: sticky;
   left: 0;
   z-index: 1;

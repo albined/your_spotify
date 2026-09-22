@@ -55,7 +55,6 @@ function monday(time: number) {
 export function calendarGrid(data: ListeningHeatmapsData): {
   rows: HeatRow[];
   columns: string[];
-  minPitch: number;
 } {
   const first = Date.parse(localDate(data.start, data.timezone));
   const last = Date.parse(localDate(data.end - 1, data.timezone));
@@ -85,7 +84,6 @@ export function calendarGrid(data: ListeningHeatmapsData): {
       return label;
     });
     return {
-      minPitch: 14,
       columns,
       rows: weekdays.map((label, row) => ({
         id: label,
@@ -151,6 +149,5 @@ export function calendarGrid(data: ListeningHeatmapsData): {
   return {
     rows: [...rows.values()].sort((a, b) => a.id.localeCompare(b.id)),
     columns,
-    minPitch: weekly ? 12 : 20,
   };
 }

@@ -35,7 +35,7 @@
 }
 
 .matrix {
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   padding: 8px 0 24px;
   display: grid;

@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 
 import { api } from "../../services/apis/api";
 import { useListeningRequest } from "../../services/listeningTimeline";
+import { HEATMAP_LABEL_WIDTH } from "../../services/matrixLayout";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import {
   decadeColor,
@@ -149,7 +150,9 @@ function DecadeMatrix({
       className={s.matrix}
       role="group"
       aria-label="Release decades over listening time"
-      style={{ gridTemplateColumns: `58px repeat(${columns}, ${pitch}px)` }}>
+      style={{
+        gridTemplateColumns: `${HEATMAP_LABEL_WIDTH}px repeat(${columns}, ${pitch}px)`,
+      }}>
       {rows.map((row, rowIndex) => {
         const rowMaximum = Math.max(0, ...row.values);
         return (
