@@ -44,6 +44,7 @@ import { up as create_private_data } from "./migrations/1708973485300-create_pri
 import { up as add_metadata_to_infos } from "./migrations/1708973485301-add_metadata_to_infos";
 import { up as add_language_to_user } from "./migrations/1708973485302-add_language_to_user";
 import { up as add_all_time_start_date } from "./migrations/1790035200000-add_all_time_start_date";
+import { up as add_competition_preference } from "./migrations/1790035200001-add_competition_preference";
 
 function noop() {}
 
@@ -81,6 +82,10 @@ export function runMigrations() {
         },
         "1790035200000-add_all_time_start_date.js": {
           up: add_all_time_start_date,
+          down: noop,
+        },
+        "1790035200001-add_competition_preference.js": {
+          up: add_competition_preference,
           down: noop,
         },
       },

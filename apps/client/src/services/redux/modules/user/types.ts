@@ -20,6 +20,7 @@ export interface User {
     timezone: string | null | undefined;
     dateFormat: string;
     allTimeStartDate?: string | null;
+    allowCompetitions?: boolean;
     blacklistedArtists: string[] | undefined;
   };
   publicToken: string | null;

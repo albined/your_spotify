@@ -1,6 +1,7 @@
 import Axios from "axios";
 
 import type { ArtistDistribution } from "../artistDistribution";
+import type { CompetitionInsights } from "../competitionInsights";
 import type {
   DetailListeningData,
   ListeningItemKind,
@@ -24,6 +25,7 @@ import { ImporterState } from "../redux/modules/import/types";
 import { Playlist, PlaylistContext } from "../redux/modules/playlist/types";
 import { User } from "../redux/modules/user/types";
 import type { ReleaseDistribution } from "../releaseDistribution";
+import type { ListeningSession } from "../sessionBars";
 import {
   Album,
   Artist,
@@ -420,6 +422,16 @@ export const api = {
       start,
       end,
     }),
+  getCompetitionParticipants: () =>
+    get<{ id: string; name: string }[]>(
+      "/spotify/collaborative/competition-participants",
+    ),
+  getCompetitionInsights: (userIds: string[], start: Date, end: Date) =>
+    get<CompetitionInsights>("/spotify/collaborative/competition-insights", {
+      userIds,
+      start,
+      end,
+    }),
 
   competeTimePer: (
     ids: string[],
@@ -493,13 +505,7 @@ export const api = {
   unblacklistArtist: (artistId: string) =>
     post(`/artist/unblacklist/${artistId}`),
   getLongestSessions: (start: Date, end: Date) =>
-    get<
-      {
-        sessionLength: number;
-        full_tracks: Record<string, Track>;
-        distanceToLast: { distance: { subtract: number; info: TrackInfo }[] };
-      }[]
-    >("/spotify/top/sessions", { start, end }),
+    get<ListeningSession[]>("/spotify/top/sessions", { start, end }),
 };
 
 export const DEFAULT_ITEMS_TO_LOAD = 20;

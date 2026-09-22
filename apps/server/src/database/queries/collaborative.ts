@@ -1,5 +1,8 @@
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
+
+import { Timesplit } from "../../tools/types";
 import { InfosModel } from "../Models";
+import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
   basicMatchUsers,
   lightAlbumLookupPipeline,
@@ -9,7 +12,6 @@ import {
   getGroupingByTimeSplit,
   sortByTimeSplit,
 } from "./statsTools";
-import { Timesplit } from "../../tools/types";
 
 function fromPairs<K extends string, V>(pairs: [K, V][]) {
   return pairs.reduce<Record<K, V>>(
@@ -279,6 +281,7 @@ export const getCollaborativeTimePer = async (
   timeSplit: Timesplit,
   artistId?: string,
 ) => {
+  await requireCompetitionParticipants(userIds);
   const match: any = basicMatchUsers(userIds, start, end);
   if (artistId) {
     match.primaryArtistId = artistId;
@@ -296,10 +299,7 @@ export const getCollaborativeTimePer = async (
     },
     {
       $group: {
-        _id: {
-          ...getGroupingByTimeSplit(timeSplit),
-          owner: "$owner",
-        },
+        _id: { ...getGroupingByTimeSplit(timeSplit), owner: "$owner" },
         durationMs: { $sum: "$durationMs" },
         count: { $sum: 1 },
         trackIds: { $addToSet: "$id" },

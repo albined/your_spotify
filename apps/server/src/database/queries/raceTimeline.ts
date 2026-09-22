@@ -1,14 +1,9 @@
 import { PipelineStage, Types } from "mongoose";
 
 import { getWithDefault } from "../../tools/env";
-import {
-  AlbumModel,
-  ArtistModel,
-  InfosModel,
-  TrackModel,
-  UserModel,
-} from "../Models";
+import { AlbumModel, ArtistModel, InfosModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
   bucketExpression,
   cumulativeHours,
@@ -31,18 +26,13 @@ const validDuration = {
   $lte: Number.MAX_SAFE_INTEGER,
 };
 
-function competitionUserIds(userIds: string[]) {
-  return [
-    ...new Set(userIds.map((id) => new Types.ObjectId(id).toHexString())),
-  ];
-}
-
 export async function getCompetitionArtists(
   userIds: string[],
   start: Date,
   end: Date,
 ) {
-  const ids = competitionUserIds(userIds);
+  const accounts = await requireCompetitionParticipants(userIds);
+  const ids = accounts.map((account) => account._id.toHexString());
   if (!ids.length) return [];
   const ranked = await InfosModel.aggregate<{
     _id: string;
@@ -241,7 +231,8 @@ export async function getCompetitionTimeline(
   artistId?: string,
 ) {
   const bounds = timelineBounds(start, end, 200);
-  const ids = competitionUserIds(userIds);
+  const accounts = await requireCompetitionParticipants(userIds);
+  const ids = accounts.map((account) => account._id.toHexString());
   const match = {
     owner: { $in: ids.map((id) => new Types.ObjectId(id)) },
     blacklistedBy: { $exists: false },
@@ -283,30 +274,25 @@ export async function getCompetitionTimeline(
           },
         },
       ];
-  const [rows, accounts] = await Promise.all([
-    InfosModel.aggregate<{
-      _id: { owner: Types.ObjectId; bucket: number };
-      value: number;
-    }>([
-      { $match: match },
-      ...(unique
-        ? [
-            {
-              $match: {
-                [metric === "differentTracks" ? "id" : "primaryArtistId"]: {
-                  $type: "string",
-                },
+  const rows = await InfosModel.aggregate<{
+    _id: { owner: Types.ObjectId; bucket: number };
+    value: number;
+  }>([
+    { $match: match },
+    ...(unique
+      ? [
+          {
+            $match: {
+              [metric === "differentTracks" ? "id" : "primaryArtistId"]: {
+                $type: "string",
               },
             },
-          ]
-        : []),
-      { $set: { bucket: bucketExpression(bounds) } },
-      ...pipeline,
-    ]).allowDiskUse(true),
-    UserModel.find({ _id: { $in: ids } })
-      .select("username")
-      .lean(),
-  ]);
+          },
+        ]
+      : []),
+    { $set: { bucket: bucketExpression(bounds) } },
+    ...pipeline,
+  ]).allowDiskUse(true);
   return {
     ...bounds,
     timezone:

@@ -23,7 +23,7 @@ import IdealImage from "../IdealImage";
 
 import s from "./index.module.css";
 
-const seriesColor = (index: number) =>
+export const seriesColor = (index: number) =>
   index < 10
     ? getColor([2, 10, 16, 4, 3, 5, 17, 26, 12, 24][index]!)
     : `hsl(${(index * 137.508) % 360} 65% ${index % 2 ? 62 : 48}%)`;

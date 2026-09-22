@@ -19,6 +19,7 @@ import AccountInfos from "./AccountInfos";
 import AllowRegistration from "./AllowRegistration";
 import AllTimeStartDate from "./AllTimeStartDate";
 import BlacklistArtist from "./BlacklistArtist";
+import CompetitionParticipation from "./CompetitionParticipation";
 import DarkMode from "./DarkMode";
 import DateFormat from "./DateFormat";
 import DeleteUser from "./DeleteUser";
@@ -94,6 +95,7 @@ export default function Settings() {
                 {!isPublic && <RelogToSpotify />}
                 {!isPublic && <Importer />}
                 {!isPublic && <PublicToken />}
+                {!isPublic && <CompetitionParticipation />}
               </Masonry>
             }
           />

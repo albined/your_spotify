@@ -27,6 +27,24 @@
   min-width: 0;
 }
 
+.insights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+.hourScroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.hourChart {
+  width: 100%;
+  height: 320px;
+  color: var(--text-on-light);
+}
+
 .artistSelector {
   width: min(360px, 100%);
   margin-bottom: 20px;

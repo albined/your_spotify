@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 import { Timesplit } from "../../tools/types";
 import { InfosModel } from "../Models";
 import { User } from "../schemas/user";
@@ -587,7 +589,17 @@ export const getLongestListeningSession = async (
   // earlier $reduce + $concatArrays implementation that was O(N²) in the
   // number of plays.
   const longestSessions = await InfosModel.aggregate([
-    ...basicMatch(userId, start, end),
+    {
+      $match: {
+        owner: new Types.ObjectId(userId),
+        blacklistedBy: { $exists: false },
+        played_at: {
+          $gte: start,
+          $lt: new Date(Math.min(end.getTime(), Date.now())),
+        },
+        durationMs: { $type: "number", $gt: 0, $lte: Number.MAX_SAFE_INTEGER },
+      },
+    },
     { $sort: { played_at: 1 } },
     {
       $setWindowFields: {
@@ -649,15 +661,15 @@ export const getLongestListeningSession = async (
           },
         },
         firstPlayedAt: { $min: "$played_at" },
-        lastPlayedAt: { $max: "$played_at" },
+        lastEndedAt: { $last: { $add: ["$played_at", "$durationMs"] } },
       },
     },
     {
       $addFields: {
-        sessionLength: { $subtract: ["$lastPlayedAt", "$firstPlayedAt"] },
+        sessionLength: { $subtract: ["$lastEndedAt", "$firstPlayedAt"] },
       },
     },
-    { $sort: { sessionLength: -1 } },
+    { $sort: { sessionLength: -1, firstPlayedAt: 1 } },
     { $limit: 5 },
     {
       $project: {
@@ -672,6 +684,15 @@ export const getLongestListeningSession = async (
         localField: "distanceToLast.distance.info.id",
         foreignField: "id",
         as: "full_tracks",
+      },
+    },
+    {
+      $lookup: {
+        from: "artists",
+        localField: "distanceToLast.distance.info.primaryArtistId",
+        foreignField: "id",
+        pipeline: [{ $project: { _id: 0, id: 1, name: 1, images: 1 } }],
+        as: "artists",
       },
     },
   ]);

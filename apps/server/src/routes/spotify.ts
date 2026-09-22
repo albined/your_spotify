@@ -29,6 +29,8 @@ import {
   getCollaborativeBestSongs,
   getCollaborativeTimePer,
 } from "../database/queries/collaborative";
+import { getCompetitionInsights } from "../database/queries/competitionInsights";
+import { listCompetitionParticipants } from "../database/queries/competitionParticipants";
 import { getDetailListening } from "../database/queries/detailListening";
 import {
   getArtistActivity,
@@ -409,7 +411,10 @@ export function normalizeUserIdsQuery(query: any) {
 
 const competeTimePerSchema = intervalPerSchema.merge(
   z.object({
-    userIds: z.array(z.string()).min(1),
+    userIds: z
+      .array(z.string().regex(/^[a-f\d]{24}$/i))
+      .min(1)
+      .max(100),
     artistId: z.string().optional(),
   }),
 );
@@ -428,6 +433,31 @@ const competitionTimelineSchema = interval
   .refine(({ start, end }) => start < end, {
     message: "Start must be before end",
   });
+
+router.get(
+  "/collaborative/competition-participants",
+  logged,
+  affinityAllowed,
+  async (_, res) => {
+    res.status(200).json(await listCompetitionParticipants());
+  },
+);
+
+router.get(
+  "/collaborative/competition-insights",
+  logged,
+  affinityAllowed,
+  async (req, res) => {
+    const { user } = req as LoggedRequest;
+    const { start, end, userIds } = validate(
+      normalizeUserIdsQuery(req.query),
+      competitionTimelineSchema,
+    );
+    res
+      .status(200)
+      .json(await getCompetitionInsights(user, userIds, start, end));
+  },
+);
 
 router.get(
   "/collaborative/competition-artists",

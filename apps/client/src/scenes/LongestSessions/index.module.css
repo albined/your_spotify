@@ -1,13 +1,9 @@
-.loader {
-  margin-top: 16px;
+.content {
+  padding: var(--page-padding);
+  min-width: 0;
+  color: var(--text-on-light);
 }
-
-@media screen and (min-width: 960px) {
-  .content {
-    padding: var(--page-padding);
-  }
-
-  .loader {
-    margin-top: 0px;
-  }
+.sessions {
+  display: grid;
+  gap: 24px;
 }
