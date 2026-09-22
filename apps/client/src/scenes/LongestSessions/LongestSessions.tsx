@@ -1,51 +1,64 @@
+import { useCallback } from "react";
 import { useSelector } from "react-redux";
+
 import Header from "../../components/Header";
-import { api } from "../../services/apis/api";
-import { useAPI } from "../../services/hooks/hooks";
-import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
-import Text from "../../components/Text";
+import { RequestState } from "../../components/ListeningPatterns/shared";
 import TitleCard from "../../components/TitleCard";
-import Loader from "../../components/Loader";
-import s from "./index.module.css";
+import { api } from "../../services/apis/api";
+import { useListeningRequest } from "../../services/listeningTimeline";
+import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
+import { sessionSections } from "../../services/sessionBars";
 import LongestSession from "./LongestSession/LongestSession";
+
+import s from "./index.module.css";
 
 export default function LongestSessions() {
   const { interval } = useSelector(selectRawIntervalDetail);
-  const result = useAPI(api.getLongestSessions, interval.start, interval.end);
-
-  const validResults = result?.filter(
-    (res) => res.distanceToLast.distance.length >= 1,
+  const start = interval.start.getTime();
+  const end = interval.end.getTime();
+  const request = useCallback(
+    () => api.getLongestSessions(new Date(start), new Date(end)),
+    [start, end],
   );
-
-  const hasValidSessions = validResults && validResults.length > 0;
+  const { data, error, retry } = useListeningRequest(request);
+  const sessions = (data ?? [])
+    .map((session) => ({
+      session,
+      timeline: sessionSections(
+        session.distanceToLast.distance.map((row) => row.info),
+      ),
+    }))
+    .filter((row) => row.timeline.duration > 0)
+    .sort(
+      (a, b) =>
+        b.timeline.duration - a.timeline.duration ||
+        a.timeline.start - b.timeline.start,
+    );
+  const maximum = Math.max(1, ...sessions.map((row) => row.timeline.duration));
 
   return (
     <div>
-      <Header
-        title="Longest sessions"
-        subtitle="You can find here the 5 longest listening sessions you have been through"
-      />
+      <Header title="Longest sessions" subtitle="" />
       <div className={s.content}>
-        {!result && (
-          <Loader
-            className={s.loader}
-            text="Loading your longest sessions, this can take a bit of time"
-          />
-        )}
-        {result && !hasValidSessions && (
-          <Text size="normal">No longest session</Text>
-        )}
-        {hasValidSessions && (
-          <TitleCard title="5 longest sessions">
-            {validResults.map((r) => (
-              <LongestSession
-                key={r.distanceToLast.distance.map((e) => e.info._id).join(",")}
-                tracks={r.distanceToLast.distance.map((e) => e.info)}
-                fullTracks={r.full_tracks}
-              />
-            ))}
-          </TitleCard>
-        )}
+        <TitleCard title="Longest sessions">
+          {!data ? (
+            <RequestState error={error} retry={retry} />
+          ) : !sessions.length ? (
+            <p>No sessions in this period.</p>
+          ) : (
+            <div className={s.sessions}>
+              {sessions.map(({ session, timeline }, index) => (
+                <LongestSession
+                  key={timeline.start}
+                  session={session}
+                  timeline={timeline}
+                  maximum={maximum}
+                  rank={index + 1}
+                />
+              ))}
+            </div>
+          )}
+        </TitleCard>
       </div>
     </div>
   );

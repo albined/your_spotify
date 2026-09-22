@@ -113,6 +113,40 @@ recorded library and excludes blacklisted plays as global statistics do.
 bin merging, hourly normalization, item/owner isolation, DST, album ordering,
 invalid durations and lifetime behavior despite an All-time start preference.
 
+Longest sessions now shows five horizontal bars on a shared elapsed-time scale.
+Each artist has one combined block, ordered by credited listening time, with
+consistent colors across sessions. Overlapping play tails are clipped at the
+next play; pauses are collected in a neutral remainder. Artwork appears only
+in blocks at least 34px wide, capped at ten circles per session. Dates use the
+statistics timezone; headers show duration and song count and expand the song
+list. Session ranking now includes the final song's duration and includes plays
+at the selected start boundary. Artist names and artwork come from the session
+query, without additional Spotify requests.
+
+Competition includes Artist diversity and Time of day cards, placed side by
+side when there is room. Diversity uses duration-weighted inverse Simpson,
+`1 / sum(p_i²)`, shown as effective artists. Ten equally weighted artists score
+ten; adding more listening in identical proportions does not change the score.
+It accumulates within the selected range and can decrease when listening becomes
+more concentrated. All primary artists are considered, with no top-artist cap;
+only the display is binned, to at most 200 time bins. The metric definition follows
+the [vegan diversity reference](https://vegandevs.github.io/vegan/reference/diversity.html).
+The grouped hourly bars show each person's percentage of their selected-period
+listening hours, using that person's local timezone and matching the race colors.
+Queries exclude blacklisted, invalid-duration and future plays and limit database
+concurrency to four participants at once.
+
+Settings → Account → Competition has an Include me in competitions switch,
+enabled by default. Opted-out users are omitted from the competition picker, and
+every competition data query rejects unavailable participants with HTTP 403,
+including the older `time_per` endpoint. The picker refreshes on window focus;
+direct requests and stale selections cannot bypass the setting. The existing
+global affinity permission remains required. Migration `1790035200001` initializes
+missing `settings.allowCompetitions` fields to true without overwriting opt-outs;
+missing values also work before migration. Tests in `competitionInsights.test.cjs`
+and `sessionBars.test.cjs` cover the metric, timezone/DST behavior, grouped bars,
+artwork cap, session ranking, authenticated settings, migration and API enforcement.
+
 The isolated preview uses the copied Mongo volume and loopback-only ports:
 
 - original stack: `http://127.0.0.1:3000`, API `8080`
@@ -135,7 +169,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 

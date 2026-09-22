@@ -7,10 +7,11 @@ import {
   TextField,
 } from "@mui/material";
 import clsx from "clsx";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 
 import Header from "../../../components/Header";
+import { RequestState } from "../../../components/ListeningPatterns/shared";
 import TimelineChart from "../../../components/ListeningTimeline/TimelineChart";
 import TitleCard from "../../../components/TitleCard";
 import { api } from "../../../services/apis/api";
@@ -18,11 +19,11 @@ import {
   cumulativeTimelinePoints,
   useListeningRequest,
 } from "../../../services/listeningTimeline";
-import { selectAccounts } from "../../../services/redux/modules/admin/selector";
 import {
   selectRawIntervalDetail,
   selectUser,
 } from "../../../services/redux/modules/user/selector";
+import CompetitionInsights from "./CompetitionInsights";
 
 import s from "./index.module.css";
 
@@ -171,19 +172,29 @@ function ArtistCompetition({ userIds, start, end }: ComparisonProps) {
 
 export default function Compete() {
   const user = useSelector(selectUser);
-  const accounts = useSelector(selectAccounts);
+  const participantsRequest = useCallback(
+    () => api.getCompetitionParticipants(),
+    [],
+  );
+  const {
+    data: participants,
+    error: participantsError,
+    retry: refreshParticipants,
+  } = useListeningRequest(participantsRequest);
   const { interval } = useSelector(selectRawIntervalDetail);
   const [selection, setSelection] = useState<string[]>();
   const currentUserId = user?._id;
   const userIds = useMemo(
-    () => selection ?? (currentUserId ? [currentUserId] : []),
-    [selection, currentUserId],
+    () =>
+      (selection ?? (currentUserId ? [currentUserId] : [])).filter((id) =>
+        participants?.some((person) => person.id === id),
+      ),
+    [selection, currentUserId, participants],
   );
-  const participants = useMemo(() => {
-    if (!user || accounts.some((account) => account.id === user._id))
-      return accounts;
-    return [{ id: user._id, username: user.username }, ...accounts];
-  }, [accounts, user]);
+  useEffect(() => {
+    window.addEventListener("focus", refreshParticipants);
+    return () => window.removeEventListener("focus", refreshParticipants);
+  }, [refreshParticipants]);
   const start = interval.start.getTime();
   const end = interval.end.getTime();
   // New people or dates get a fresh ranking and the strongest shared artist.
@@ -191,35 +202,40 @@ export default function Compete() {
 
   return (
     <div>
-      <Header
-        title="Competition"
-        subtitle="Watch your listening totals grow alongside your friends"
-      />
+      <Header title="Competition" subtitle="" />
       <div className={s.content}>
         <div className={s.sidebar}>
           <TitleCard title="Who's competing?">
             <div className={s.usersList}>
-              {participants.map((account) => (
-                <FormControlLabel
-                  key={account.id}
-                  label={
-                    account.username +
-                    (account.id === user?._id ? " (you)" : "")
-                  }
-                  control={
-                    <Checkbox
-                      checked={userIds.includes(account.id)}
-                      onChange={(_, checked) =>
-                        setSelection(
-                          checked
-                            ? [...userIds, account.id]
-                            : userIds.filter((id) => id !== account.id),
-                        )
-                      }
-                    />
-                  }
+              {!participants ? (
+                <RequestState
+                  error={participantsError}
+                  retry={refreshParticipants}
                 />
-              ))}
+              ) : !participants.length ? (
+                <p>No participants available.</p>
+              ) : (
+                participants.map((account) => (
+                  <FormControlLabel
+                    key={account.id}
+                    label={
+                      account.name + (account.id === user?._id ? " (you)" : "")
+                    }
+                    control={
+                      <Checkbox
+                        checked={userIds.includes(account.id)}
+                        onChange={(_, checked) =>
+                          setSelection(
+                            checked
+                              ? [...userIds, account.id]
+                              : userIds.filter((id) => id !== account.id),
+                          )
+                        }
+                      />
+                    }
+                  />
+                ))
+              )}
             </div>
           </TitleCard>
         </div>
@@ -233,6 +249,7 @@ export default function Compete() {
             start={start}
             end={end}
           />
+          <CompetitionInsights userIds={userIds} start={start} end={end} />
         </div>
       </div>
     </div>

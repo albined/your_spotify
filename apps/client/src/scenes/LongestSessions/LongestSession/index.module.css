@@ -1,22 +1,93 @@
-.accordion {
-  border: 1px solid var(--hover);
+.session {
+  min-width: 0;
 }
-
-.accordion:not(:first-of-type) {
-  margin-top: -1px;
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 4px 0 10px;
+  border: 0;
+  background: none;
+  color: var(--text-on-light);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-
-.line {
+.date,
+.stats {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.date {
+  font-size: 14px;
+}
+.stats {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.rank {
+  opacity: 0.6;
+}
+.bar {
+  position: relative;
+  height: 40px;
+  min-width: 1px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(var(--primary-tuple), 0.08);
+}
+.section {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: default;
+}
+.section:hover,
+.section:focus-visible {
+  outline: 2px solid var(--text-on-light);
+  outline-offset: -2px;
+  z-index: 1;
+  filter: brightness(1.12);
+}
+.section img {
+  width: 26px;
+  height: 26px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
-.line > :first-child {
-  margin-right: 8px;
-  width: 32px;
+.pause {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
 }
-
-.artist {
-  color: var(--text-grey);
+.tracks {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: 32px;
+  margin-bottom: 0;
+}
+.tracks li {
+  padding: 6px 0 6px 4px;
+}
+.tracks li a {
+  margin-right: 12px;
+}
+@media (max-width: 600px) {
+  .heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
 }

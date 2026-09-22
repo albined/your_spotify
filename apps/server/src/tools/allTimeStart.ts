@@ -2,7 +2,7 @@ import type { User } from "../database/schemas/user";
 import { getWithDefault } from "./env";
 
 export function statisticsTimezone(user: User) {
-  return user.settings.timezone ?? getWithDefault("TIMEZONE", "Europe/Paris");
+  return user.settings?.timezone ?? getWithDefault("TIMEZONE", "Europe/Paris");
 }
 
 export function calendarDate(timestamp: number, timezone: string) {

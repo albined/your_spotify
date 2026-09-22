@@ -23,6 +23,7 @@ export interface User {
     timezone: string | undefined;
     dateFormat: string;
     allTimeStartDate?: string | null;
+    allowCompetitions?: boolean;
     blacklistedArtists: string[];
   };
   lastImport: string | null;
@@ -63,6 +64,7 @@ export const UserSchema = new Schema<User>(
       timezone: { type: String, default: undefined, required: false },
       dateFormat: { type: String, required: true },
       allTimeStartDate: { type: String, default: null },
+      allowCompetitions: { type: Boolean, default: true },
     },
     lastImport: { type: String, default: null },
     publicToken: { type: String, default: null, index: true },
