@@ -21,6 +21,7 @@ import {
   getArtists,
 } from "../database";
 import { getArtistDistribution } from "../database/queries/artistDistribution";
+import { getPersonalArtistDiversity } from "../database/queries/artistDiversity";
 import { getArtistEras } from "../database/queries/artistEras";
 import {
   CollaborativeMode,
@@ -32,6 +33,8 @@ import {
 import { getCompetitionInsights } from "../database/queries/competitionInsights";
 import { listCompetitionParticipants } from "../database/queries/competitionParticipants";
 import { getDetailListening } from "../database/queries/detailListening";
+import { getListeningOverview } from "../database/queries/listeningOverview";
+import { overviewPeriods } from "../database/queries/listeningOverviewBuckets";
 import {
   getArtistActivity,
   getListeningHeatmaps,
@@ -147,6 +150,28 @@ const patternsSchema = listeningDistributionSchema.refine(
   ({ start, end }) => end.getTime() - start.getTime() <= 150 * 366 * 86400000,
   { message: "Date range must not exceed 150 years" },
 );
+
+const overviewSchema = interval
+  .extend({ period: z.enum(overviewPeriods).default("custom") })
+  .refine(
+    ({ start, end }) =>
+      start < end && end.getTime() - start.getTime() <= 150 * 366 * 86400000,
+    { message: "Choose a date range between zero and 150 years" },
+  );
+
+router.get("/listening-overview", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end, period } = validate(req.query, overviewSchema);
+  res.status(200).json(await getListeningOverview(user, start, end, period));
+});
+
+router.get("/artist-diversity", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end, period } = validate(req.query, overviewSchema);
+  res
+    .status(200)
+    .json(await getPersonalArtistDiversity(user, start, end, period));
+});
 
 router.get("/listening-heatmaps", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;

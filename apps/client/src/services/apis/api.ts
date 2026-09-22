@@ -12,6 +12,11 @@ import type {
   ListeningItemKind,
 } from "../detailListening";
 import type {
+  ListeningOverview,
+  OverviewPeriod,
+  PersonalArtistDiversity,
+} from "../listeningOverview";
+import type {
   ArtistActivityData,
   ArtistErasData,
   ListeningHeatmapsData,
@@ -294,6 +299,22 @@ export const api = {
     get<ArtistActivityData>("/spotify/artist-activity", { start, end }),
   getArtistEras: (start: Date, end: Date) =>
     get<ArtistErasData>("/spotify/artist-eras", { start, end }),
+  getListeningOverview: (start: Date, end: Date, period: OverviewPeriod) =>
+    get<ListeningOverview>("/spotify/listening-overview", {
+      start,
+      end,
+      period,
+    }),
+  getPersonalArtistDiversity: (
+    start: Date,
+    end: Date,
+    period: OverviewPeriod,
+  ) =>
+    get<PersonalArtistDiversity>("/spotify/artist-diversity", {
+      start,
+      end,
+      period,
+    }),
   getDetailListening: (kind: ListeningItemKind, id: string) =>
     get<DetailListeningData | null>("/spotify/detail-listening", { kind, id }),
 

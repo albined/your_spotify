@@ -183,6 +183,37 @@ of its exact trailing window across short, long and overlapping date ranges. It
 also covers warm-up history, expiry boundaries, empty windows, future dates and
 keeping the warm-up history out of the selected-period hourly histogram.
 
+Home and All stats now share zero-based, rounded listening-volume bars, with no
+gridlines or chart controls. One `/spotify/listening-overview` request supplies
+both hours and play counts on All stats. Daily/hourly/monthly/yearly buckets use
+the statistics timezone; missing buckets remain zero, and partial buckets are
+muted. All history uses monthly bars up to four years and annual bars thereafter.
+
+Today compares local hours with their mean over the preceding 365 complete local
+days. Week/month/last-7/last-30 views use daily bars and a dashed daily average
+from the 365 days before the selection. Quiet days count in that denominator;
+the selected period never contributes to its own baseline. The reference is
+omitted when that full year predates recorded history or the saved All start.
+Partial bars' tooltips compare the same fraction of the average. This year uses
+monthly bars with wider, faint bars for the corresponding months last year,
+ending at the same local date/time for the incomplete current month (Feb 29 is
+clamped to Feb 28). Last 365 days uses 53 elapsed-week buckets, the last partial,
+compared with matching elapsed positions in the immediately preceding period.
+Unavailable reference buckets stay absent rather than becoming false zeros.
+All history and long custom ranges have no comparison overlay; short custom
+ranges use the same average defaults.
+
+Artist diversity replaces the old distinct-artist time chart on All stats. It
+uses the same duration-weighted trailing 30-day calculation as competition,
+including warm-up history and global artist groups, with up to 201 samples.
+Empty windows are gaps on the personal chart; the raw artist count remains on
+Home. The personal endpoint is authenticated through the usual guest/user rules
+and does not depend on competition participation. No new persisted fields or
+migrations are needed. `listeningOverview.test.cjs` covers comparisons, DST,
+leap years, missing history, partial buckets, invalid durations, blacklists,
+account isolation, artist groups and route validation. Existing competition and
+rolling-diversity tests also cover the shared calculation.
+
 The isolated preview uses the copied Mongo volume and loopback-only ports:
 
 - original stack: `http://127.0.0.1:3000`, API `8080`
@@ -205,7 +236,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistGroups.test.cjs test/artistDistribution.test.cjs test/artistEras.test.cjs test/artistItemEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistGroups.test.cjs test/artistDistribution.test.cjs test/artistEras.test.cjs test/artistItemEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/listeningOverview.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 
