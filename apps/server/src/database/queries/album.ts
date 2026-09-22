@@ -1,13 +1,21 @@
-import { AlbumModel, InfosModel } from "../Models";
+import { AlbumModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import {
+  normalizeArtistCredits,
+  populateStatisticsArtists,
+} from "./artistGroups";
 
-export const getAlbums = (albumsId: string[]) =>
-  AlbumModel.find({ id: { $in: albumsId } });
-
-export const searchAlbum = (str: string) =>
-  AlbumModel.find({ name: { $regex: new RegExp(str, "i") } }).populate(
-    "full_artists",
+export const getAlbums = async (albumsId: string[]) =>
+  normalizeArtistCredits(
+    await AlbumModel.find({ id: { $in: albumsId } }).lean(),
   );
+
+export const searchAlbum = async (str: string) => {
+  return populateStatisticsArtists(
+    await AlbumModel.find({ name: { $regex: new RegExp(str, "i") } }).lean(),
+  );
+};
 
 export const getAlbumInfos = (albumId: string) => [
   {
@@ -38,7 +46,7 @@ export const getFirstAndLastListenedAlbum = async (
   user: User,
   albumId: string,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, albumId: albumId } },
     ...getAlbumInfos(albumId),
     { $sort: { played_at: 1 } },
@@ -67,7 +75,7 @@ export const getFirstAndLastListenedAlbum = async (
 };
 
 export const getAlbumSongs = async (user: User, albumId: string) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, albumId: albumId } },
     ...getAlbumInfos(albumId),
     { $group: { _id: "$id", count: { $sum: 1 } } },

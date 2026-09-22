@@ -18,6 +18,7 @@ import { compact, conditionalEntry } from "../../services/tools";
 import AccountInfos from "./AccountInfos";
 import AllowRegistration from "./AllowRegistration";
 import AllTimeStartDate from "./AllTimeStartDate";
+import ArtistGroups from "./ArtistGroups/ArtistGroups";
 import BlacklistArtist from "./BlacklistArtist";
 import CompetitionParticipation from "./CompetitionParticipation";
 import DarkMode from "./DarkMode";
@@ -102,16 +103,19 @@ export default function Settings() {
           <Route
             path="/admin"
             element={
-              <Masonry>
-                {user.admin && !isPublic && <SetAdmin />}
-                {user.admin && !isPublic && <DeleteUser />}
-                {user.admin && !isPublic && (
-                  <AllowRegistration settings={settings} />
-                )}
-                {user.admin && !isPublic && (
-                  <EnableAffinity settings={settings} />
-                )}
-              </Masonry>
+              <div className={s.admin}>
+                {user.admin && !isPublic && <ArtistGroups />}
+                <Masonry>
+                  {user.admin && !isPublic && <SetAdmin />}
+                  {user.admin && !isPublic && <DeleteUser />}
+                  {user.admin && !isPublic && (
+                    <AllowRegistration settings={settings} />
+                  )}
+                  {user.admin && !isPublic && (
+                    <EnableAffinity settings={settings} />
+                  )}
+                </Masonry>
+              </div>
             }
           />
           <Route

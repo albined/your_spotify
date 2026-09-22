@@ -14,7 +14,7 @@ import Text from "../../components/Text";
 import TitleCard from "../../components/TitleCard";
 import { ArtistStatsResponse } from "../../services/apis/api";
 import { DateFormatter } from "../../services/date";
-import { selectBlacklistedArtist } from "../../services/redux/modules/user/selector";
+import { selectBlacklistedArtists } from "../../services/redux/modules/user/selector";
 import { buildFromDateId } from "../../services/stats";
 import ArtistContextMenu from "./ArtistContextMenu";
 import ArtistRank from "./ArtistRank/ArtistRank";
@@ -31,7 +31,10 @@ interface ArtistStatsProps {
 }
 
 export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
-  const blacklisted = useSelector(selectBlacklistedArtist(artistId));
+  const blocked = useSelector(selectBlacklistedArtists);
+  const blacklisted = (stats?.artist.memberIds ?? [artistId]).every((id) =>
+    blocked.includes(id),
+  );
   const listening = useDetailListening("artist", artistId);
 
   if (!stats) {
@@ -54,6 +57,7 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
         right={
           <ArtistContextMenu
             artistId={stats.artist.id}
+            members={stats.artist.members}
             artistName={stats.artist.name}
             blacklisted={blacklisted}
           />

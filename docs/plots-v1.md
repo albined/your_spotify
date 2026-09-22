@@ -1,5 +1,7 @@
 # Plot V1 working notes
 
+Reversible global artist grouping is documented in [Artist groups](artist-groups.md).
+
 This checkout contains the focused plot pass on `feat/plots-v1`:
 
 1. Artist distribution replaces the cumulative artist timeline on `/all`. It is
@@ -203,7 +205,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/artistItemEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistGroups.test.cjs test/artistDistribution.test.cjs test/artistEras.test.cjs test/artistItemEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/competitionInsights.test.cjs test/rollingDiversity.test.cjs test/sessionBars.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs test/detailListening.test.cjs test/listeningTimeline.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 

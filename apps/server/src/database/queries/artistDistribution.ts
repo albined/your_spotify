@@ -1,6 +1,7 @@
 import { getWithDefault } from "../../tools/env";
-import { ArtistModel, InfosModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import { getStatisticsArtists } from "./artistGroups";
 import { bucketExpression, HOUR_MS } from "./listeningTimelineTools";
 
 export const ARTIST_DISTRIBUTION_MAX_ARTISTS = 30;
@@ -25,7 +26,7 @@ export async function getArtistDistribution(
     count,
     width: span / count,
   };
-  const rows = await InfosModel.aggregate<{
+  const rows = await StatisticsInfosModel.aggregate<{
     _id: string;
     total: number;
     bins: { bucket: number; duration: number }[];
@@ -75,10 +76,7 @@ export async function getArtistDistribution(
         .sort(([a], [b]) => a - b),
     );
   }
-  const artists = await ArtistModel.find({ id: { $in: [...bins.keys()] } })
-    .select("id name images")
-    .maxTimeMS(15_000)
-    .lean();
+  const artists = await getStatisticsArtists([...bins.keys()]);
   const metadata = new Map(artists.map((artist) => [artist.id, artist]));
   return {
     ...bounds,

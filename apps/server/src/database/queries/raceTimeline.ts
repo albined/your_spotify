@@ -1,8 +1,10 @@
 import { PipelineStage, Types } from "mongoose";
 
 import { getWithDefault } from "../../tools/env";
-import { AlbumModel, ArtistModel, InfosModel, TrackModel } from "../Models";
+import { AlbumModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import { getStatisticsArtists, normalizeArtistCredits } from "./artistGroups";
 import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
   bucketExpression,
@@ -34,7 +36,7 @@ export async function getCompetitionArtists(
   const accounts = await requireCompetitionParticipants(userIds);
   const ids = accounts.map((account) => account._id.toHexString());
   if (!ids.length) return [];
-  const ranked = await InfosModel.aggregate<{
+  const ranked = await StatisticsInfosModel.aggregate<{
     _id: string;
     minimumDuration: number;
     totalDuration: number;
@@ -74,12 +76,7 @@ export async function getCompetitionArtists(
     { $sort: { minimumDuration: -1, totalDuration: -1, _id: 1 } },
     { $limit: 200 },
   ]).option({ maxTimeMS: 15_000, allowDiskUse: true });
-  const metadata = await ArtistModel.find({
-    id: { $in: ranked.map((row) => row._id) },
-  })
-    .select("id name images")
-    .maxTimeMS(15_000)
-    .lean();
+  const metadata = await getStatisticsArtists(ranked.map((row) => row._id));
   const byId = new Map(metadata.map((artist) => [artist.id, artist]));
   return ranked.map((row) => ({
     id: row._id,
@@ -110,7 +107,7 @@ export async function getTopTimeline(
   // Inspect every contender at actual play timestamps, independently of the
   // chart's display resolution. Stream plays to keep memory bounded by entries.
   const race = new RaceLeaders();
-  const plays = InfosModel.aggregate<{
+  const plays = StatisticsInfosModel.aggregate<{
     item: string;
     played_at: Date;
     durationMs: number;
@@ -131,7 +128,7 @@ export async function getTopTimeline(
   const top = race.select(crownEnd);
   const ids = top.map((item) => item._id);
   const buckets = ids.length
-    ? await InfosModel.aggregate<{
+    ? await StatisticsInfosModel.aggregate<{
         _id: { item: string; bucket: number };
         duration: number;
       }>([
@@ -144,7 +141,7 @@ export async function getTopTimeline(
         },
       ])
     : [];
-  const [tracks, albums, artists] = await Promise.all([
+  const [rawTracks, rawAlbums, artists] = await Promise.all([
     kind === "songs"
       ? TrackModel.find({ id: { $in: ids } })
           .select("id name album artists")
@@ -155,11 +152,11 @@ export async function getTopTimeline(
           .select("id name images artists")
           .lean()
       : [],
-    kind === "artists"
-      ? ArtistModel.find({ id: { $in: ids } })
-          .select("id name images")
-          .lean()
-      : [],
+    kind === "artists" ? getStatisticsArtists(ids) : [],
+  ]);
+  const [tracks, albums] = await Promise.all([
+    normalizeArtistCredits(rawTracks),
+    normalizeArtistCredits(rawAlbums),
   ]);
   const [covers, credits] = await Promise.all([
     tracks.length
@@ -168,11 +165,9 @@ export async function getTopTimeline(
           .lean()
       : [],
     kind !== "artists"
-      ? ArtistModel.find({
-          id: { $in: [...tracks, ...albums].flatMap((item) => item.artists) },
-        })
-          .select("id name")
-          .lean()
+      ? getStatisticsArtists(
+          [...tracks, ...albums].flatMap((item) => item.artists),
+        )
       : [],
   ]);
   return {
@@ -274,7 +269,7 @@ export async function getCompetitionTimeline(
           },
         },
       ];
-  const rows = await InfosModel.aggregate<{
+  const rows = await StatisticsInfosModel.aggregate<{
     _id: { owner: Types.ObjectId; bucket: number };
     value: number;
   }>([

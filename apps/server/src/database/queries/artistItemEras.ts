@@ -1,6 +1,7 @@
 import { statisticsTimezone } from "../../tools/allTimeStart";
-import { AlbumModel, InfosModel, TrackModel } from "../Models";
+import { AlbumModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 import {
   selectEraAlbums,
   selectEraSongs,
@@ -29,7 +30,7 @@ export async function getArtistItemEras(
     played_at: { $gte: start, $lt: end },
     durationMs: { $type: "number", $gt: 0, $lte: Number.MAX_SAFE_INTEGER },
   };
-  const [selection] = await InfosModel.aggregate<{
+  const [selection] = await StatisticsInfosModel.aggregate<{
     songs: SongPeriod[];
     albums: { id: string; duration: number }[];
     total: { duration: number }[];
@@ -91,7 +92,7 @@ export async function getArtistItemEras(
   ];
   type Bin = { _id: { id: string; bucket: number }; hours: number };
   const [[result], albums, songs] = await Promise.all([
-    InfosModel.aggregate<{ albums: Bin[]; songs: Bin[] }>([
+    StatisticsInfosModel.aggregate<{ albums: Bin[]; songs: Bin[] }>([
       {
         $match: {
           ...match,

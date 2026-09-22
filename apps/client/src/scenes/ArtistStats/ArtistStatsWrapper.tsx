@@ -1,16 +1,32 @@
-import { CircularProgress } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
+import { useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../../services/apis/api";
-import { useAPI } from "../../services/hooks/hooks";
+
 import FullscreenCentered from "../../components/FullscreenCentered";
 import Text from "../../components/Text";
+import { api } from "../../services/apis/api";
+import { useListeningRequest } from "../../services/listeningTimeline";
 import ArtistStats from "./ArtistStats";
 
 export default function ArtistStatsWrapper() {
   const params = useParams();
-  const stats = useAPI(api.getArtistStats, params.id || "");
+  const request = useCallback(
+    () => api.getArtistStats(params.id || ""),
+    [params.id],
+  );
+  const { data: stats, error, retry } = useListeningRequest(request);
 
-  if (stats === null) {
+  if (error)
+    return (
+      <FullscreenCentered>
+        <Text element="h3" size="normal">
+          This artist or group is unavailable.
+        </Text>
+        <Button onClick={retry}>Retry</Button>
+      </FullscreenCentered>
+    );
+
+  if (!stats) {
     return (
       <FullscreenCentered>
         <CircularProgress />

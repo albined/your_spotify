@@ -10,6 +10,7 @@ import {
 } from "../Models";
 import { Infos } from "../schemas/info";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 
 export const getUserFromField = async <F extends keyof User>(
   field: F,
@@ -216,7 +217,7 @@ export const getSongs = async (
   number: number,
   inter?: { start: Date; end: Date },
 ) =>
-  InfosModel.aggregate([
+  StatisticsInfosModel.aggregate([
     {
       $match: {
         owner: new Types.ObjectId(userId),

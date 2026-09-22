@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import {
   getArtists,
-  getTracks,
+  getStatisticsTracks as getTracks,
   getTrackListenedCount,
   getTrackFirstAndLastListened,
   bestPeriodOfTrack,

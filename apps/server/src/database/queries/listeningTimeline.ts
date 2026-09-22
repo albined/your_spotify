@@ -1,8 +1,10 @@
 import { PipelineStage } from "mongoose";
 
 import { getWithDefault } from "../../tools/env";
-import { AlbumModel, ArtistModel, InfosModel, TrackModel } from "../Models";
+import { AlbumModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import { getStatisticsArtists } from "./artistGroups";
 import {
   bucketExpression,
   cumulativeHours,
@@ -28,7 +30,7 @@ export async function getListeningDistribution(
   };
   // Find discovery dates before filtering the selected period. An old favourite
   // must not become "new" simply because the user changes the date selector.
-  const rows = await InfosModel.aggregate<{
+  const rows = await StatisticsInfosModel.aggregate<{
     _id: { bucket: number; artist: string };
     duration: number;
     newDuration: number;
@@ -79,9 +81,7 @@ export async function getListeningDistribution(
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 10)
     .map(([id]) => id);
-  const artists = await ArtistModel.find({ id: { $in: artistIds } })
-    .select("id name images")
-    .lean();
+  const artists = await getStatisticsArtists(artistIds);
   const artistById = new Map(artists.map((artist) => [artist.id, artist]));
   const series = artistIds.map((id) => ({
     id,
@@ -162,13 +162,16 @@ export async function getArtistTimeline(user: User, artistId: string) {
     durationMs: { $gt: 0, $lte: Number.MAX_SAFE_INTEGER },
   };
   const end = new Date();
-  const first = await InfosModel.findOne({ ...match, played_at: { $lte: end } })
+  const first = await StatisticsInfosModel.findOne({
+    ...match,
+    played_at: { $lte: end },
+  })
     .sort({ played_at: 1 })
     .select("played_at")
     .lean();
   if (!first) return null;
   const bounds = timelineBounds(first.played_at, end, 200);
-  const [result] = await InfosModel.aggregate<{
+  const [result] = await StatisticsInfosModel.aggregate<{
     total: Bucket[];
     albums: RankedSeries[];
     songs: RankedSeries[];

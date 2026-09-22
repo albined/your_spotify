@@ -1,42 +1,34 @@
 import { Timesplit } from "../../tools/types";
-import { ArtistModel, InfosModel } from "../Models";
+import { ArtistModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import { artistGroups, getStatisticsArtists } from "./artistGroups";
 import { getGroupByDateProjection, getGroupingByTimeSplit } from "./statsTools";
 
 export const getArtists = (artistIds: string[]) =>
-  ArtistModel.find({ id: { $in: artistIds } });
+  getStatisticsArtists(artistIds);
 
-export const searchArtist = (str: string) =>
-  ArtistModel.find({ name: { $regex: new RegExp(str, "i") } });
+export const searchArtist = async (str: string) => {
+  const pattern = new RegExp(str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  const originals = await ArtistModel.find({ name: { $regex: pattern } })
+    .limit(50)
+    .lean();
+  const { artists } = await artistGroups();
+  return getStatisticsArtists([
+    ...originals.map((artist) => artist.id),
+    ...artists
+      .filter((artist) => pattern.test(artist.name))
+      .map((artist) => artist.id),
+  ]);
+};
 
-export const getArtistInfos = (artistId: string) => [
-  {
-    $lookup: {
-      from: "tracks",
-      let: { targetId: "$id" },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$id", "$$targetId"] },
-                { $eq: [{ $first: "$artists" }, artistId] },
-              ],
-            },
-          },
-        },
-        { $project: { trackId: "$id", artistId: { $first: "$artists" } } },
-      ],
-      as: "artistInfos",
-    },
-  },
-  { $match: { "artistInfos.artistId": { $exists: true } } },
-  { $unwind: "$artistInfos" },
+export const getArtistInfos = (_artistId: string) => [
+  { $set: { artistInfos: { trackId: "$id", artistId: "$primaryArtistId" } } },
 ];
 
 export const getFirstAndLastListened = async (user: User, artistId: string) => {
   // Non sense to compute blacklist here
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
     { $sort: { played_at: 1 } },
@@ -78,7 +70,7 @@ export const getMostListenedSongOfArtist = async (
   artistId: string,
   count: number,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     // Non sense to compute blacklist here
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
@@ -109,7 +101,7 @@ export const getMostListenedSongOfArtist = async (
 
 export const bestPeriodOfArtist = async (user: User, artistId: string) => {
   // Non sense to compute blacklist here
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
     {
@@ -141,7 +133,7 @@ export const getTotalListeningOfArtist = async (
   artistId: string,
 ) => {
   // Non sense to compute blacklist here
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
     {
@@ -163,7 +155,7 @@ export const getMostListenedAlbumOfArtist = async (
   user: User,
   artistId: string,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     {
       $lookup: {
@@ -191,7 +183,7 @@ export const getMostListenedAlbumOfArtist = async (
 
 export const getDayRepartitionOfArtist = (user: User, artistId: string) =>
   // Non sense to compute blacklist here
-  InfosModel.aggregate([
+  StatisticsInfosModel.aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     { $addFields: getGroupByDateProjection(user.settings.timezone) },
     ...getArtistInfos(artistId),

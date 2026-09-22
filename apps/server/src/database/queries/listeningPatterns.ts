@@ -1,6 +1,7 @@
 import { getWithDefault } from "../../tools/env";
-import { ArtistModel, InfosModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import { getStatisticsArtists } from "./artistGroups";
 import { DAY_MS, HOUR_MS } from "./listeningTimelineTools";
 
 function context(user: User, start: Date, end: Date) {
@@ -18,7 +19,7 @@ function context(user: User, start: Date, end: Date) {
 
 export async function getListeningHeatmaps(user: User, start: Date, end: Date) {
   const { timezone, match } = context(user, start, end);
-  const [result] = await InfosModel.aggregate<{
+  const [result] = await StatisticsInfosModel.aggregate<{
     days: { _id: string; hours: number }[];
     rhythms: { _id: { weekday: number; hour: number }; hours: number }[];
   }>([
@@ -97,7 +98,10 @@ export async function getArtistActivity(user: User, start: Date, end: Date) {
   const base = { start: start.getTime(), end: end.getTime(), timezone };
   if (end.getTime() - start.getTime() < 7 * DAY_MS)
     return { ...base, artists: [] };
-  const totals = await InfosModel.aggregate<{ _id: string; hours: number }>([
+  const totals = await StatisticsInfosModel.aggregate<{
+    _id: string;
+    hours: number;
+  }>([
     { $match: { ...match, primaryArtistId: { $type: "string", $ne: "" } } },
     {
       $group: {
@@ -111,7 +115,7 @@ export async function getArtistActivity(user: User, start: Date, end: Date) {
   if (!totals.length) return { ...base, artists: [] };
   const ids = totals.map((row) => row._id);
   const [daily, metadata] = await Promise.all([
-    InfosModel.aggregate<{
+    StatisticsInfosModel.aggregate<{
       _id: { artist: string; date: string };
       hours: number;
     }>([
@@ -132,10 +136,7 @@ export async function getArtistActivity(user: User, start: Date, end: Date) {
         },
       },
     ]).option({ maxTimeMS: 15_000, allowDiskUse: true }),
-    ArtistModel.find({ id: { $in: ids } })
-      .select("id name images")
-      .maxTimeMS(15_000)
-      .lean(),
+    getStatisticsArtists(ids),
   ]);
   const byId = new Map(metadata.map((artist) => [artist.id, artist]));
   const byArtist = new Map<string, { date: string; hours: number }[]>();

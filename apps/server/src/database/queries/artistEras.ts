@@ -1,7 +1,8 @@
 import { statisticsTimezone } from "../../tools/allTimeStart";
-import { ArtistModel, InfosModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 import { ArtistPeriod, selectEraArtists } from "./artistErasSelection";
+import { getStatisticsArtists } from "./artistGroups";
 import {
   bucketExpression,
   DAY_MS,
@@ -20,7 +21,7 @@ export async function getArtistEras(user: User, start: Date, end: Date) {
     primaryArtistId: { $type: "string", $ne: "" },
     durationMs: { $type: "number", $gt: 0, $lte: Number.MAX_SAFE_INTEGER },
   };
-  const periods = await InfosModel.aggregate<ArtistPeriod>([
+  const periods = await StatisticsInfosModel.aggregate<ArtistPeriod>([
     { $match: match },
     {
       $group: {
@@ -51,7 +52,7 @@ export async function getArtistEras(user: User, start: Date, end: Date) {
   const ids = selections[20];
   const [buckets, metadata] = await Promise.all([
     ids.length
-      ? InfosModel.aggregate<{
+      ? StatisticsInfosModel.aggregate<{
           _id: { artist: string; bucket: number };
           duration: number;
         }>([
@@ -67,10 +68,7 @@ export async function getArtistEras(user: User, start: Date, end: Date) {
           },
         ]).option({ maxTimeMS: 15_000, allowDiskUse: true })
       : [],
-    ArtistModel.find({ id: { $in: ids } })
-      .select("id name images")
-      .maxTimeMS(15_000)
-      .lean(),
+    getStatisticsArtists(ids),
   ]);
   const byId = new Map(metadata.map((artist) => [artist.id, artist]));
   return {

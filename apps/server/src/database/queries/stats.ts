@@ -1,8 +1,9 @@
 import { Types } from "mongoose";
 
 import { Timesplit } from "../../tools/types";
-import { InfosModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
+import { resolveArtistId } from "./artistGroups";
 import {
   basicMatch,
   getGroupByDateProjection,
@@ -29,7 +30,7 @@ export const getMostListenedSongs = async (
   end: Date,
   timeSplit: Timesplit = Timesplit.hour,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: { ...getGroupByDateProjection(user.settings.timezone), id: 1 },
@@ -93,7 +94,7 @@ export const getMostListenedArtist = async (
   end: Date,
   timeSplit = Timesplit.hour,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -155,7 +156,7 @@ export const getSongsPer = async (
   end: Date,
   timeSplit = Timesplit.day,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: { ...getGroupByDateProjection(user.settings.timezone), id: 1 },
@@ -186,7 +187,7 @@ export const getTimePer = async (
   end: Date,
   timeSplit = Timesplit.day,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -215,7 +216,7 @@ export const albumDateRatio = async (
   // infos already carries `albumId`, so the per-play `tracks` lookup is
   // unnecessary. Group by (timeBucket, albumId) first to collapse repeat
   // plays into a single row, then look the album up once per unique row.
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -277,7 +278,7 @@ export const featRatio = async (
 ) => {
   // infos already carries `artistIds`, so the per-play `tracks` lookup is
   // unnecessary — compute the artist count from the denormalized field.
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -341,7 +342,7 @@ export const differentArtistsPer = async (
   end: Date,
   timeSplit = Timesplit.day,
 ) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -385,7 +386,7 @@ export const differentArtistsPer = async (
 };
 
 export const getDayRepartition = async (user: User, start: Date, end: Date) => {
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -413,7 +414,7 @@ export const getBestArtistsPer = async (
 ) => {
   // infos already carries `primaryArtistId` and `durationMs`, so the per-play
   // `tracks` lookup is unnecessary.
-  const res = await InfosModel.aggregate([
+  const res = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $project: {
@@ -473,7 +474,7 @@ export const getBest = (
   nb: number,
   offset: number,
 ) =>
-  InfosModel.aggregate([
+  StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $group: {
@@ -532,7 +533,7 @@ export const getBestOfHour = async (
   start: Date,
   end: Date,
 ) => {
-  const bestOfHour = await InfosModel.aggregate([
+  const bestOfHour = await StatisticsInfosModel.aggregate([
     ...basicMatch(user._id, start, end),
     {
       $group: {
@@ -588,7 +589,7 @@ export const getLongestListeningSession = async (
   // then cumulative-sum the flags to assign a session id. This replaces an
   // earlier $reduce + $concatArrays implementation that was O(N²) in the
   // number of plays.
-  const longestSessions = await InfosModel.aggregate([
+  const longestSessions = await StatisticsInfosModel.aggregate([
     {
       $match: {
         owner: new Types.ObjectId(userId),
@@ -711,7 +712,9 @@ export const getRankOf = async (
   user: User,
   itemId: string,
 ) => {
-  const res = await InfosModel.aggregate([
+  if (itemType.field === ItemType.artist.field)
+    itemId = await resolveArtistId(itemId);
+  const res = await StatisticsInfosModel.aggregate([
     { $match: { owner: user._id } },
     { $group: { _id: itemType.field, count: { $sum: 1 } } },
     { $sort: { count: -1, _id: 1 } },
