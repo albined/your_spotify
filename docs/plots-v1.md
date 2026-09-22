@@ -13,6 +13,8 @@ This checkout contains the focused plot pass on `feat/plots-v1`:
    time, with no Other group. Dynamic input bins are capped at 256 and the
    Canvas draws 256 samples. Names, artwork, and density appear on hover, tap,
    or arrow-key navigation. There are no knobs, totals, info, or table buttons.
+   Axis labels use local calendar boundaries, choosing years, months, days or
+   hours for the selected range and thinning labels to fit the available width.
 2. Release dates contains a yearly hours histogram and a decade-only time matrix.
    The matrix keeps rows at or above one percent of the selected plays, merges
    source bins into a bounded grid, and uses dark-mode-aware colors with rounded
@@ -45,6 +47,18 @@ This checkout contains the focused plot pass on `feat/plots-v1`:
 
 The average album release date and average feats charts are removed from `/all`.
 No barcode is included. Discovery & listening habits is also removed from `/all`.
+
+The hourly mix card uses a lightweight SVG renderer, with rounded 100% stacks
+for the existing top 20 artists/albums/songs at each local hour. Percentages are
+shares of plays, not listening time. A muted Other segment accounts for plays
+outside that hour's top 20; empty hours stay empty. Item colors are stable by ID,
+with consistent stack order across hours. Hover, tap and arrow keys reveal the
+item, its share and play count. There are no gridlines or persistent legends.
+`node apps/client/test/hourlyMix.browser.cjs` checks percentages, empty hours,
+category switching, keyboard/touch, request recovery and calendar-axis boundaries
+and label spacing on desktop/mobile, including DST and a fractional-offset zone.
+It uses the same external Playwright variables as the other browser regressions;
+`PROFILE_WEB_URL` and `PROFILE_API_URL` optionally override the preview addresses.
 
 The home page's Best artist and Best song cards each request the top three using
 the existing ranking endpoint and selected page range. The winner remains above

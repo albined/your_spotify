@@ -28,11 +28,9 @@
 
 .axis {
   opacity: 0.6;
-  justify-content: space-between;
-  gap: 8px;
-  padding-top: 12px;
   font-size: 12px;
-  display: flex;
+  display: block;
+  fill: currentColor;
 }
 
 .tooltip {
@@ -88,9 +86,5 @@
 @media (width <= 600px) {
   .viewport {
     height: 260px;
-  }
-
-  .axis span:nth-child(2n) {
-    display: none;
   }
 }

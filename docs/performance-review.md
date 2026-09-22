@@ -41,9 +41,8 @@ profile shows substantial React development instrumentation overhead, so the
 3002 development preview exaggerates the cost compared with a production build.
 The running preview remains in development mode for continued editing.
 
-The next larger improvement should target the old hourly stacked chart: replace
-its many independent Recharts series with a lighter renderer while preserving
-the current values and tooltip behavior. Mounting lower-page plots as they
+The next improvement identified here was the old hourly stacked chart; the
+follow-up below implements that replacement. Mounting lower-page plots as they
 approach the viewport is another candidate, but needs stable reserved space and
 checks for fast scrolling and date changes. The application also ships all
 routes in one JavaScript bundle; route splitting could help first visits to
@@ -76,3 +75,51 @@ interactions, the existing four-list pagination regression, and a delayed-respon
 check confirming an old chart response cannot overwrite a new date selection.
 All changed code passes formatting. The full source-format check still reports
 141 pre-existing failures in unrelated files.
+
+## Follow-up: hourly mix and distribution ticks
+
+Baseline: `546442d`. The old hourly chart displayed the top 20 items per hour,
+dividing by all plays in that hour but omitting everyone else. Its uneven tops
+therefore represented omitted listening shares, rather than absolute volume.
+The replacement draws the occupied sections directly in SVG instead of mounting
+many independent Recharts series. Each occupied hour reaches 100%, including a
+muted Other section. Empty hours stay empty. Item shares still use all plays as
+the denominator, without truncation to tenths before drawing. Colors and stack
+order remain consistent across hours; hover/tap and keyboard details show one
+item at a time. The artists/albums/songs selector remains.
+
+Artist distribution now uses the existing calendar-axis helper: local year and
+month starts, calendar days and whole hours, with width-dependent label density.
+Tick positions follow their actual timestamps. Labels show just the year when
+appropriate. Tick computation is memoized independently of pointer movement;
+the 30-artist limit, KDE and 256 rendering samples are unchanged.
+
+Three development runs before and after this follow-up, with the same browser,
+1440 × 1000 viewport, snapshot and All preset:
+
+| Measurement on `/all` | Before | After |
+| --- | ---: | ---: |
+| Mean browser scripting time | 1.609 s | 1.054 s |
+| Longest task in each run | 779 / 673 / 702 ms | 207 / 200 / 202 ms |
+| Heatmap squares | 1,246 | 1,246 |
+| DOM elements (approximately) | 4,808 | 3,746 |
+
+This is about 35% less scripting and a 72% reduction in the mean of each run's
+largest pause. These measure browser work, not total page-load time. An initial
+after run overlapped lint; the final figures above were remeasured without build
+or lint contention. All sampled requests succeeded, with no browser errors or
+pending API requests. The larger viewport-mounting and route-splitting options
+remain possible future work; this follow-up does not implement them.
+
+Two additional optimized-build runs used temporary assets served only to the
+profiling browser, with the existing API. Scripting took 0.474 / 0.487 seconds,
+and the longest task was 108 / 110 ms. Both rendered all 1,246 heatmap squares
+without request failures or browser errors. The running preview stays in
+development mode.
+
+Client typecheck, source lint, the optimized build and the hourly/calendar-axis
+browser regression pass. Changed code passes formatting; the full source check
+still reports 140 pre-existing failures in unrelated files. The literal package
+lint command also traverses dependencies and build output in this container
+layout, so source lint was checked separately. No backend or database changes
+were needed.

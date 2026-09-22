@@ -1,0 +1,62 @@
+.plot {
+  --hourly-other: color-mix(
+    in srgb,
+    var(--text-on-light) 20%,
+    var(--background)
+  );
+  position: relative;
+  min-width: 0;
+  color: var(--text-on-light);
+}
+
+.chart {
+  display: block;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.chart text {
+  fill: currentColor;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.tooltip {
+  position: absolute;
+  top: 32px;
+  z-index: 10;
+  pointer-events: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 240px;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(var(--primary-tuple), 0.14);
+  border-radius: 8px;
+  background: var(--background);
+  box-shadow: 0 6px 24px #0002;
+  font-size: 12px;
+}
+
+.tooltip img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tooltip div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tooltip strong {
+  overflow-wrap: anywhere;
+}
+
+.tooltip span {
+  opacity: 0.7;
+}
