@@ -1,0 +1,77 @@
+.cards {
+  min-width: 0;
+  color: var(--text-on-light);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  display: grid;
+}
+
+.scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.histogram {
+  display: block;
+}
+
+.histogram text {
+  fill: currentColor;
+  opacity: 0.65;
+  font-size: 12px;
+}
+
+.gridline {
+  stroke: currentColor;
+  opacity: 0.08;
+}
+
+.bar:hover,
+.bar:focus {
+  filter: brightness(1.15);
+  stroke: var(--primary);
+  stroke-width: 1px;
+  outline: none;
+}
+
+.matrix {
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0 24px;
+  display: grid;
+}
+
+.rowLabel {
+  opacity: 0.75;
+  font-size: 12px;
+}
+
+.cell {
+  cursor: default;
+  border: 0;
+  border-radius: 3px;
+  margin: 1.5px;
+  padding: 0;
+  display: block;
+}
+
+.cell:hover,
+.cell:focus-visible {
+  outline: 1.5px solid var(--primary);
+  outline-offset: 0;
+}
+
+.dateLabel {
+  white-space: nowrap;
+  opacity: 0.6;
+  align-self: start;
+  padding-top: 10px;
+  font-size: 11px;
+}
+
+.loading {
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  display: flex;
+}

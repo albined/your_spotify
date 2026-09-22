@@ -47,6 +47,9 @@ export function startServer() {
       server.listen(port);
       server.on("error", onError);
       server.on("listening", onListening);
+      // Local snapshot previews serve a copied database without polling Spotify
+      // or resuming imports and repair jobs from that copy.
+      if (get("DISABLE_BACKGROUND_JOBS")) return;
       fixRunningImportsAtStart().catch(logger.error);
       checkBlacklistConsistency().catch(logger.error);
       const domain = get("CLIENT_ENDPOINT");

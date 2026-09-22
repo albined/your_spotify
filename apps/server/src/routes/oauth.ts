@@ -50,7 +50,10 @@ router.get("/spotify", async (req, res) => {
       expiresIn: getWithDefault("COOKIE_VALIDITY_MS", "1h") as `${number}`,
     });
     storeTokenInCookie(req, res, token);
-    res.status(204).end();
+    // The normal Login link navigates to this endpoint. Return to the client
+    // after creating the local session so offline previews never leave the
+    // browser on a blank API response.
+    res.redirect(get("CLIENT_ENDPOINT"));
     return;
   }
   const { url, state } = await spotifyProvider.getRedirect();

@@ -1,0 +1,87 @@
+# Plot V1 working notes
+
+This checkout contains the focused plot pass on `feat/plots-v1`:
+
+1. Artist distribution replaces the cumulative artist timeline on `/all`. It is
+   a centered, duration-weighted Gaussian KDE with automatic bandwidth of the
+   selected range divided by 73. The API returns the top 30 artists by listening
+   time, with no Other group. Dynamic input bins are capped at 256 and the
+   Canvas draws 256 samples. Names, artwork, and density appear on hover, tap,
+   or arrow-key navigation. There are no knobs, totals, info, or table buttons.
+2. Release dates contains a yearly hours histogram and a decade-only time matrix.
+   The matrix keeps rows at or above one percent of the selected plays, merges
+   source bins into a bounded grid, and uses dark-mode-aware colors with rounded
+   cells. It has no controls, legend, info, or data table.
+   Matrix color intensity blends 80% row-relative and 20% overall square-root
+   scaling, so individual decade phases remain visible.
+3. Artist eras shares the artist distribution request. The only control is
+   10/20 artists. It merges the source bins into up to 64 columns based on the
+   available width, independently of artist count. Both timeline matrices use
+   21px squares with 3px gaps. Eras sorts rows by peak date and uses hours on one
+   shared square-root color scale.
+4. Listening calendar and daily rhythms share one request. The calendar uses
+   local calendar dates, switches from daily cells to ISO weeks and then months
+   for longer ranges, and groups years for very long histories. Rhythms shows
+   total hours by local weekday and hour. Both have rounded, theme-aware cells,
+   hover/touch details, keyboard navigation, and no settings or extra buttons.
+5. Artist activity shows the top 100 artists by selected-period hours. X is
+   active local calendar days, Y is the highest seven-calendar-day total divided
+   by seven, with square-root positioning and actual h/day tick labels. Bubble
+   area represents total hours with a small minimum visible radius. The chart is
+   hidden below seven elapsed days. Only selected-period plays enter the peak.
+
+The average album release date and average feats charts are removed from `/all`.
+No barcode is included. Discovery & listening habits is also removed from `/all`.
+
+The home page's Best artist and Best song cards each request the top three using
+the existing ranking endpoint and selected page range. The winner remains above
+two compact runner-ups, with linked images/names and shortened song/play and
+minute counts. Both cards retain their 300px height and share the same layout.
+
+Competition now has a fixed overall listening-time race and a separate artist
+race below it. Its searchable dropdown contains up to 200 artists, ranked by
+the minimum recorded hours across all selected participants in the selected
+period. Missing listeners count as zero; ties use combined hours, then artist
+ID. Changing people or dates selects the new highest-ranked artist. Changing
+the artist only refreshes the artist race. Both API routes require login and
+the existing affinity permission.
+
+Top songs, artists and albums races keep the five highest listening-time totals
+in the selected range, then fill up to ten lines with entries that spent longest
+in first place, followed by the remaining highest totals. Selection scans all
+contenders at actual play timestamps, independently of the 200 display buckets.
+The race starts from zero for each selected range; tied leaders each receive the
+full tied interval, and repeated reigns add together. No crown time is credited
+before the first play or into the future. Crown-duration ties use final listening
+time, then ID. The compact legend sits on the right on desktop and below the
+chart in two columns on narrow screens. Detailed totals remain in the existing
+table and chart tooltip.
+
+The isolated preview uses the copied Mongo volume and loopback-only ports:
+
+- original stack: `http://127.0.0.1:3000`, API `8080`
+- plot preview: `http://127.0.0.1:3002`, API `8082`, Mongo `27029`
+
+Start the preview from this directory with:
+
+```sh
+docker compose -f docker-compose.plots.yml up -d
+```
+
+Stop it with `docker compose -f docker-compose.plots.yml stop`. The copied
+database volume is `your-spotify-plots_plots-db`; do not use `down -v` unless
+you intentionally want to discard that copy.
+
+The focused tests use a disposable Mongo container without data volumes:
+
+```sh
+docker run --rm -d --name your-spotify-patterns-test-mongo \
+  --network your-spotify-plots_snapshot mongo:6
+docker compose -f docker-compose.plots.yml exec -T \
+  -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
+  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs'
+docker stop your-spotify-patterns-test-mongo
+```
+
+Tests create and remove uniquely named databases only in that disposable instance.
+Do not point the test URI at either preview database.

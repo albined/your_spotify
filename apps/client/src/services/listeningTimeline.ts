@@ -26,6 +26,14 @@ export interface CompetitionTimeline extends TimelineBounds {
   series: { id: string; name: string; values: number[] }[];
 }
 
+export interface CompetitionArtist {
+  id: string;
+  name: string;
+  image?: string;
+  minimumHours: number;
+  totalHours: number;
+}
+
 export function cumulativeTimelinePoints(
   bounds: TimelineBounds,
   series: number[][],

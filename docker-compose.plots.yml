@@ -1,0 +1,64 @@
+name: your-spotify-plots
+
+services:
+  mongo:
+    image: mongo:6
+    volumes:
+      - plots-db:/data/db
+    ports:
+      - "127.0.0.1:27029:27017"
+    networks: [snapshot]
+
+  server:
+    image: your_spotify-server:latest
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        cd /app/apps/server && ./node_modules/.bin/rsbuild build &&
+        ./node_modules/.bin/concurrently
+        './node_modules/.bin/rsbuild build -w'
+        'nodemon --watch build build/index.js'
+    volumes:
+      - ./apps/server/src:/app/apps/server/src
+      - ./apps/server/test:/app/apps/server/test
+      - ./apps/dev:/app/apps/dev:ro
+      - ./apps/client/src:/app/apps/client/src:ro
+    ports:
+      - "127.0.0.1:8082:8080"
+    environment:
+      MONGO_ENDPOINT: mongodb://mongo:27017/your_spotify
+      API_ENDPOINT: http://127.0.0.1:8082
+      CLIENT_ENDPOINT: http://127.0.0.1:3002
+      CORS: http://127.0.0.1:3002,http://localhost:3002
+      SPOTIFY_PUBLIC: snapshot-disabled
+      SPOTIFY_SECRET: snapshot-disabled
+      OFFLINE_DEV_ID: 68e663e59acd63a9d7c29e0b
+      DISABLE_BACKGROUND_JOBS: "true"
+      LOG_LEVEL: warn
+    depends_on: [mongo]
+    networks: [snapshot]
+
+  web:
+    image: your_spotify-web:latest
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        . /app/apps/client/scripts/run/variables.sh &&
+        cd /app/apps/client && ./node_modules/.bin/rsbuild dev --host
+    volumes:
+      - ./apps/client/src:/app/apps/client/src
+      - ./apps/dev:/app/apps/dev:ro
+    ports:
+      - "127.0.0.1:3002:3000"
+    environment:
+      NODE_ENV: development
+      API_ENDPOINT: http://127.0.0.1:8082
+    networks: [snapshot]
+
+volumes:
+  plots-db:
+
+networks:
+  snapshot: {}

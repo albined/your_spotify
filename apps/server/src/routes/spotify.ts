@@ -20,6 +20,7 @@ import {
   getMostListenedSongOfArtist,
   getArtists,
 } from "../database";
+import { getArtistDistribution } from "../database/queries/artistDistribution";
 import {
   CollaborativeMode,
   getCollaborativeBestAlbums,
@@ -27,11 +28,17 @@ import {
   getCollaborativeBestSongs,
   getCollaborativeTimePer,
 } from "../database/queries/collaborative";
+import {
+  getArtistActivity,
+  getListeningHeatmaps,
+} from "../database/queries/listeningPatterns";
 import { getListeningDistribution } from "../database/queries/listeningTimeline";
 import {
+  getCompetitionArtists,
   getCompetitionTimeline,
   getTopTimeline,
 } from "../database/queries/raceTimeline";
+import { getReleaseDistribution } from "../database/queries/releaseDistribution";
 import { DateFormatter, intervalToDisplay } from "../tools/date";
 import { logger } from "../tools/logger";
 import {
@@ -118,6 +125,35 @@ router.get("/listening-distribution", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { start, end } = validate(req.query, listeningDistributionSchema);
   res.status(200).send(await getListeningDistribution(user, start, end));
+});
+
+router.get("/artist-distribution", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end } = validate(req.query, listeningDistributionSchema);
+  res.status(200).send(await getArtistDistribution(user, start, end));
+});
+
+router.get("/release-distribution", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end } = validate(req.query, listeningDistributionSchema);
+  res.status(200).send(await getReleaseDistribution(user, start, end));
+});
+
+const patternsSchema = listeningDistributionSchema.refine(
+  ({ start, end }) => end.getTime() - start.getTime() <= 150 * 366 * 86400000,
+  { message: "Date range must not exceed 150 years" },
+);
+
+router.get("/listening-heatmaps", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end } = validate(req.query, patternsSchema);
+  res.status(200).send(await getListeningHeatmaps(user, start, end));
+});
+
+router.get("/artist-activity", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end } = validate(req.query, patternsSchema);
+  res.status(200).send(await getArtistActivity(user, start, end));
 });
 
 const topTimelineSchema = interval
@@ -373,6 +409,19 @@ const competitionTimelineSchema = interval
   .refine(({ start, end }) => start < end, {
     message: "Start must be before end",
   });
+
+router.get(
+  "/collaborative/competition-artists",
+  logged,
+  affinityAllowed,
+  async (req, res) => {
+    const { start, end, userIds } = validate(
+      normalizeUserIdsQuery(req.query),
+      competitionTimelineSchema,
+    );
+    res.status(200).send(await getCompetitionArtists(userIds, start, end));
+  },
+);
 
 router.get(
   "/collaborative/listening-timeline",

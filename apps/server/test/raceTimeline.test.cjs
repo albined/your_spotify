@@ -215,6 +215,41 @@ test(
         narrowed.series.map((item) => item.values.at(-1)),
         [1, 2, 0],
       );
+      // A long early reign must survive even when its final total ranks 12th.
+      // These plays use a separate owner so competition fixtures stay intact.
+      const historicalOwner = new mongoose.Types.ObjectId();
+      await InfosModel.collection.insertMany([
+        makePlay(historicalOwner, 0, 0, 1),
+        ...Array.from({ length: 11 }, (_, i) =>
+          makePlay(historicalOwner, i + 1, 300, i + 2),
+        ),
+        makePlay(historicalOwner, 0, -1, 999),
+        makePlay(historicalOwner, 0, 365, 999),
+        makePlay(historicalOwner, 0, 30, 999, { blacklistedBy: ["artist"] }),
+        makePlay(historicalOwner, 0, 30, -999),
+        makePlay(historicalOwner, 0, 30, NaN),
+      ]);
+      for (const kind of ["songs", "albums", "artists"]) {
+        const result = await getTopTimeline(
+          { ...user, _id: historicalOwner },
+          start,
+          end,
+          kind,
+        );
+        const prefix = kind.slice(0, -1);
+        assert.deepEqual(
+          result.series.map((row) => row.id),
+          [11, 10, 9, 8, 7, 0, 6, 5, 4, 3].map((i) => `${prefix}-${i}`),
+        );
+        assert.equal(result.series[5].hours.at(-1), 1);
+        const late = await getTopTimeline(
+          { ...user, _id: historicalOwner },
+          at(299),
+          end,
+          kind,
+        );
+        assert.ok(!late.series.some((row) => row.id === `${prefix}-0`));
+      }
     } finally {
       await mongoose.connection.dropDatabase();
       await mongoose.disconnect();

@@ -24,7 +24,8 @@ import s from "../../ListeningTimeline/index.module.css";
 
 export default function ArtistListeningTimeline({
   className,
-}: ImplementedChartProps) {
+  insightsOnly = false,
+}: ImplementedChartProps & { insightsOnly?: boolean }) {
   const { interval } = useSelector(selectRawIntervalDetail);
   const start = interval.start.getTime();
   const end = interval.end.getTime();
@@ -39,7 +40,11 @@ export default function ArtistListeningTimeline({
   if (!result) {
     return (
       <TitleCard
-        title="Artist listening timeline"
+        title={
+          insightsOnly
+            ? "Discovery & listening habits"
+            : "Artist listening timeline"
+        }
         className={className}
         contentClassName={s.section}>
         {error ? (
@@ -55,7 +60,13 @@ export default function ArtistListeningTimeline({
   }
   if (!result.series.length) {
     return (
-      <TitleCard title="Artist listening timeline" contentClassName={s.section}>
+      <TitleCard
+        title={
+          insightsOnly
+            ? "Discovery & listening habits"
+            : "Artist listening timeline"
+        }
+        contentClassName={s.section}>
         <p>No listening history in this period.</p>
       </TitleCard>
     );
@@ -75,51 +86,53 @@ export default function ArtistListeningTimeline({
   const discovered = result.newHours.reduce((sum, hours) => sum + hours, 0);
   return (
     <div className={s.section}>
-      <TitleCard title="Artist listening timeline">
-        <div className={s.controls}>
-          <Select
-            size="small"
-            value={mode}
-            inputProps={{ "aria-label": "Distribution view" }}
-            onChange={(event) =>
-              setMode(event.target.value as DistributionMode)
-            }>
-            <MenuItem value="hours">Listening hours</MenuItem>
-            <MenuItem value="share">Share of listening time</MenuItem>
-            <MenuItem value="cumulative">Cumulative hours</MenuItem>
-          </Select>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={smooth}
-                onChange={(_, checked) => setSmooth(checked)}
-                disabled={mode === "cumulative"}
-              />
-            }
-            label="28-day average"
+      {!insightsOnly && (
+        <TitleCard title="Artist listening timeline">
+          <div className={s.controls}>
+            <Select
+              size="small"
+              value={mode}
+              inputProps={{ "aria-label": "Distribution view" }}
+              onChange={(event) =>
+                setMode(event.target.value as DistributionMode)
+              }>
+              <MenuItem value="hours">Listening hours</MenuItem>
+              <MenuItem value="share">Share of listening time</MenuItem>
+              <MenuItem value="cumulative">Cumulative hours</MenuItem>
+            </Select>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={smooth}
+                  onChange={(_, checked) => setSmooth(checked)}
+                  disabled={mode === "cumulative"}
+                />
+              }
+              label="28-day average"
+            />
+          </div>
+          <p className={s.description}>
+            Every artist is shown separately, ordered by listening time. Hover
+            over a band to see the artist and their listening time.
+            {mode === "cumulative"
+              ? " Running totals from the start of the selected period."
+              : smooth
+                ? " Smoothed over up to 28 days within the selected period; hours are daily averages."
+                : " Each point includes all listening in its interval; silent intervals stay at zero."}
+          </p>
+          <TimelineChart
+            bounds={result}
+            data={data}
+            series={result.series}
+            bucketed={mode !== "cumulative" && !smooth}
+            stacked
+            showLegend={false}
+            hoverSeriesOnly
+            percent={mode === "share"}
+            unit={smooth && mode === "hours" ? "h/day" : "h"}
           />
-        </div>
-        <p className={s.description}>
-          Every artist is shown separately, ordered by listening time. Hover
-          over a band to see the artist and their listening time.
-          {mode === "cumulative"
-            ? " Running totals from the start of the selected period."
-            : smooth
-              ? " Smoothed over up to 28 days within the selected period; hours are daily averages."
-              : " Each point includes all listening in its interval; silent intervals stay at zero."}
-        </p>
-        <TimelineChart
-          bounds={result}
-          data={data}
-          series={result.series}
-          bucketed={mode !== "cumulative" && !smooth}
-          stacked
-          showLegend={false}
-          hoverSeriesOnly
-          percent={mode === "share"}
-          unit={smooth && mode === "hours" ? "h/day" : "h"}
-        />
-      </TitleCard>
+        </TitleCard>
+      )}
       <TitleCard title="Discovery & listening habits">
         <div className={s.controls}>
           <Select

@@ -39,26 +39,16 @@ export default function TopListeningRace({ kind }: { kind: TopTimelineKind }) {
         ) : !data.series.length ? (
           <p>No listening history in this period.</p>
         ) : (
-          <>
-            <p className={s.description}>
-              Your top ten {kind} by listening time in the selected period,
-              starting together at zero. Hover, focus, or tap a name or cover to
-              follow its line.
-            </p>
-            <TimelineChart
-              height={360}
-              bounds={data}
-              data={cumulativeTimelinePoints(
-                data,
-                data.series.map((item) => item.hours),
-              )}
-              series={data.series.map((item, index) => ({
-                ...item,
-                name: `#${index + 1} ${item.name}`,
-                value: `${(item.hours.at(-1) ?? 0).toLocaleString(undefined, { maximumFractionDigits: 1 })} h`,
-              }))}
-            />
-          </>
+          <TimelineChart
+            height={360}
+            legendPosition="right"
+            bounds={data}
+            data={cumulativeTimelinePoints(
+              data,
+              data.series.map((item) => item.hours),
+            )}
+            series={data.series}
+          />
         )}
       </TitleCard>
     </div>
