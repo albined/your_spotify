@@ -14,11 +14,19 @@ This checkout contains the focused plot pass on `feat/plots-v1`:
    cells. It has no controls, legend, info, or data table.
    Matrix color intensity blends 80% row-relative and 20% overall square-root
    scaling, so individual decade phases remain visible.
-3. Artist eras shares the artist distribution request. The only control is
-   10/20 artists. It merges the source bins into up to 64 columns based on the
-   available width, independently of artist count. Both timeline matrices use
-   21px squares with 3px gaps. Eras sorts rows by peak date and uses hours on one
-   shared square-root color scale.
+3. Artist eras has a separate request that considers the full artist library.
+   The 10/20 selector reserves half the rows for the overall hours ranking, then
+   selects recurring local top-three artists and fills any gaps from totals.
+   Local periods are calendar months for ranges of at least 180 days, Monday
+   weeks otherwise, in the user's statistics timezone. A qualifying period has
+   at least 30 minutes and 10% of the median active-period listening time. Era
+   candidates need two top-three appearances; ties use hours during those
+   appearances, overall hours, then ID. Both selections share one bounded
+   response, so toggling artist count does not refetch data. Display bins merge
+   into up to 64 columns based on available width, independently of artist count.
+   The 21px squares retain 3px gaps. Rows sort by peak date; color intensity
+   blends 80% row-relative and 20% overall square-root scaling. Calendar and
+   daily-rhythm colors keep their existing global scale.
 4. Listening calendar and daily rhythms share one request. The calendar uses
    local calendar dates, switches from daily cells to ISO weeks and then months
    for longer ranges, and groups years for very long histories. Rhythms shows
@@ -96,7 +104,7 @@ docker run --rm -d --name your-spotify-patterns-test-mongo \
   --network your-spotify-plots_snapshot mongo:6
 docker compose -f docker-compose.plots.yml exec -T \
   -e TIMELINE_TEST_MONGO_URI=mongodb://your-spotify-patterns-test-mongo:27017 \
-  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs'
+  server sh -lc 'cd /app/apps/server && node --test test/artistDistribution.test.cjs test/artistEras.test.cjs test/releaseDistribution.test.cjs test/listeningPatterns.test.cjs test/competitionArtists.test.cjs test/raceTimeline.test.cjs test/raceLeaders.test.cjs test/allTimeStart.test.cjs'
 docker stop your-spotify-patterns-test-mongo
 ```
 

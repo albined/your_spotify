@@ -1,7 +1,7 @@
 import { Button, CircularProgress, Tooltip, useTheme } from "@mui/material";
 import { Fragment, useEffect, useRef, useState } from "react";
 
-import { HeatRow } from "../../services/listeningPatterns";
+import { heatmapIntensity, HeatRow } from "../../services/listeningPatterns";
 import {
   HEATMAP_LABEL_WIDTH,
   HEATMAP_PITCH,
@@ -53,6 +53,7 @@ export function Heatmap({
   minPitch = HEATMAP_PITCH,
   maxPitch = HEATMAP_PITCH,
   centerColumnLabels = false,
+  rowWeight = 0,
 }: {
   rows: HeatRow[];
   columns: string[];
@@ -61,6 +62,7 @@ export function Heatmap({
   minPitch?: number;
   maxPitch?: number;
   centerColumnLabels?: boolean;
+  rowWeight?: number;
 }) {
   const dark = useTheme().palette.mode === "dark";
   const firstCell =
@@ -92,67 +94,76 @@ export function Heatmap({
             {column}
           </span>
         ))}
-        {rows.map((row, r) => (
-          <Fragment key={row.id}>
-            <span className={s.row} title={row.label}>
-              {row.label}
-            </span>
-            {row.cells.map((cell, c) => {
-              const index = r * columns.length + c;
-              if (!cell) return <span key={c} className={s.blank} />;
-              return (
-                <Tooltip key={c} title={cell.label} arrow enterTouchDelay={0}>
-                  <button
-                    type="button"
-                    className={s.cell}
-                    aria-label={cell.label}
-                    data-cell={index}
-                    tabIndex={
-                      index ===
-                      (rows[Math.floor(focused / columns.length)]?.cells[
-                        focused % columns.length
-                      ]
-                        ? focused
-                        : firstCell)
-                        ? 0
-                        : -1
-                    }
-                    onFocus={() => setFocused(index)}
-                    onKeyDown={(event) => {
-                      const step = {
-                        ArrowLeft: -1,
-                        ArrowRight: 1,
-                        ArrowUp: -columns.length,
-                        ArrowDown: columns.length,
-                      }[event.key];
-                      if (!step) return;
-                      event.preventDefault();
-                      let next = index + step;
-                      while (next >= 0 && next < rows.length * columns.length) {
-                        const target = event.currentTarget
-                          .closest('[role="group"]')
-                          ?.querySelector<HTMLButtonElement>(
-                            `[data-cell="${next}"]`,
-                          );
-                        if (target) {
-                          target.focus();
-                          break;
-                        }
-                        next += step;
+        {rows.map((row, r) => {
+          const rowMaximum = Math.max(
+            0,
+            ...row.cells.map((cell) => cell?.value ?? 0),
+          );
+          return (
+            <Fragment key={row.id}>
+              <span className={s.row} title={row.label}>
+                {row.label}
+              </span>
+              {row.cells.map((cell, c) => {
+                const index = r * columns.length + c;
+                if (!cell) return <span key={c} className={s.blank} />;
+                return (
+                  <Tooltip key={c} title={cell.label} arrow enterTouchDelay={0}>
+                    <button
+                      type="button"
+                      className={s.cell}
+                      aria-label={cell.label}
+                      data-cell={index}
+                      tabIndex={
+                        index ===
+                        (rows[Math.floor(focused / columns.length)]?.cells[
+                          focused % columns.length
+                        ]
+                          ? focused
+                          : firstCell)
+                          ? 0
+                          : -1
                       }
-                    }}
-                    style={{
-                      background:
-                        cell.value > 0 && maximum > 0
-                          ? `color-mix(in srgb, ${dark ? "#65d6a0" : "#147d50"} ${floor + Math.sqrt(cell.value / maximum) * (100 - floor)}%, var(--background))`
-                          : "rgba(var(--primary-tuple), 0.07)",
-                    }}
-                  />
-                </Tooltip>
-              );
-            })}
-          </Fragment>
-        ))}
+                      onFocus={() => setFocused(index)}
+                      onKeyDown={(event) => {
+                        const step = {
+                          ArrowLeft: -1,
+                          ArrowRight: 1,
+                          ArrowUp: -columns.length,
+                          ArrowDown: columns.length,
+                        }[event.key];
+                        if (!step) return;
+                        event.preventDefault();
+                        let next = index + step;
+                        while (
+                          next >= 0 &&
+                          next < rows.length * columns.length
+                        ) {
+                          const target = event.currentTarget
+                            .closest('[role="group"]')
+                            ?.querySelector<HTMLButtonElement>(
+                              `[data-cell="${next}"]`,
+                            );
+                          if (target) {
+                            target.focus();
+                            break;
+                          }
+                          next += step;
+                        }
+                      }}
+                      style={{
+                        background:
+                          cell.value > 0 && maximum > 0
+                            ? `color-mix(in srgb, ${dark ? "#65d6a0" : "#147d50"} ${floor + heatmapIntensity(cell.value, maximum, rowMaximum, rowWeight) * (100 - floor)}%, var(--background))`
+                            : "rgba(var(--primary-tuple), 0.07)",
+                      }}
+                    />
+                  </Tooltip>
+                );
+              })}
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );
