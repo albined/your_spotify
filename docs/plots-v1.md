@@ -190,6 +190,9 @@ and play counts on All stats. Daily/hourly/monthly/yearly buckets use the
 statistics timezone; missing buckets remain zero, and hollow points identify
 partial periods. Long histories use monthly points up to 200 calendar months;
 larger ranges fall back to annual totals without truncating the selected range.
+Date ticks use local calendar boundaries: weekdays on short views, round day
+numbers on month views, and regular months or years on longer views. Narrow
+cards use wider intervals; the chart never picks arbitrary dates to fit labels.
 
 Today compares local hours with their mean over the preceding 365 complete local
 days, drawn as a faint second line. Week/month/last-7/last-30 views use daily
