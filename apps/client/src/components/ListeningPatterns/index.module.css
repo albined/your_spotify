@@ -58,11 +58,58 @@
   font-size: 12px;
 }
 
+.columns {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: inherit;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--background);
+}
+
 .column {
   align-self: end;
   height: 24px;
   font-size: 11px;
   white-space: nowrap;
+  color: color-mix(in srgb, var(--text-on-light) 65%, var(--background));
+}
+
+.hourChart {
+  width: 100%;
+  height: 260px;
+  min-width: 0;
+  color: var(--text-on-light);
+}
+
+.hourLegend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 8px;
+  color: var(--text-on-light);
+  font-size: 12px;
+}
+
+.hourLegend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hourLegend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.hourLegend .overallMark {
+  height: 0;
+  width: 18px;
+  border-top: 2px dashed currentColor;
+  border-radius: 0;
   opacity: 0.65;
 }
 

@@ -156,7 +156,11 @@ function rankedSeries(field: string): PipelineStage.FacetPipelineStage[] {
 export async function getArtistTimeline(user: User, artistId: string) {
   // Like existing artist detail statistics, include this artist even when it is
   // excluded from the user's global statistics by the blacklist.
-  const match = { owner: user._id, primaryArtistId: artistId };
+  const match = {
+    owner: user._id,
+    primaryArtistId: artistId,
+    durationMs: { $gt: 0, $lte: Number.MAX_SAFE_INTEGER },
+  };
   const end = new Date();
   const first = await InfosModel.findOne({ ...match, played_at: { $lte: end } })
     .sort({ played_at: 1 })
@@ -164,15 +168,11 @@ export async function getArtistTimeline(user: User, artistId: string) {
     .lean();
   if (!first) return null;
   const bounds = timelineBounds(first.played_at, end, 200);
-  type Peak = { played_at: Date; hours: number };
   const [result] = await InfosModel.aggregate<{
     total: Bucket[];
     albums: RankedSeries[];
     songs: RankedSeries[];
-    peak7: Peak[];
-    peak30: Peak[];
     milestones: { _id: number; date: Date }[];
-    rediscoveries: { played_at: Date; previous: Date; gapDays: number }[];
   }>([
     { $match: { ...match, played_at: { $lte: end } } },
     {
@@ -189,12 +189,6 @@ export async function getArtistTimeline(user: User, artistId: string) {
             $sum: "$durationMs",
             window: { documents: ["unbounded", "current"] },
           },
-          week: { $sum: "$durationMs", window: { range: [1 - 7 * DAY_MS, 0] } },
-          month: {
-            $sum: "$durationMs",
-            window: { range: [1 - 30 * DAY_MS, 0] },
-          },
-          previous: { $shift: { output: "$played_at", by: -1 } },
         },
       },
     },
@@ -205,20 +199,6 @@ export async function getArtistTimeline(user: User, artistId: string) {
         ],
         albums: rankedSeries("albumId"),
         songs: rankedSeries("id"),
-        peak7: [
-          { $sort: { week: -1, played_at: 1 } },
-          { $limit: 1 },
-          {
-            $project: { played_at: 1, hours: { $divide: ["$week", HOUR_MS] } },
-          },
-        ],
-        peak30: [
-          { $sort: { month: -1, played_at: 1 } },
-          { $limit: 1 },
-          {
-            $project: { played_at: 1, hours: { $divide: ["$month", HOUR_MS] } },
-          },
-        ],
         milestones: [
           { $set: { milestone: [10, 50, 100, 250, 500, 1000] } },
           { $unwind: "$milestone" },
@@ -231,29 +211,6 @@ export async function getArtistTimeline(user: User, artistId: string) {
           },
           { $group: { _id: "$milestone", date: { $min: "$played_at" } } },
           { $sort: { _id: 1 } },
-        ],
-        rediscoveries: [
-          {
-            $match: {
-              previous: { $ne: null },
-              $expr: {
-                $gte: [{ $subtract: ["$played_at", "$previous"] }, 90 * DAY_MS],
-              },
-            },
-          },
-          { $sort: { played_at: -1 } },
-          { $limit: 5 },
-          {
-            $project: {
-              played_at: 1,
-              previous: 1,
-              gapDays: {
-                $floor: {
-                  $divide: [{ $subtract: ["$played_at", "$previous"] }, DAY_MS],
-                },
-              },
-            },
-          },
         ],
       },
     },
@@ -296,23 +253,9 @@ export async function getArtistTimeline(user: User, artistId: string) {
         hours: cumulativeHours(denseHours(bounds, item.buckets)),
       };
     }),
-    peaks: [7, 30].map((days) => {
-      const peak = (days === 7 ? result.peak7 : result.peak30)[0];
-      return {
-        days,
-        hours: peak?.hours ?? 0,
-        end: peak?.played_at ?? end,
-        start: new Date((peak?.played_at ?? end).getTime() - days * DAY_MS),
-      };
-    }),
     milestones: result.milestones.map((item) => ({
       hours: item._id,
       date: item.date,
-    })),
-    rediscoveries: result.rediscoveries.map((item) => ({
-      date: item.played_at,
-      previous: item.previous,
-      gapDays: item.gapDays,
     })),
   };
 }

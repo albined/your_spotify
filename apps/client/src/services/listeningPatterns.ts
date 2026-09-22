@@ -71,10 +71,9 @@ function monday(time: number) {
   return time - ((new Date(time).getUTCDay() + 6) % 7) * DAY;
 }
 
-export function calendarGrid(data: ListeningHeatmapsData): {
-  rows: HeatRow[];
-  columns: string[];
-} {
+export function calendarGrid(
+  data: Pick<ListeningHeatmapsData, "start" | "end" | "timezone" | "days">,
+): { rows: HeatRow[]; columns: string[] } {
   const first = Date.parse(localDate(data.start, data.timezone));
   const last = Date.parse(localDate(data.end - 1, data.timezone));
   const values = new Map(data.days.map((day) => [day.date, day.hours]));

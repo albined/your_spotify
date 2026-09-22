@@ -132,9 +132,12 @@ export default function TimelineChart({
               minTickGap={35}
             />
             <YAxis
-              width={65}
+              width={unit === "h/day" ? 80 : 65}
               allowDecimals={percent || unit === "h" || unit === "h/day"}
-              tick={{ fill: "var(--text-on-light)" }}
+              tick={{
+                fill: "var(--text-on-light)",
+                ...(unit === "h/day" ? { fontSize: 12 } : {}),
+              }}
               domain={percent ? [0, 100] : [0, "auto"]}
               tickFormatter={(value: number) =>
                 `${Number(value.toFixed(2))}${percent ? "%" : unit === "h" || unit === "h/day" ? ` ${unit}` : ""}`

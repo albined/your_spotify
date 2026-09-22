@@ -54,6 +54,7 @@ export function Heatmap({
   maxPitch = HEATMAP_PITCH,
   centerColumnLabels = false,
   rowWeight = 0,
+  maxHeight,
 }: {
   rows: HeatRow[];
   columns: string[];
@@ -63,6 +64,7 @@ export function Heatmap({
   maxPitch?: number;
   centerColumnLabels?: boolean;
   rowWeight?: number;
+  maxHeight?: number;
 }) {
   const dark = useTheme().palette.mode === "dark";
   const firstCell =
@@ -76,7 +78,7 @@ export function Heatmap({
   );
   const floor = dark ? 12 : 8;
   return (
-    <div className={s.scroll}>
+    <div className={s.scroll} style={{ maxHeight }}>
       <div
         className={s.grid}
         role="group"
@@ -85,15 +87,17 @@ export function Heatmap({
           gridTemplateColumns: `${labelWidth}px repeat(${columns.length}, minmax(${minPitch}px, ${maxPitch}px))`,
           minWidth: labelWidth + columns.length * minPitch,
         }}>
-        <span className={s.row} />
-        {columns.map((column, index) => (
-          <span
-            key={index}
-            className={s.column}
-            style={centerColumnLabels ? { textAlign: "center" } : undefined}>
-            {column}
-          </span>
-        ))}
+        <div className={s.columns}>
+          <span className={s.row} />
+          {columns.map((column, index) => (
+            <span
+              key={index}
+              className={s.column}
+              style={centerColumnLabels ? { textAlign: "center" } : undefined}>
+              {column}
+            </span>
+          ))}
+        </div>
         {rows.map((row, r) => {
           const rowMaximum = Math.max(
             0,

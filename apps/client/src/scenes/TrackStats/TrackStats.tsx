@@ -1,16 +1,19 @@
 import { CircularProgress, Grid } from "@mui/material";
+
 import Header from "../../components/Header";
+import IdealImage from "../../components/IdealImage";
+import ImageTwoLines from "../../components/ImageTwoLines";
+import InlineAlbum from "../../components/InlineAlbum";
+import InlineArtist from "../../components/InlineArtist";
+import DetailListening from "../../components/ListeningPatterns/DetailListening";
+import Text from "../../components/Text";
 import TitleCard from "../../components/TitleCard";
 import { TrackStatsResponse } from "../../services/apis/api";
-import { buildFromDateId } from "../../services/stats";
-import Text from "../../components/Text";
-import InlineArtist from "../../components/InlineArtist";
-import ImageTwoLines from "../../components/ImageTwoLines";
-import IdealImage from "../../components/IdealImage";
-import InlineAlbum from "../../components/InlineAlbum";
 import { DateFormatter } from "../../services/date";
+import { buildFromDateId } from "../../services/stats";
 import FirstAndLast from "./FirstAndLast";
 import TrackRank from "./TrackRank/TrackRank";
+
 import s from "./index.module.css";
 
 interface TrackStatsProps {
@@ -49,6 +52,9 @@ export default function TrackStats({ trackId, stats }: TrackStatsProps) {
           spacing={2}
           sx={{ justifyContent: "flex-start", alignItems: "flex-start" }}
           style={{ marginTop: 0 }}>
+          <Grid size={{ xs: 12 }}>
+            <DetailListening kind="song" id={trackId} />
+          </Grid>
           <Grid
             container
             size={{ xs: 12, lg: 6 }}
