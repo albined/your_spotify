@@ -75,6 +75,7 @@ interface Props {
   bucketed?: boolean;
   height?: number;
   showLegend?: boolean;
+  legendPosition?: "bottom" | "right";
   hoverSeriesOnly?: boolean;
 }
 
@@ -88,6 +89,7 @@ export default function TimelineChart({
   bucketed = false,
   height = 280,
   showLegend = true,
+  legendPosition = "bottom",
   hoverSeriesOnly = false,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export default function TimelineChart({
       : AreaChart
     : LineChart;
   return (
-    <>
+    <div className={legendPosition === "right" ? s.withSideLegend : s.timeline}>
       <div
         className={s.chart}
         style={{ height }}
@@ -254,23 +256,34 @@ export default function TimelineChart({
               onFocus={() => setHovered(item.id)}
               onBlur={() => setHovered(null)}
               onClick={() => setPinned(pinned === item.id ? null : item.id)}
+              title={
+                item.subtitle ? `${item.name} · ${item.subtitle}` : item.name
+              }
               aria-pressed={pinned === item.id}>
               <span
                 className={s.swatch}
                 style={{ background: seriesColor(index) }}
               />
               {!!item.images?.length && (
-                <IdealImage images={item.images} size={36} alt="" />
+                <IdealImage
+                  images={item.images}
+                  size={legendPosition === "right" ? 24 : 36}
+                  alt=""
+                />
               )}
               <span className={s.legendlabel}>
                 <span>{item.name}</span>
-                {item.subtitle && <small>{item.subtitle}</small>}
-                {item.value && <small>{item.value}</small>}
+                {legendPosition !== "right" && item.subtitle && (
+                  <small>{item.subtitle}</small>
+                )}
+                {legendPosition !== "right" && item.value && (
+                  <small>{item.value}</small>
+                )}
               </span>
             </button>
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }

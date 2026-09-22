@@ -1,0 +1,96 @@
+.cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.plot {
+  min-width: 0;
+  color: var(--text-on-light);
+  position: relative;
+}
+
+.viewport {
+  position: relative;
+  min-width: 0;
+  height: 340px;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.axis {
+  opacity: 0.6;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  font-size: 12px;
+  display: flex;
+}
+
+.tooltip {
+  z-index: 2;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 1px solid rgba(var(--primary-tuple), 0.14);
+  background: var(--background);
+  border-radius: 8px;
+  align-items: center;
+  gap: 12px;
+  width: 260px;
+  max-width: calc(100% - 8px);
+  padding: 12px;
+  display: flex;
+  position: absolute;
+  box-shadow: 0 6px 24px #0002;
+}
+
+.tooltip img {
+  object-fit: cover;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+}
+
+.tooltip div {
+  gap: 3px;
+  min-width: 0;
+  font-size: 12px;
+  display: grid;
+}
+
+.tooltip strong {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.tooltip span {
+  opacity: 0.7;
+}
+
+.loading {
+  min-height: 340px;
+  color: var(--text-on-light);
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+@media (width <= 600px) {
+  .viewport {
+    height: 260px;
+  }
+
+  .axis span:nth-child(2n) {
+    display: none;
+  }
+}

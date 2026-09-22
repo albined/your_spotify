@@ -1,6 +1,13 @@
 import Axios from "axios";
+
+import type { ArtistDistribution } from "../artistDistribution";
+import type {
+  ArtistActivityData,
+  ListeningHeatmapsData,
+} from "../listeningPatterns";
 import {
   ArtistTimeline,
+  CompetitionArtist,
   CompetitionMetric,
   CompetitionTimeline,
   ListeningDistribution,
@@ -11,6 +18,7 @@ import { AdminAccount } from "../redux/modules/admin/reducer";
 import { ImporterState } from "../redux/modules/import/types";
 import { Playlist, PlaylistContext } from "../redux/modules/playlist/types";
 import { User } from "../redux/modules/user/types";
+import type { ReleaseDistribution } from "../releaseDistribution";
 import {
   Album,
   Artist,
@@ -249,7 +257,18 @@ export const api = {
     }>(`/album/${id}/rank`),
   getArtists: (ids: string[]) => get<Artist[]>(`/artist/${ids.join(",")}`),
   getListeningDistribution: (start: Date, end: Date) =>
-    get<ListeningDistribution>("/spotify/listening-distribution", { start, end }),
+    get<ListeningDistribution>("/spotify/listening-distribution", {
+      start,
+      end,
+    }),
+  getArtistDistribution: (start: Date, end: Date) =>
+    get<ArtistDistribution>("/spotify/artist-distribution", { start, end }),
+  getReleaseDistribution: (start: Date, end: Date) =>
+    get<ReleaseDistribution>("/spotify/release-distribution", { start, end }),
+  getListeningHeatmaps: (start: Date, end: Date) =>
+    get<ListeningHeatmapsData>("/spotify/listening-heatmaps", { start, end }),
+  getArtistActivity: (start: Date, end: Date) =>
+    get<ArtistActivityData>("/spotify/artist-activity", { start, end }),
 
   getArtistTimeline: (id: string) =>
     get<ArtistTimeline | null>(`/artist/${id}/listening-timeline`),
@@ -326,13 +345,11 @@ export const api = {
   },
   doImportDeezer: (files: File[]) => {
     const formData = new FormData();
-    files.forEach(file => {
+    files.forEach((file) => {
       formData.append("imports", file);
     });
     return axios.post("/import/deezer", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
 
@@ -387,6 +404,13 @@ export const api = {
       end,
       metric,
       artistId,
+    }),
+
+  getCompetitionArtists: (userIds: string[], start: Date, end: Date) =>
+    get<CompetitionArtist[]>("/spotify/collaborative/competition-artists", {
+      userIds,
+      start,
+      end,
     }),
 
   competeTimePer: (

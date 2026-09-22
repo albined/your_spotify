@@ -16,6 +16,7 @@ import {
   timelineBounds,
   TimelineBounds,
 } from "./listeningTimelineTools";
+import { RaceLeaders } from "./raceLeaders";
 
 export type TopTimelineKind = "songs" | "albums" | "artists";
 export type CompetitionMetric =
@@ -24,6 +25,81 @@ export type CompetitionMetric =
   | "differentTracks"
   | "differentArtists";
 
+const validDuration = {
+  $type: "number",
+  $gt: 0,
+  $lte: Number.MAX_SAFE_INTEGER,
+};
+
+function competitionUserIds(userIds: string[]) {
+  return [
+    ...new Set(userIds.map((id) => new Types.ObjectId(id).toHexString())),
+  ];
+}
+
+export async function getCompetitionArtists(
+  userIds: string[],
+  start: Date,
+  end: Date,
+) {
+  const ids = competitionUserIds(userIds);
+  if (!ids.length) return [];
+  const ranked = await InfosModel.aggregate<{
+    _id: string;
+    minimumDuration: number;
+    totalDuration: number;
+  }>([
+    {
+      $match: {
+        owner: { $in: ids.map((id) => new Types.ObjectId(id)) },
+        played_at: { $gte: start, $lt: end },
+        blacklistedBy: { $exists: false },
+        primaryArtistId: { $type: "string", $ne: "" },
+        durationMs: validDuration,
+      },
+    },
+    {
+      $group: {
+        _id: { artist: "$primaryArtistId", owner: "$owner" },
+        duration: { $sum: "$durationMs" },
+      },
+    },
+    {
+      $group: {
+        _id: "$_id.artist",
+        minimumDuration: { $min: "$duration" },
+        totalDuration: { $sum: "$duration" },
+        listeners: { $sum: 1 },
+      },
+    },
+    // Missing participants have zero hours; taking only the minimum of
+    // existing rows would incorrectly promote one person's favorite artist.
+    {
+      $set: {
+        minimumDuration: {
+          $cond: [{ $eq: ["$listeners", ids.length] }, "$minimumDuration", 0],
+        },
+      },
+    },
+    { $sort: { minimumDuration: -1, totalDuration: -1, _id: 1 } },
+    { $limit: 200 },
+  ]).option({ maxTimeMS: 15_000, allowDiskUse: true });
+  const metadata = await ArtistModel.find({
+    id: { $in: ranked.map((row) => row._id) },
+  })
+    .select("id name images")
+    .maxTimeMS(15_000)
+    .lean();
+  const byId = new Map(metadata.map((artist) => [artist.id, artist]));
+  return ranked.map((row) => ({
+    id: row._id,
+    name: byId.get(row._id)?.name ?? "Unknown artist",
+    image: byId.get(row._id)?.images.at(-1)?.url,
+    minimumHours: row.minimumDuration / 3_600_000,
+    totalHours: row.totalDuration / 3_600_000,
+  }));
+}
+
 export async function getTopTimeline(
   user: User,
   start: Date,
@@ -31,21 +107,38 @@ export async function getTopTimeline(
   kind: TopTimelineKind,
 ) {
   const bounds = timelineBounds(start, end, 200);
-  const field = { songs: "id", albums: "albumId", artists: "primaryArtistId" }[
-    kind
-  ];
+  const field = (
+    { songs: "id", albums: "albumId", artists: "primaryArtistId" } as const
+  )[kind];
+  const crownEnd = Math.min(end.getTime(), Date.now());
   const match = {
     owner: user._id,
     blacklistedBy: { $exists: false },
-    played_at: { $gte: start, $lt: end },
+    played_at: { $gte: start, $lt: new Date(crownEnd) },
+    durationMs: validDuration,
   };
-  // Rank over the entire selected range, before grouping into display buckets.
-  const top = await InfosModel.aggregate<{ _id: string; duration: number }>([
-    { $match: { ...match, [field]: { $type: "string" } } },
-    { $group: { _id: `$${field}`, duration: { $sum: "$durationMs" } } },
-    { $sort: { duration: -1, _id: 1 } },
-    { $limit: 10 },
-  ]);
+  // Inspect every contender at actual play timestamps, independently of the
+  // chart's display resolution. Stream plays to keep memory bounded by entries.
+  const race = new RaceLeaders();
+  const plays = InfosModel.aggregate<{
+    item: string;
+    played_at: Date;
+    durationMs: number;
+  }>([
+    { $match: { ...match, [field]: { $type: "string", $ne: "" } } },
+    { $sort: { played_at: 1 } },
+    { $project: { _id: 0, item: `$${field}`, played_at: 1, durationMs: 1 } },
+  ])
+    .option({ maxTimeMS: 15_000, allowDiskUse: true })
+    .cursor({ batchSize: 1000 });
+  try {
+    for await (const play of plays) {
+      race.add(play.item, play.played_at.getTime(), play.durationMs);
+    }
+  } finally {
+    await plays.close();
+  }
+  const top = race.select(crownEnd);
   const ids = top.map((item) => item._id);
   const buckets = ids.length
     ? await InfosModel.aggregate<{
@@ -148,12 +241,13 @@ export async function getCompetitionTimeline(
   artistId?: string,
 ) {
   const bounds = timelineBounds(start, end, 200);
-  const ids = [...new Set(userIds)];
+  const ids = competitionUserIds(userIds);
   const match = {
     owner: { $in: ids.map((id) => new Types.ObjectId(id)) },
     blacklistedBy: { $exists: false },
     played_at: { $gte: start, $lt: end },
     ...(artistId ? { primaryArtistId: artistId } : {}),
+    ...(metric === "hours" ? { durationMs: validDuration } : {}),
   };
   const unique = metric === "differentTracks" || metric === "differentArtists";
   // Count a unique item at its first bucket in the selected range. Summing each
