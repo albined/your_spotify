@@ -10,6 +10,7 @@ import { useListeningRequest } from "../../services/listeningTimeline";
 import TimelineChart from "../ListeningTimeline/TimelineChart";
 import TitleCard from "../TitleCard";
 import AlbumTracksHeatmap from "./AlbumTracksHeatmap";
+import ArtistItemEras from "./ArtistItemEras";
 import { Heatmap, RequestState } from "./shared";
 
 import s from "./index.module.css";
@@ -68,6 +69,7 @@ export function DetailListeningCharts({
         />
       </TitleCard>
       {kind === "album" && <AlbumTracksHeatmap data={data} />}
+      {kind === "artist" && data.eras && <ArtistItemEras data={data.eras} />}
     </div>
   );
 }
