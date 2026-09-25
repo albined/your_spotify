@@ -1,5 +1,6 @@
+import { MenuItem, Select } from "@mui/material";
 import clsx from "clsx";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   Line,
   LineChart,
@@ -19,6 +20,7 @@ import { useOverviewSelection } from "./context";
 import s from "./index.module.css";
 
 export default function ArtistDiversity({ className }: { className?: string }) {
+  const [windowDays, setWindowDays] = useState<number | "auto">("auto");
   const { start, end, period, user } = useOverviewSelection();
   const request = useCallback(async () => {
     if (!user) throw new Error("No account selected");
@@ -26,8 +28,9 @@ export default function ArtistDiversity({ className }: { className?: string }) {
       new Date(start),
       new Date(end),
       period,
+      windowDays === "auto" ? undefined : windowDays,
     );
-  }, [start, end, period, user]);
+  }, [start, end, period, user, windowDays]);
   const { data, error, retry } = useListeningRequest(request);
   const date = useTimelineDate(data ?? { start, end, width: 0, count: 0 });
   const points = data?.values.map((value, index) => ({
@@ -38,18 +41,39 @@ export default function ArtistDiversity({ className }: { className?: string }) {
     value.toLocaleString(undefined, { maximumFractionDigits: 1 });
   return (
     <TitleCard
-      title="Artist diversity · 30 days"
+      title={`Artist diversity${data ? ` · ${data.windowDays} days` : ""}`}
+      right={
+        <Select
+          size="small"
+          value={windowDays}
+          inputProps={{ "aria-label": "Diversity window" }}
+          onChange={(event) =>
+            setWindowDays(
+              event.target.value === "auto"
+                ? "auto"
+                : Number(event.target.value),
+            )
+          }>
+          <MenuItem value="auto">Auto window</MenuItem>
+          {[7, 30, 90, 180, 365].map((days) => (
+            <MenuItem key={days} value={days}>
+              {days} days
+            </MenuItem>
+          ))}
+        </Select>
+      }
+      info="Effective number of artists, weighted by listening time in the trailing window. Auto uses 7 days for ranges up to 90 days, 30 for up to a year, 90 for up to 3 years, 180 for up to 6 years, and 365 beyond that."
       className={clsx(s.card, className)}
       contentClassName={s.content}>
       {!data ? (
         <RequestState error={error} retry={retry} />
       ) : !data.values.some((value) => value !== null) ? (
-        <p>No listening in these 30-day windows.</p>
+        <p>No listening in these {data.windowDays}-day windows.</p>
       ) : (
         <div
           className={s.plot}
           role="img"
-          aria-label="Effective artists over trailing 30-day windows">
+          aria-label={`Effective artists over trailing ${data.windowDays}-day windows`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={points}

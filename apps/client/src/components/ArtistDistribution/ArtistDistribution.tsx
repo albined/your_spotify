@@ -18,6 +18,7 @@ import { calendarAxis } from "../../services/calendarAxis";
 import { useListeningRequest } from "../../services/listeningTimeline";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import ArtistEras from "../ListeningPatterns/ArtistEras";
+import ArtistHours from "../ListeningPatterns/ArtistHours";
 import TitleCard from "../TitleCard";
 
 import s from "./index.module.css";
@@ -272,6 +273,7 @@ export default function ArtistDistribution() {
         )}
       </TitleCard>
       <ArtistEras />
+      <ArtistHours />
     </div>
   );
 }

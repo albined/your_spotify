@@ -297,6 +297,11 @@ export const api = {
     get<ListeningHeatmapsData>("/spotify/listening-heatmaps", { start, end }),
   getArtistActivity: (start: Date, end: Date) =>
     get<ArtistActivityData>("/spotify/artist-activity", { start, end }),
+  getArtistHours: (start: Date, end: Date) =>
+    get<{
+      timezone: string;
+      series: { id: string; name: string; hours: number[] }[];
+    }>("/spotify/artist-hours", { start, end }),
   getArtistEras: (start: Date, end: Date) =>
     get<ArtistErasData>("/spotify/artist-eras", { start, end }),
   getListeningOverview: (start: Date, end: Date, period: OverviewPeriod) =>
@@ -309,11 +314,13 @@ export const api = {
     start: Date,
     end: Date,
     period: OverviewPeriod,
+    windowDays?: number,
   ) =>
     get<PersonalArtistDiversity>("/spotify/artist-diversity", {
       start,
       end,
       period,
+      windowDays,
     }),
   getDetailListening: (kind: ListeningItemKind, id: string) =>
     get<DetailListeningData | null>("/spotify/detail-listening", { kind, id }),

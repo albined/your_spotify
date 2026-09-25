@@ -27,6 +27,7 @@ export default function TopListeningRace({ kind }: { kind: TopTimelineKind }) {
     <div className={s.race}>
       <TitleCard
         title={`The race for your top ${kind}`}
+        info="The final top five plus sustained former leaders, filled to ten by total listening. Former leaders need at least 25% of the fifth-place total and 5% of the time since the first play. Legend ordered by final listening time."
         contentClassName={s.section}>
         {!data ? (
           error ? (
