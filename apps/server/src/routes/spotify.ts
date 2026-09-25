@@ -169,28 +169,9 @@ router.get("/listening-overview", isLoggedOrGuest, async (req, res) => {
 router.get("/artist-diversity", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { start, end, period } = validate(req.query, overviewSchema);
-  const { windowDays } = validate(
-    req.query,
-    z.object({
-      windowDays: z.coerce
-        .number()
-        .pipe(
-          z.union([
-            z.literal(7),
-            z.literal(30),
-            z.literal(90),
-            z.literal(180),
-            z.literal(365),
-          ]),
-        )
-        .optional(),
-    }),
-  );
   res
     .status(200)
-    .json(
-      await getPersonalArtistDiversity(user, start, end, period, windowDays),
-    );
+    .json(await getPersonalArtistDiversity(user, start, end, period));
 });
 
 router.get("/artist-hours", isLoggedOrGuest, async (req, res) => {

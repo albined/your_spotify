@@ -3,6 +3,7 @@ import type { PipelineStage } from "mongoose";
 import { statisticsTimezone } from "../../tools/allTimeStart";
 import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
+import { diversityWindowDays } from "./diversityWindow";
 import { overviewPlan, OverviewPeriod } from "./listeningOverviewBuckets";
 import {
   DAY_MS,
@@ -14,8 +15,6 @@ export interface DiversityChange {
   _id: { artist: string; bucket: number };
   durationMs: number;
 }
-
-export const DIVERSITY_WINDOW_MS = 30 * DAY_MS;
 
 // Changes are grouped by artist and sample: add listening when it enters the
 // trailing window, subtract it when it expires. Only active artists remain in
@@ -47,7 +46,7 @@ export function artistDiversity(
 export function artistDiversityStages(
   bounds: TimelineBounds,
   start: Date,
-  windowMs = DIVERSITY_WINDOW_MS,
+  windowMs: number,
 ): PipelineStage.FacetPipelineStage[] {
   // A play at s belongs to the sample at t exactly when t - windowMs <= s < t.
   // Derive entry/expiry indices from actual timestamps, independently of the
@@ -100,22 +99,10 @@ export async function getPersonalArtistDiversity(
   start: Date,
   end: Date,
   period: OverviewPeriod = "custom",
-  requestedWindowDays?: number,
 ) {
   const plan = overviewPlan(start, end, period, statisticsTimezone(user));
   start = new Date(plan.start);
-  const spanDays = (end.getTime() - start.getTime()) / DAY_MS;
-  const windowDays =
-    requestedWindowDays ??
-    (spanDays <= 90
-      ? 7
-      : spanDays <= 366
-        ? 30
-        : spanDays <= 3 * 366
-          ? 90
-          : spanDays <= 6 * 366
-            ? 180
-            : 365);
+  const windowDays = diversityWindowDays(start, end);
   const windowMs = windowDays * DAY_MS;
   const cutoff = new Date(Math.min(end.getTime(), Date.now()));
   const bounds = timelineBounds(start, cutoff > start ? cutoff : end, 200);

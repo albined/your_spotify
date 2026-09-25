@@ -94,10 +94,11 @@ test(
 
       for (const [span, expected] of [
         [30, 7],
-        [365, 30],
-        [730, 90],
-        [1825, 180],
-        [3650, 365],
+        [365, 14],
+        [730, 30],
+        [1825, 90],
+        [3650, 90],
+        [4015, 180],
       ]) {
         const data = await getPersonalArtistDiversity(
           user,
@@ -109,24 +110,6 @@ test(
       const automatic = await getPersonalArtistDiversity(user, start, end);
       assert.equal(automatic.windowDays, 7);
       assert.equal(automatic.values[0], null);
-      const manual = await getPersonalArtistDiversity(
-        user,
-        start,
-        end,
-        "custom",
-        30,
-      );
-      assert.equal(manual.windowDays, 30);
-      assert.equal(manual.values[0], 1); // Warm history included, expired history excluded.
-      const longer = await getPersonalArtistDiversity(
-        user,
-        start,
-        end,
-        "custom",
-        90,
-      );
-      assert.equal(longer.values[0], 2);
-      assert.ok(manual.values.at(-1) > 1);
     } finally {
       await mongoose.connection.dropDatabase();
       await mongoose.disconnect();

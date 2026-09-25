@@ -12,12 +12,12 @@ require("ts-node").register({
 });
 
 const DAY = 86400000;
-const WINDOW = 30 * DAY;
+const WINDOW = 7 * DAY;
 
-function expectedDiversity(plays, timestamp) {
+function expectedDiversity(plays, timestamp, window = WINDOW) {
   const totals = new Map();
   for (const play of plays) {
-    if (play.at >= timestamp - WINDOW && play.at < timestamp) {
+    if (play.at >= timestamp - window && play.at < timestamp) {
       totals.set(play.artist, (totals.get(play.artist) ?? 0) + play.durationMs);
     }
   }
@@ -29,7 +29,7 @@ function expectedDiversity(plays, timestamp) {
 }
 
 test(
-  "rolling diversity matches exact 30-day windows at every sample, independent of date range",
+  "personal and competition diversity share adaptive windows and exact sample values",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
@@ -109,6 +109,9 @@ test(
           durationMs,
         })),
       ]);
+      const {
+        getPersonalArtistDiversity,
+      } = require("../src/database/queries/artistDiversity");
       const ids = [String(owner)];
       let sharedEnd;
       for (const [from, to] of [
@@ -116,6 +119,9 @@ test(
         [start, start + 31 * DAY],
         [start + 20 * DAY, start + 31 * DAY],
         [start - 500 * DAY, start + 200 * DAY],
+        [start - 365 * DAY, start],
+        [start - 5 * 365 * DAY, start],
+        [start - 11 * 365 * DAY, start],
         [start + DAY + 1, start + 3 * DAY],
         [start + 400 * DAY, start + 431 * DAY],
       ]) {
@@ -125,12 +131,26 @@ test(
           new Date(from),
           new Date(to),
         );
+        const personal = await getPersonalArtistDiversity(
+          user,
+          new Date(from),
+          new Date(to),
+        );
+        assert.equal(personal.windowDays, data.windowDays);
+        assert.deepEqual(
+          personal.values,
+          data.series[0].values.map((value) => value || null),
+        );
         const series = data.series[0];
         assert.equal(series.values.length, data.count + 1);
         assert(data.count <= 200);
         for (let i = 0; i <= data.count; i++) {
           const timestamp = Math.min(data.end, data.start + i * data.width);
-          const expected = expectedDiversity(plays, timestamp);
+          const expected = expectedDiversity(
+            plays,
+            timestamp,
+            data.windowDays * DAY,
+          );
           assert(
             Math.abs(series.values[i] - expected) < 1e-9,
             `sample ${i} in ${from}..${to}: ${series.values[i]} vs ${expected}`,
@@ -156,7 +176,7 @@ test(
         new Date(start),
         new Date(start + DAY),
       );
-      assert(Math.abs(beginning.series[0].values[0] - 1.6) < 1e-12);
+      assert.equal(beginning.series[0].values[0], 1);
       // The left boundary is inclusive; one millisecond later that play expires.
       const afterBoundary = await getCompetitionInsights(
         user,
@@ -164,7 +184,7 @@ test(
         new Date(start + 1),
         new Date(start + DAY),
       );
-      assert(Math.abs(afterBoundary.series[0].values[0] - 1.8) < 1e-12);
+      assert.equal(afterBoundary.series[0].values[0], 1);
       const quiet = await getCompetitionInsights(
         user,
         ids,
