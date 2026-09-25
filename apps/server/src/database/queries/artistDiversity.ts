@@ -47,8 +47,9 @@ export function artistDiversity(
 export function artistDiversityStages(
   bounds: TimelineBounds,
   start: Date,
+  windowMs = DIVERSITY_WINDOW_MS,
 ): PipelineStage.FacetPipelineStage[] {
-  // A play at s belongs to the sample at t exactly when t - 30d <= s < t.
+  // A play at s belongs to the sample at t exactly when t - windowMs <= s < t.
   // Derive entry/expiry indices from actual timestamps, independently of the
   // display resolution: no approximation using wide multi-year chart bins.
   const changeAt = (offset: number) => ({
@@ -77,7 +78,7 @@ export function artistDiversityStages(
         changes: [
           { bucket: changeAt(0), durationMs: "$durationMs" },
           {
-            bucket: changeAt(DIVERSITY_WINDOW_MS),
+            bucket: changeAt(windowMs),
             durationMs: { $multiply: ["$durationMs", -1] },
           },
         ],
@@ -99,9 +100,23 @@ export async function getPersonalArtistDiversity(
   start: Date,
   end: Date,
   period: OverviewPeriod = "custom",
+  requestedWindowDays?: number,
 ) {
   const plan = overviewPlan(start, end, period, statisticsTimezone(user));
   start = new Date(plan.start);
+  const spanDays = (end.getTime() - start.getTime()) / DAY_MS;
+  const windowDays =
+    requestedWindowDays ??
+    (spanDays <= 90
+      ? 7
+      : spanDays <= 366
+        ? 30
+        : spanDays <= 3 * 366
+          ? 90
+          : spanDays <= 6 * 366
+            ? 180
+            : 365);
+  const windowMs = windowDays * DAY_MS;
   const cutoff = new Date(Math.min(end.getTime(), Date.now()));
   const bounds = timelineBounds(start, cutoff > start ? cutoff : end, 200);
   const changes =
@@ -111,7 +126,7 @@ export async function getPersonalArtistDiversity(
             $match: {
               owner: user._id,
               played_at: {
-                $gte: new Date(start.getTime() - DIVERSITY_WINDOW_MS),
+                $gte: new Date(start.getTime() - windowMs),
                 $lt: cutoff,
               },
               blacklistedBy: { $exists: false },
@@ -122,12 +137,13 @@ export async function getPersonalArtistDiversity(
               },
             },
           },
-          ...artistDiversityStages(bounds, start),
+          ...artistDiversityStages(bounds, start, windowMs),
         ]).option({ maxTimeMS: 15_000, allowDiskUse: true })
       : [];
   return {
     ...bounds,
     timezone: statisticsTimezone(user),
+    windowDays,
     values: artistDiversity(
       bounds.count,
       changes.map((row) => ({

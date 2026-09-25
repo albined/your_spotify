@@ -1,6 +1,7 @@
 import { Grid } from "@mui/material";
 import { useSelector } from "react-redux";
 
+import ArtistDistribution from "../../components/ArtistDistribution/ArtistDistribution";
 import Header from "../../components/Header";
 import History from "../../components/History";
 import ArtistsListened from "../../components/ImplementedCards/ArtistsListened";
@@ -54,6 +55,9 @@ export default function Home() {
               <BestSong />
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 12 }}>
+              <ArtistDistribution />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
               <History />
             </Grid>
           </Grid>

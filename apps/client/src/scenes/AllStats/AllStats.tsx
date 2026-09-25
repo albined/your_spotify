@@ -3,9 +3,7 @@ import { useSelector } from "react-redux";
 
 import ArtistDistribution from "../../components/ArtistDistribution/ArtistDistribution";
 import Header from "../../components/Header";
-import ArtistListeningRepartition from "../../components/ImplementedCharts/ArtistListeningRepartition";
 import BestArtistsBar from "../../components/ImplementedCharts/BestArtistsBar";
-import BestOfHour from "../../components/ImplementedCharts/BestOfHour";
 import ListeningRepartition from "../../components/ImplementedCharts/ListeningRepartition";
 import SongsListenedPer from "../../components/ImplementedCharts/SongsListenedPer";
 import TimeListenedPer from "../../components/ImplementedCharts/TimeListenedPer";
@@ -40,12 +38,6 @@ export default function AllStats() {
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 6 }}>
               <ListeningRepartition className={s.chart} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 12, lg: 6 }}>
-              <ArtistListeningRepartition className={s.chart} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 12, lg: 6 }}>
-              <BestOfHour className={s.chart} />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <ArtistDistribution />

@@ -35,5 +35,6 @@ export interface ListeningOverview {
 }
 
 export interface PersonalArtistDiversity extends TimelineBounds {
+  windowDays: number;
   values: (number | null)[];
 }

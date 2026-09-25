@@ -215,11 +215,11 @@ test(
         narrowed.series.map((item) => item.values.at(-1)),
         [1, 2, 0],
       );
-      // A long early reign must survive even when its final total ranks 12th.
+      // A substantial early reign survives even outside the final top ten.
       // These plays use a separate owner so competition fixtures stay intact.
       const historicalOwner = new mongoose.Types.ObjectId();
       await InfosModel.collection.insertMany([
-        makePlay(historicalOwner, 0, 0, 1),
+        makePlay(historicalOwner, 0, 0, 2),
         ...Array.from({ length: 11 }, (_, i) =>
           makePlay(historicalOwner, i + 1, 300, i + 2),
         ),
@@ -239,9 +239,9 @@ test(
         const prefix = kind.slice(0, -1);
         assert.deepEqual(
           result.series.map((row) => row.id),
-          [11, 10, 9, 8, 7, 0, 6, 5, 4, 3].map((i) => `${prefix}-${i}`),
+          [11, 10, 9, 8, 7, 6, 5, 4, 3, 0].map((i) => `${prefix}-${i}`),
         );
-        assert.equal(result.series[5].hours.at(-1), 1);
+        assert.equal(result.series[9].hours.at(-1), 2);
         const late = await getTopTimeline(
           { ...user, _id: historicalOwner },
           at(299),
