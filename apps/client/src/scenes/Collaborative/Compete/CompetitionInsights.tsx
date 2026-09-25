@@ -50,7 +50,7 @@ export default function CompetitionInsights({
     (data?.series.some((person) =>
       person.values.some((value) => value > 0),
     ) ? null : (
-      <p>No listening in these 30-day windows.</p>
+      <p>No listening in these {data?.windowDays}-day windows.</p>
     ));
   const hoursStatus =
     status ??
@@ -71,7 +71,7 @@ export default function CompetitionInsights({
   return (
     <div className={s.insights}>
       <TitleCard
-        title="Artist diversity · 30 days"
+        title={`Artist diversity${data ? ` · ${data.windowDays} days` : ""}`}
         contentClassName={s.chartContent}>
         {diversityStatus ??
           (data && (

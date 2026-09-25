@@ -314,13 +314,11 @@ export const api = {
     start: Date,
     end: Date,
     period: OverviewPeriod,
-    windowDays?: number,
   ) =>
     get<PersonalArtistDiversity>("/spotify/artist-diversity", {
       start,
       end,
       period,
-      windowDays,
     }),
   getDetailListening: (kind: ListeningItemKind, id: string) =>
     get<DetailListeningData | null>("/spotify/detail-listening", { kind, id }),

@@ -3,15 +3,12 @@ import { Types } from "mongoose";
 import { statisticsTimezone } from "../../tools/allTimeStart";
 import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
-import {
-  artistDiversity,
-  artistDiversityStages,
-  DIVERSITY_WINDOW_MS,
-} from "./artistDiversity";
+import { artistDiversity, artistDiversityStages } from "./artistDiversity";
 import { requireCompetitionParticipants } from "./competitionParticipants";
-import { timelineBounds } from "./listeningTimelineTools";
+import { diversityWindowDays } from "./diversityWindow";
+import { DAY_MS, timelineBounds } from "./listeningTimelineTools";
 
-export { artistDiversity, DIVERSITY_WINDOW_MS } from "./artistDiversity";
+export { artistDiversity } from "./artistDiversity";
 
 export async function getCompetitionInsights(
   user: User,
@@ -20,6 +17,8 @@ export async function getCompetitionInsights(
   end: Date,
 ) {
   const accounts = await requireCompetitionParticipants(userIds);
+  const windowDays = diversityWindowDays(start, end);
+  const windowMs = windowDays * DAY_MS;
   const cutoff = new Date(Math.min(end.getTime(), Date.now()));
   // Do not extrapolate rolling diversity into a future part of a date range.
   const bounds = timelineBounds(start, cutoff > start ? cutoff : end, 200);
@@ -37,7 +36,7 @@ export async function getCompetitionInsights(
         $match: {
           owner: new Types.ObjectId(account._id),
           played_at: {
-            $gte: new Date(start.getTime() - DIVERSITY_WINDOW_MS),
+            $gte: new Date(start.getTime() - windowMs),
             $lt: cutoff,
           },
           blacklistedBy: { $exists: false },
@@ -50,7 +49,7 @@ export async function getCompetitionInsights(
       },
       {
         $facet: {
-          artists: artistDiversityStages(bounds, start),
+          artists: artistDiversityStages(bounds, start, windowMs),
           hours: [
             // The warm-up history belongs only to diversity, not this histogram.
             { $match: { played_at: { $gte: start } } },
@@ -91,5 +90,10 @@ export async function getCompetitionInsights(
       ...(await Promise.all(accounts.slice(offset, offset + 4).map(load))),
     );
   }
-  return { ...bounds, timezone: statisticsTimezone(user), series: rows };
+  return {
+    ...bounds,
+    windowDays,
+    timezone: statisticsTimezone(user),
+    series: rows,
+  };
 }
