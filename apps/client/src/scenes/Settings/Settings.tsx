@@ -19,6 +19,7 @@ import AccountInfos from "./AccountInfos";
 import AllowRegistration from "./AllowRegistration";
 import AllTimeStartDate from "./AllTimeStartDate";
 import ArtistGroups from "./ArtistGroups/ArtistGroups";
+import Backups from "./Backups";
 import BlacklistArtist from "./BlacklistArtist";
 import CompetitionParticipation from "./CompetitionParticipation";
 import DarkMode from "./DarkMode";
@@ -26,6 +27,7 @@ import DateFormat from "./DateFormat";
 import DeleteUser from "./DeleteUser";
 import EnableAffinity from "./EnableAffinity";
 import Importer from "./Importer";
+import ListeningTime from "./ListeningTime";
 import PublicToken from "./PublicToken";
 import RelogToSpotify from "./RelogToSpotify";
 import SetAdmin from "./SetAdmin";
@@ -106,6 +108,7 @@ export default function Settings() {
               <div className={s.admin}>
                 {user.admin && !isPublic && <ArtistGroups />}
                 <Masonry>
+                  {user.admin && !isPublic && <Backups />}
                   {user.admin && !isPublic && <SetAdmin />}
                   {user.admin && !isPublic && <DeleteUser />}
                   {user.admin && !isPublic && (
@@ -122,6 +125,7 @@ export default function Settings() {
             path="/statistics"
             element={
               <Masonry>
+                {!isPublic && <ListeningTime />}
                 {!isPublic && <AllTimeStartDate />}
                 {!isPublic && <BlacklistArtist />}
                 {!isPublic && <Timezone />}

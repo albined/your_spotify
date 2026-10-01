@@ -21,6 +21,7 @@ export interface User {
     dateFormat: string;
     allTimeStartDate?: string | null;
     allowCompetitions?: boolean;
+    useFullSongDurations?: boolean;
     blacklistedArtists: string[] | undefined;
   };
   publicToken: string | null;

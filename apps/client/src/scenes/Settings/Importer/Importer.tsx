@@ -1,124 +1,163 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  CircularProgress,
+  Button,
+  Checkbox,
   FormControl,
+  FormControlLabel,
   InputLabel,
-  LinearProgress,
   MenuItem,
   Select,
+  TextField,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { getImports } from "../../../services/redux/modules/import/thunk";
-import { selectImportStates } from "../../../services/redux/modules/import/selector";
-import { ImporterStateType } from "../../../services/redux/modules/import/types";
-import Text from "../../../components/Text";
-import { useAppDispatch } from "../../../services/redux/tools";
+
 import TitleCard from "../../../components/TitleCard";
+import { api } from "../../../services/apis/api";
+import { selectImportStates } from "../../../services/redux/modules/import/selector";
+import { getImports } from "../../../services/redux/modules/import/thunk";
+import { ImporterStateType } from "../../../services/redux/modules/import/types";
+import { useAppDispatch } from "../../../services/redux/tools";
 import ImportHistory from "./ImportHistory";
+import ImportReview from "./ImportReview";
+
+import textStyles from "../ListeningSettings.module.css";
 import s from "./index.module.css";
-import Privacy from "./Privacy";
-import FullPrivacy from "./FullPrivacy";
-import Deezer from "./Deezer";
-
-const ImportTypeToComponent: Record<ImporterStateType, any> = {
-  privacy: { label: "Account data", component: Privacy },
-  "full-privacy": {
-    label: "Extended streaming history",
-    component: FullPrivacy,
-  },
-  deezer: {
-    label: "Deezer listening history",
-    component: Deezer,
-  },
-};
-
-
-const REFRESH_IF_RUNNING_INTERVAL = 2000;
 
 export default function Importer() {
   const dispatch = useAppDispatch();
   const imports = useSelector(selectImportStates);
-  const [importType, setImportType] = useState<ImporterStateType>(
-    ImporterStateType.privacy,
-  );
-
-  // eslint-disable-next-line react-no-manual-memo/no-hook-memo
-  const fetch = useCallback(
-    (force = false) => dispatch(getImports(force)).catch(console.error),
-    [dispatch],
-  );
-
+  const [type, setType] = useState(ImporterStateType.fullPrivacy);
+  const [files, setFiles] = useState<File[]>([]);
+  const [selectionVersion, setSelectionVersion] = useState(0);
+  const [timezone, setTimezone] = useState("UTC");
+  const [repairLegacyDeezer, setRepairLegacyDeezer] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const running = imports?.some((st) => st.status === "progress");
   useEffect(() => {
-    fetch().catch(console.error);
-  }, [fetch]);
-
-  const running = imports?.find((st) => st.status === "progress");
-  const Component = importType
-    ? ImportTypeToComponent[importType].component
-    : null;
-
-  const isAtLeastOneImportRunning = Boolean(running);
-
-  const timeout = useRef<NodeJS.Timeout | undefined>(undefined);
-
+    void dispatch(getImports(true));
+  }, [dispatch]);
   useEffect(() => {
-    if (!isAtLeastOneImportRunning) {
-      return;
+    if (!running) return;
+    const timer = setInterval(() => void dispatch(getImports(true)), 2000);
+    return () => clearInterval(timer);
+  }, [dispatch, running]);
+  const prepare = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await api.prepareImport(
+        type,
+        files,
+        timezone,
+        type === "deezer" && repairLegacyDeezer,
+      );
+      setFiles([]);
+      setSelectionVersion((version) => version + 1);
+      await dispatch(getImports(true));
+    } catch {
+      setError(
+        "Could not read these files. Check the export type, timezone and file format, then try again.",
+      );
+    } finally {
+      setBusy(false);
     }
-    async function refresh() {
-      await fetch(true).catch(console.error);
-      timeout.current = setTimeout(refresh, REFRESH_IF_RUNNING_INTERVAL);
-    }
-
-    timeout.current = setTimeout(async () => {
-      await refresh();
-    }, REFRESH_IF_RUNNING_INTERVAL);
-
-    return () => clearTimeout(timeout.current);
-  }, [fetch, isAtLeastOneImportRunning]);
-
-  if (!imports) {
-    return <CircularProgress />;
-  }
-
+  };
   return (
-    <TitleCard title="Import data">
-      <div>
-        {running && (
-          <div>
-            <Text className={s.progress} size="normal">
-              Importing {running.current} of {running.total}
-            </Text>
-            <LinearProgress
-              style={{ width: "100%" }}
-              variant="determinate"
-              value={(running.current / running.total) * 100}
-            />
-          </div>
-        )}
-      </div>
+    <TitleCard
+      title="Import listening history"
+      contentClassName={textStyles.content}>
+      <p>
+        Imports add missing plays and correct listening time on matched plays.
+        Repeated imports keep existing plays without counting them twice.
+      </p>
       {!running && (
-        <div>
-          <FormControl className={s.selectimport}>
-            <InputLabel id="import-type-select">Import type</InputLabel>
+        <>
+          <FormControl className={s.selectimport} fullWidth>
+            <InputLabel id="import-type-select">Export type</InputLabel>
             <Select
               labelId="import-type-select"
-              value={importType}
-              label="Import type"
-              onChange={(ev) =>
-                setImportType(ev.target.value as ImporterStateType)
-              }>
-              {Object.values(ImporterStateType).map((typ) => (
-                <MenuItem value={typ} key={typ}>
-                  {ImportTypeToComponent[typ].label}
-                </MenuItem>
-              ))}
+              label="Export type"
+              value={type}
+              onChange={(event) => {
+                setType(event.target.value as ImporterStateType);
+                setFiles([]);
+              }}>
+              <MenuItem value="full-privacy">
+                Spotify extended streaming history
+              </MenuItem>
+              <MenuItem value="privacy">Spotify account data</MenuItem>
+              <MenuItem value="deezer">Deezer listening history</MenuItem>
             </Select>
           </FormControl>
-          {Component && <Component />}
-        </div>
+          {type === "deezer" && (
+            <>
+              <p>
+                Duplicate recordings at the same time use the longest listening
+                time. Missing listening time uses song length.
+              </p>
+              <TextField
+                label="Timezone of dates in the Deezer export"
+                value={timezone}
+                onChange={(event) => setTimezone(event.target.value)}
+                helperText="The file has no timezone. Confirm UTC or enter an IANA timezone, e.g. Europe/Stockholm."
+                fullWidth
+                margin="normal"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={repairLegacyDeezer}
+                    onChange={(event) =>
+                      setRepairLegacyDeezer(event.target.checked)
+                    }
+                  />
+                }
+                label="Repair versions from an earlier Deezer import"
+              />
+              {repairLegacyDeezer && (
+                <p>
+                  Use when you previously imported this Deezer history. A unique
+                  play at the exact export time can be reassigned to the
+                  confirmed version of the same song and artist. Its previous
+                  mapping is saved.
+                </p>
+              )}
+            </>
+          )}
+          <p>
+            Choose{" "}
+            {type === "deezer"
+              ? "the .xlsx export"
+              : "the streaming history .json files from your export"}
+            . Plays under 30 seconds are excluded.
+          </p>
+          <input
+            key={`${type}:${selectionVersion}`}
+            type="file"
+            aria-label="Listening history files"
+            multiple
+            disabled={busy}
+            accept={type === "deezer" ? ".xlsx" : ".json"}
+            onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
+          />
+          <p>{files.length > 0 && `${files.length} file(s) selected`}</p>
+          <Button
+            variant="contained"
+            disabled={busy || !files.length}
+            onClick={() => void prepare()}>
+            {busy ? "Checking files…" : "Check files"}
+          </Button>
+        </>
       )}
-      {imports.length > 0 && <ImportHistory />}
+      {error && <p role="alert">{error}</p>}
+      <ImportReview
+        running={Boolean(running)}
+        refreshKey={
+          imports?.map((st) => `${st._id}:${st.status}`).join(",") ?? ""
+        }
+      />
+      <ImportHistory />
     </TitleCard>
   );
 }
