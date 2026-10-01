@@ -19,6 +19,18 @@
 .delta {
   color: var(--text-secondary);
   display: inline-flex;
-  gap: 5px;
   font-size: 13px;
+}
+.deltaVisual {
+  display: inline-flex;
+  gap: 5px;
+}
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
