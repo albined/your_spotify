@@ -12,6 +12,13 @@ import type {
   ListeningItemKind,
 } from "../detailListening";
 import type {
+  ReviewCategory,
+  ReviewGroups,
+  ReviewCandidate,
+  ReviewSummary,
+  TimingReview,
+} from "../importReview";
+import type {
   ListeningOverview,
   OverviewPeriod,
   PersonalArtistDiversity,
@@ -377,37 +384,70 @@ export const api = {
         album: Album;
       }[]
     >("/spotify/top/albums", { start, end, nb, offset }),
+  listeningAccuracy: () =>
+    get<{
+      total: number;
+      reported: number;
+      latestReported: string | null;
+      lastImport: string | null;
+    }>("/imports/accuracy"),
+  backupStatus: () =>
+    get<{
+      enabled: boolean;
+      beforeImport: boolean;
+      running: boolean;
+      schedule: string;
+      retentionDays: number;
+      latest: string | null;
+      lastError: string | null;
+    }>("/imports/backups"),
+  getImportReview: (category: ReviewCategory) =>
+    get<ReviewGroups>("/imports/review", { category }),
+  getImportTiming: (group: string) =>
+    get<TimingReview>("/imports/review/timing", { group }),
+  applyImportTiming: (
+    group: string,
+    rowId: string,
+    token: string,
+    existingId: string | null,
+    exclude = false,
+  ) =>
+    post<{
+      outcome: "added" | "updated" | "unchanged" | "excluded";
+      deltaMs: number;
+    }>("/imports/review/timing", {
+      group,
+      rowId,
+      token,
+      existingId,
+      ...(exclude ? { exclude: true } : {}),
+    }),
+  getImportCandidates: (query: string) =>
+    get<{ candidates: ReviewCandidate[]; searchUnavailable: boolean }>(
+      "/imports/review/candidates",
+      { query },
+    ),
+  applyImportChoice: (group: string, track: string) =>
+    post<{ summary: ReviewSummary }>("/imports/review/apply", { group, track }),
+  markImportNoMatch: (group: string) =>
+    post<{ saved: boolean }>("/imports/review/no-match", { group }),
+  reopenImportNoMatch: (group: string) =>
+    post<{ saved: boolean }>("/imports/review/reopen", { group }),
+  prepareImport: (
+    type: string,
+    files: File[],
+    timezone: string,
+    repairLegacyDeezer = false,
+  ) => {
+    const data = new FormData();
+    for (const file of files) data.append("imports", file);
+    data.append("timezone", timezone);
+    data.append("repairLegacyDeezer", String(repairLegacyDeezer));
+    return axios.post(`/import/${type}`, data);
+  },
+  startPreparedImport: (id: string) =>
+    axios.post("/import/start", { existingStateId: id }),
   getImports: () => get<ImporterState[]>("/imports"),
-  doImportPrivacy: (files: File[]) => {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append("imports", file);
-    });
-    return axios.post("/import/privacy", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-  doImportFullPrivacy: (files: File[]) => {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append("imports", file);
-    });
-    return axios.post("/import/full-privacy", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-  doImportDeezer: (files: File[]) => {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append("imports", file);
-    });
-    return axios.post("/import/deezer", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
-
-  retryImport: (existingStateId: string) =>
-    post("/import/retry", { existingStateId }),
   cleanupImport: (id: string) => delet(`/import/clean/${id}`),
   collaborativeBestSongs: (
     ids: string[],
