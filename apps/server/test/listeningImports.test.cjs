@@ -282,7 +282,7 @@ test(
               "song",
               new Date("2024-01-01T12:00:45Z"),
             ),
-            true,
+            false, // The saved listen already claimed the earlier API event.
           );
         },
       );
@@ -2131,6 +2131,145 @@ test(
           }
         },
       );
+      await t.test(
+        "export enrichment cannot consume a distinct API repeat at its end time",
+        async () => {
+          const owner = await UserModel.create({
+            username: "API identity",
+            spotifyId: "api-identity",
+            settings: { dateFormat: "default" },
+          });
+          const start = new Date("2027-01-01T12:00:00Z");
+          const end = new Date("2027-01-01T12:03:00Z");
+          const apiKey = (at) => `api:song:${at.toISOString()}`;
+          const original = await InfosModel.create(
+            live({
+              owner: owner._id,
+              played_at: start,
+              sourceKeys: [apiKey(start)],
+            }),
+          );
+          const entry = row({
+            key: "api-identity-export",
+            at: end,
+            listenedMs: 180000,
+          });
+          assert.equal(
+            (await reconcileImport(owner, entry, track, "enrich", 0)).outcome,
+            "updated",
+          );
+          assert.equal(await hasLivePlay(owner._id, "song", start), true);
+          assert.equal(await hasLivePlay(owner._id, "song", end), false);
+          // Exercise the polling decision and persistence under its write lock.
+          await longWriteDbLock.lock();
+          try {
+            if (!(await hasLivePlay(owner._id, "song", end)))
+              await InfosModel.create(
+                live({
+                  owner: owner._id,
+                  played_at: end,
+                  sourceKeys: [apiKey(end)],
+                }),
+              );
+          } finally {
+            longWriteDbLock.unlock();
+          }
+          assert.equal(
+            await InfosModel.countDocuments({ owner: owner._id }),
+            2,
+          );
+          assert.equal(await hasLivePlay(owner._id, "song", end), true);
+          assert.equal(
+            (await reconcileImport(owner, entry, track, "repeat", 0)).outcome,
+            "unchanged",
+          );
+          const saved = await InfosModel.findById(original._id);
+          assert.equal(+saved.played_at, +start);
+          assert.equal(+saved.sourceEndedAt, +end);
+          assert.equal(saved.listenedMs, 180000);
+          assert(saved.sourceKeys.includes(apiKey(start)));
+          assert(!saved.sourceKeys.includes(apiKey(end)));
+        },
+      );
+      for (const claimEnd of [false, true])
+        await t.test(
+          `an export-only listen durably claims one API event (${claimEnd ? "end" : "start"} first), including release aliases`,
+          async () => {
+            const owner = await UserModel.create({
+              username: "Export first",
+              spotifyId: `export-first-${claimEnd}`,
+              settings: { dateFormat: "default" },
+            });
+            const release = await TrackModel.findOne({
+              id: "old-release",
+            }).lean();
+            const end = new Date("2027-02-01T12:03:00Z");
+            const start = new Date(+end - 180000);
+            await reconcileImport(
+              owner,
+              row({
+                key: "export-first",
+                at: end,
+                listenedMs: 180000,
+                spotifyId: release.id,
+                title: release.name,
+              }),
+              release,
+              "import",
+              0,
+            );
+            const claimed = claimEnd ? end : start;
+            const repeat = claimEnd ? start : end;
+            assert.equal(
+              await hasLivePlay(
+                owner._id,
+                "uncached-release",
+                claimed,
+                "TESTRECORDING",
+              ),
+              true,
+            );
+            const snapshot = await InfosModel.findOne({
+              owner: owner._id,
+            }).lean();
+            assert(
+              snapshot.sourceKeys.includes(
+                `api:uncached-release:${claimed.toISOString()}`,
+              ),
+            );
+            assert.equal(
+              await hasLivePlay(
+                owner._id,
+                "old-release",
+                claimed,
+                "TESTRECORDING",
+              ),
+              true,
+            );
+            assert.equal(
+              await hasLivePlay(
+                owner._id,
+                "new-release",
+                repeat,
+                "TESTRECORDING",
+              ),
+              false,
+            );
+            assert.equal(
+              await hasLivePlay(
+                owner._id,
+                "new-release",
+                new Date(+claimed + 500),
+                "TESTRECORDING",
+              ),
+              false,
+            );
+            assert.deepEqual(
+              await InfosModel.findOne({ owner: owner._id }).lean(),
+              snapshot,
+            );
+          },
+        );
     } finally {
       await mongoose.connection.dropDatabase();
       await mongoose.disconnect();

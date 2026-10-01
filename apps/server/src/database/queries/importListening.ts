@@ -440,13 +440,16 @@ export async function reconcileImport(
   return { outcome: "added", deltaMs, ...estimated };
 }
 
-/** Prevent the API from adding a second copy after an export was imported. */
+/** Check and durably claim an API event under the live-ingestion write lock. */
 export async function hasLivePlay(
   owner: Types.ObjectId,
   id: string,
   at: Date,
   isrc?: string,
 ) {
+  const sourceKey = `api:${id}:${at.toISOString()}`;
+  if (await InfosModel.exists(importSourceKeyFilter(owner, sourceKey)))
+    return true;
   const recording =
     isrc ??
     (await TrackModel.findOne({ id }).select("external_ids").lean())
@@ -463,19 +466,40 @@ export async function hasLivePlay(
         ).map((track) => track.id),
       ]
     : [id];
-  const exact = await InfosModel.exists({
+  const linked = await InfosModel.exists({
     owner,
     id: { $in: ids },
     provider: { $ne: "deezer" },
-    played_at: at,
+    // A claimed API release might not be cached yet. The saved recording's
+    // confirmed ISRC and exact API timestamp also establish a release alias.
+    sourceKeys: {
+      $regex: `^api:[^:]+:${at.toISOString().replace(/[.+]/g, "\\$&")}$`,
+    },
   });
-  if (exact) return true;
-  const matches = await InfosModel.aggregate([
+  if (linked) return true;
+  // Once linked, an export's start/end cannot claim a different API event.
+  const unclaimed = {
+    owner,
+    id: { $in: ids },
+    provider: { $ne: "deezer" as const },
+    sourceKeys: { $not: { $elemMatch: { $regex: "^api:" } } },
+  };
+  const claim = async (_id: Types.ObjectId) => {
+    const result = await InfosModel.updateOne(
+      { ...unclaimed, _id },
+      { $addToSet: { sourceKeys: sourceKey }, $set: { provider: "spotify" } },
+    );
+    return result.modifiedCount === 1;
+  };
+  const exact = await InfosModel.findOne({
+    ...unclaimed,
+    played_at: at,
+  }).select("_id");
+  if (exact) return claim(exact._id);
+  const matches = await InfosModel.aggregate<{ _id: Types.ObjectId }>([
     {
       $match: {
-        owner,
-        id: { $in: ids },
-        provider: { $ne: "deezer" },
+        ...unclaimed,
         sourceEndedAt: {
           $gte: new Date(at.getTime() - 60000),
           $lte: new Date(at.getTime() + 86400000),
@@ -518,7 +542,8 @@ export async function hasLivePlay(
         },
       },
     },
-    { $limit: 1 },
+    { $project: { _id: 1 } },
+    { $limit: 2 },
   ]);
-  return matches.length > 0;
+  return matches.length === 1 && claim(matches[0]!._id);
 }
