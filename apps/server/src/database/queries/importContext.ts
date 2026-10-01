@@ -26,6 +26,7 @@ export class ImportContext {
   reviewMapping?: { id: string; trackId: string };
   holdUnmatched = false;
   private spotifyEvents = new Map<string, ImportRecord[]>();
+  private unresolvedSpotifyEvents?: ImportRecord[];
   private privacyEvents = new Map<string, Set<string>>();
   private spotifyStart = Infinity;
   private spotifyEnd = -Infinity;
@@ -56,6 +57,41 @@ export class ImportContext {
     return this.privacyEvents.get(`${key}:${row.listenedMs}`)?.size === 1
       ? key
       : undefined;
+  }
+
+  hasUnresolvedSpotifyCompetitor(
+    row: ImportRecord,
+    plays: Infos[],
+    ids: string[],
+  ) {
+    if (row.source !== "full-privacy" || !plays.length) return false;
+    const unresolved = (this.unresolvedSpotifyEvents ??= [
+      ...this.spotifyEvents,
+    ].flatMap(([id, events]) =>
+      this.ids.get(id)?.external_ids?.isrc ? [] : events,
+    ));
+    if (!unresolved.length) return false;
+    const known = [...new Set([...ids, row.spotifyId!])]
+      .flatMap((id) => this.spotifyEvents.get(id) ?? [])
+      .filter((event) => (event.listenedMs ?? 0) >= 30000);
+    const distances = plays.map((play) => ({
+      at: play.played_at.getTime(),
+      nearest: known.reduce(
+        (best, event) =>
+          Math.min(
+            best,
+            Math.abs(event.at.getTime() - play.played_at.getTime()),
+          ),
+        Infinity,
+      ),
+    }));
+    return unresolved.some(
+      (event) =>
+        event.spotifyId !== row.spotifyId &&
+        distances.some(
+          ({ at, nearest }) => Math.abs(event.at.getTime() - at) <= nearest,
+        ),
+    );
   }
 
   /** Prefer the precise export's qualifying plays over uncertain API timing. */
@@ -285,6 +321,7 @@ export class ImportContext {
       // Metadata may be filled in after the catalog was first cached.
       const isrc = track.external_ids?.isrc?.toUpperCase();
       if (isrc && !previous.external_ids?.isrc) {
+        this.unresolvedSpotifyEvents = undefined;
         previous.external_ids = { isrc };
         this.recordings.set(isrc, [
           ...(this.recordings.get(isrc) ?? []),
@@ -293,6 +330,7 @@ export class ImportContext {
       }
       return;
     }
+    this.unresolvedSpotifyEvents = undefined;
     this.ids.set(track.id, track);
     const title = normalized(track.name);
     this.titles.set(title, [...(this.titles.get(title) ?? []), track]);

@@ -2277,3 +2277,191 @@ test(
     }
   },
 );
+
+test(
+  "fresh cross-release imports agree across metadata caches and file orders",
+  { skip: !process.env.TIMELINE_TEST_MONGO_URI },
+  async (t) => {
+    const mongoose = require("mongoose");
+    const {
+      InfosModel,
+      UserModel,
+      TrackModel,
+      AlbumModel,
+      ArtistModel,
+      ImporterStateModel,
+      ImportReviewModel,
+    } = require("../src/database/Models");
+    const { SpotifyAPI } = require("../src/tools/apis/spotifyApi");
+    const {
+      prepareImport,
+      runImporter,
+    } = require("../src/tools/importers/importer");
+    const original = SpotifyAPI.prototype.getTracks;
+    const dir = await mkdtemp(join(tmpdir(), "spotify-alias-order-"));
+    const base = {
+      name: "Recording",
+      album: "album",
+      artists: ["artist"],
+      duration_ms: 240000,
+      external_ids: { isrc: "SAME" },
+    };
+    const source = (id, ts) => ({
+      ts,
+      ms_played: 240000,
+      spotify_track_uri: `spotify:track:${id}`,
+      master_metadata_track_name: id === "filler" ? "Other" : "Recording",
+      master_metadata_album_artist_name: "Artist",
+    });
+    let expected;
+    try {
+      for (const cached of [
+        "absent",
+        "complete",
+        "missing-isrc",
+        "relinked",
+        "unavailable",
+      ])
+        for (const reverse of [false, true])
+          await t.test(
+            `${cached}, ${reverse ? "B first" : "A first"}`,
+            async () => {
+              await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
+                dbName: `alias_order_${Date.now()}_${cached}_${reverse}`,
+              });
+              try {
+                await InfosModel.createIndexes();
+                await ImportReviewModel.createIndexes();
+                const owner = await UserModel.create({
+                  username: "Alias import",
+                  spotifyId: "alias-import",
+                  settings: { dateFormat: "default" },
+                });
+                await AlbumModel.create({ id: "album", artists: ["artist"] });
+                await ArtistModel.create({ id: "artist", name: "Artist" });
+                await TrackModel.create([
+                  { ...base, id: "releaseA" },
+                  {
+                    ...base,
+                    id: "filler",
+                    name: "Other",
+                    external_ids: { isrc: "OTHER" },
+                  },
+                  ...(["absent", "relinked", "unavailable"].includes(cached)
+                    ? []
+                    : [
+                        {
+                          ...base,
+                          id: "releaseB",
+                          external_ids:
+                            cached === "complete"
+                              ? base.external_ids
+                              : undefined,
+                        },
+                      ]),
+                ]);
+                const originalPlay = await InfosModel.create({
+                  owner: owner._id,
+                  id: "releaseA",
+                  albumId: "album",
+                  primaryArtistId: "artist",
+                  durationMs: 240000,
+                  provider: "spotify",
+                  played_at: new Date("2027-01-02T00:02:00Z"),
+                  sourceKeys: ["api:releaseA:2027-01-02T00:02:00.000Z"],
+                });
+                const requests = [];
+                SpotifyAPI.prototype.getTracks = async (ids) => {
+                  requests.push(...ids);
+                  return ids.map((id) =>
+                    cached === "unavailable"
+                      ? undefined
+                      : {
+                          ...base,
+                          id: cached === "relinked" ? "replacement" : id,
+                          album: { id: "album" },
+                          artists: [{ id: "artist", name: "Artist" }],
+                        },
+                  );
+                };
+                const files = [join(dir, "a.json"), join(dir, "b.json")];
+                for (const [index, file] of files.entries())
+                  await writeFile(
+                    file,
+                    JSON.stringify([
+                      source(
+                        index ? "releaseB" : "releaseA",
+                        index ? "2027-01-02T00:02:00Z" : "2027-01-01T23:58:00Z",
+                      ),
+                      ...Array.from({ length: 100 }, (_, i) =>
+                        source(
+                          "filler",
+                          new Date(
+                            Date.UTC(2026, 0, 1, index, i),
+                          ).toISOString(),
+                        ),
+                      ),
+                    ]),
+                  );
+                const rows = await readImportRecords("full-privacy", files);
+                const job = await prepareImport(
+                  owner,
+                  "full-privacy",
+                  reverse ? [...files].reverse() : files,
+                );
+                await runImporter(String(job._id), owner);
+                const receipt = await ImporterStateModel.findById(job._id);
+                assert.equal(receipt.status, "success", receipt.error);
+                assert.deepEqual(
+                  requests,
+                  cached === "complete" ? [] : ["releaseB"],
+                );
+                if (cached === "unavailable") {
+                  assert.equal(receipt.summary.ambiguous, 1);
+                  assert.equal(receipt.summary.unresolved, 1);
+                  const saved = await InfosModel.findById(originalPlay._id);
+                  assert.deepEqual(saved.sourceKeys, originalPlay.sourceKeys);
+                  assert.equal(saved.listenedMs, undefined);
+                  assert.equal(
+                    await InfosModel.countDocuments({
+                      owner: owner._id,
+                      id: "releaseA",
+                    }),
+                    1,
+                  );
+                  return;
+                }
+                assert.equal(receipt.summary.ambiguous, 0);
+                const assignments = [];
+                for (const id of ["releaseA", "releaseB"]) {
+                  const entry = rows.find((row) => row.spotifyId === id);
+                  const plays = await InfosModel.find({
+                    owner: owner._id,
+                    sourceKeys: entry.key,
+                  });
+                  assert.equal(plays.length, 1);
+                  assignments.push({
+                    key: entry.key,
+                    at: plays[0].played_at.toISOString(),
+                    api: plays[0]._id.equals(originalPlay._id),
+                  });
+                  assert.equal(+plays[0].played_at, +entry.at);
+                  assert.equal(
+                    plays[0]._id.equals(originalPlay._id),
+                    id === "releaseB",
+                  );
+                }
+                if (expected) assert.deepEqual(assignments, expected);
+                else expected = assignments;
+              } finally {
+                await mongoose.connection.dropDatabase();
+                await mongoose.disconnect();
+              }
+            },
+          );
+    } finally {
+      SpotifyAPI.prototype.getTracks = original;
+      await rm(dir, { recursive: true, force: true });
+    }
+  },
+);
