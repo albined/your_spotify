@@ -10,7 +10,7 @@
 
 .sider {
   position: fixed;
-  width: 250px;
+  width: 228px;
   z-index: 1;
 }
 
@@ -21,5 +21,5 @@
 }
 
 .contentdrawer {
-  padding-left: 250px;
+  padding-left: 228px;
 }

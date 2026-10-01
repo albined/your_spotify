@@ -1,7 +1,9 @@
-import { Ref } from "react";
 import { Paper } from "@mui/material";
 import clsx from "clsx";
+import { Ref } from "react";
+
 import Text from "../Text";
+
 import s from "./index.module.css";
 
 interface ChartCardProps {
@@ -26,7 +28,7 @@ function ChartCard({
       ref={ref}
       className={clsx(s.root, className, { [s.noborder]: noBorder })}>
       <div className={s.title}>
-        <Text size="big" weight="bold">
+        <Text size="normal" weight="bold">
           {title}
         </Text>
         {right}

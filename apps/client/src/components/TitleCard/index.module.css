@@ -1,7 +1,7 @@
 .root {
-  background-color: var(--background);
+  background-color: var(--card-background, var(--surface-card));
   box-shadow: var(--shadow) !important;
-  border-radius: 6px;
+  border-radius: var(--radius);
   border: var(--content-border);
 }
 
@@ -10,7 +10,7 @@
 }
 
 .container {
-  padding: 16px 20px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -23,7 +23,7 @@
 .title {
   display: flex;
   align-items: center;
-  padding-bottom: 16px;
+  padding-bottom: 14px;
 }
 
 .title > :last-child {
@@ -41,4 +41,13 @@
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
+}
+
+.title h3 {
+  font-weight: 600;
+}
+@media (max-width: 600px) {
+  .container {
+    padding: 18px 16px;
+  }
 }

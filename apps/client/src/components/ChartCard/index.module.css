@@ -2,6 +2,7 @@
   box-shadow: var(--shadow) !important;
   background-color: var(--background) !important;
   border: var(--content-border) !important;
+  border-radius: var(--radius) !important;
   position: relative;
 }
 
@@ -14,10 +15,11 @@
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 16px;
+  padding: 20px 24px 14px;
 }
 
 .content {
+  border-radius: var(--radius) !important;
   position: relative;
   height: 92%;
   padding-bottom: 32px;

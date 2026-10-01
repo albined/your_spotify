@@ -2,11 +2,13 @@ import {
   LineChart,
   Line as RLine,
   ResponsiveContainer,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
 } from "recharts";
 import { ContentType } from "recharts/types/component/Tooltip";
+
 import { DateWithPrecision } from "../../../services/stats";
 
 interface LineProps<
@@ -28,26 +30,34 @@ export default function Line<
           connectNulls
           type="monotone"
           dataKey="y"
-          fill="var(--primary)"
-          stroke="var(--primary)"
+          fill="var(--accent-green)"
+          stroke="var(--accent-green)"
           strokeWidth={2}
           dot={false}
+        />
+        <CartesianGrid
+          vertical={false}
+          stroke="var(--chart-grid)"
+          strokeDasharray="3 5"
         />
         <XAxis
           name="X"
           domain={["dataMin", "dataMax"]}
           dataKey="x"
           tickFormatter={xFormat}
-          style={{ fontWeight: "bold" }}
+          axisLine={false}
+          tickLine={false}
         />
         <YAxis
+          axisLine={false}
+          tickLine={false}
           domain={["dataMin", "dataMax"]}
           tickFormatter={yFormat}
           width="auto"
         />
         <Tooltip
           wrapperStyle={{ zIndex: 10 }}
-          contentStyle={{ backgroundColor: "var(--background)" }}
+          contentStyle={{ backgroundColor: "var(--surface-raised)" }}
           labelStyle={{ color: "var(--text-on-light)" }}
           content={customTooltip}
         />

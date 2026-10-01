@@ -1,15 +1,17 @@
-import { useSelector } from "react-redux";
-import clsx from "clsx";
 import { Skeleton } from "@mui/material";
+import { useSelector } from "react-redux";
+
 import { api } from "../../../services/apis/api";
 import { useAPI } from "../../../services/hooks/hooks";
-import { Timesplit } from "../../../services/types";
-import TitleCard from "../../TitleCard";
-import { ImplementedCardProps } from "../types";
-import s from "../index.module.css";
-import { getLastPeriod, getPercentMore } from "../../../services/stats";
 import { selectRawIntervalDetail } from "../../../services/redux/modules/user/selector";
+import { getLastPeriod, getPercentMore } from "../../../services/stats";
+import { Timesplit } from "../../../services/types";
 import Text from "../../Text";
+import TitleCard from "../../TitleCard";
+import ListeningChange from "../ListeningChange";
+import { ImplementedCardProps } from "../types";
+
+import s from "../index.module.css";
 
 interface ArtistsListenedProps extends ImplementedCardProps {}
 
@@ -52,22 +54,10 @@ export default function ArtistsListened({ className }: ArtistsListenedProps) {
   return (
     <TitleCard title="Artists listened" className={className} fade>
       <div className={s.root}>
-        <Text size="huge">{count} different</Text>
-        <Text size="normal">
-          <Text
-            element="strong"
-            size="normal"
-            className={clsx({
-              [s.more]: percentMore >= 0,
-              [s.less]: percentMore < 0,
-            })}>
-            {Math.abs(percentMore)}%
-          </Text>
-          <Text size="normal">
-            &nbsp;
-            {percentMore < 0 ? "less" : "more"} than last {unit}
-          </Text>
+        <Text size="huge" className={s.value}>
+          {count} different
         </Text>
+        <ListeningChange percent={percentMore} unit={unit} />
       </div>
     </TitleCard>
   );

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useCallback } from "react";
 import {
+  CartesianGrid,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -55,6 +56,11 @@ export default function ArtistDiversity({ className }: { className?: string }) {
               data={points}
               margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
               accessibilityLayer>
+              <CartesianGrid
+                vertical={false}
+                stroke="var(--chart-grid)"
+                strokeDasharray="3 5"
+              />
               <XAxis
                 dataKey="timestamp"
                 type="number"
@@ -64,7 +70,7 @@ export default function ArtistDiversity({ className }: { className?: string }) {
                 axisLine={false}
                 tickLine={false}
                 minTickGap={30}
-                tick={{ fill: "var(--text-on-light)", fontSize: 11 }}
+                tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
               />
               <YAxis
                 domain={[0, "auto"]}
@@ -72,7 +78,7 @@ export default function ArtistDiversity({ className }: { className?: string }) {
                 tickFormatter={formatValue}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "var(--text-on-light)", fontSize: 11 }}
+                tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
               />
               <Tooltip
                 labelFormatter={(value) => date.full(Number(value))}
@@ -91,7 +97,7 @@ export default function ArtistDiversity({ className }: { className?: string }) {
               <Line
                 dataKey="value"
                 type="linear"
-                stroke="var(--primary)"
+                stroke="var(--accent-purple)"
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}

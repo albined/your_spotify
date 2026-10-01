@@ -1,25 +1,24 @@
 .root {
   display: flex;
-  flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: baseline;
+  gap: 10px 16px;
 }
-
 .twonumbers {
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
+  align-items: baseline;
   gap: 8px;
 }
-
-.twonumbers > :last-child {
-  transform: translateY(-2px);
+.value {
+  font-size: 30px !important;
+  font-weight: 500;
+  color: var(--text-strong);
+  letter-spacing: -0.5px;
 }
-
-.more {
-  color: green;
-}
-
-.less {
-  color: red;
+.delta {
+  color: var(--text-secondary);
+  display: inline-flex;
+  gap: 5px;
+  font-size: 13px;
 }

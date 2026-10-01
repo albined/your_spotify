@@ -1,28 +1,26 @@
-import { Settings, SettingsOutlined } from "@mui/icons-material";
+import { CalendarMonthOutlined } from "@mui/icons-material";
 import {
   SelectProps,
   Button,
-  FormControlLabel,
   IconButton,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
+  useMediaQuery,
 } from "@mui/material";
-import React, { useState } from "react";
 import { endOfDay, startOfDay } from "date-fns";
+import React, { useId, useState } from "react";
+
 import { getAppropriateTimesplitFromRange } from "../../services/date";
-import { useMobile } from "../../services/hooks/hooks";
 import {
   allIntervals,
   getAllIndexFromIntervalDetail,
   IntervalDetail,
 } from "../../services/intervals";
 import Dialog from "../Dialog";
-import Text from "../Text";
-import s from "./index.module.css";
 import RangePicker from "./RangePicker";
 import { Range } from "./RangePicker/RangePicker";
+
+import s from "./index.module.css";
 
 interface IntervalSelectorProps {
   value: IntervalDetail;
@@ -37,7 +35,8 @@ export function IntervalSelector({
   selectType,
   forceTiny,
 }: IntervalSelectorProps) {
-  const upmd = !useMobile()[1] && !forceTiny;
+  const upmd = useMediaQuery("(min-width: 1200px)") && !forceTiny;
+  const groupName = useId();
   const [open, setOpen] = useState(false);
   const [customIntervalDate, setCustomIntervalDate] = useState<Range>([
     undefined,
@@ -63,7 +62,10 @@ export function IntervalSelector({
   if (!upmd) {
     content = (
       <Select
-        variant={selectType}
+        variant={selectType ?? "outlined"}
+        size="small"
+        className={s.compact}
+        inputProps={{ "aria-label": "Listening period" }}
         value={existingInterval}
         onChange={(ev) => internOnChange(ev.target.value as number)}>
         {allIntervals.map((inter, index) => (
@@ -78,25 +80,32 @@ export function IntervalSelector({
     );
   } else {
     content = (
-      <div className={s.radiogroup}>
-        <RadioGroup
-          row
-          value={existingInterval}
-          onChange={(ev) =>
-            internOnChange(ev.target.value as unknown as number)
-          }
-          name="interval radio group">
+      <div className={s.segmented}>
+        <div
+          className={s.options}
+          role="radiogroup"
+          aria-label="Listening period">
           {allIntervals.map((inter, index) => (
-            <FormControlLabel
-              key={inter.name}
-              value={index}
-              control={<Radio />}
-              label={<Text size="normal">{inter.name}</Text>}
-            />
+            <label key={inter.name} className={s.segment}>
+              <input
+                type="radio"
+                name={groupName}
+                value={index}
+                checked={existingInterval === index}
+                onChange={() => internOnChange(index)}
+              />
+              <span>{inter.name}</span>
+            </label>
           ))}
-        </RadioGroup>
-        <IconButton size="small" onClick={() => setOpen(true)}>
-          {existingInterval === -1 ? <Settings /> : <SettingsOutlined />}
+        </div>
+        <IconButton
+          size="small"
+          aria-label="Custom date range"
+          aria-haspopup="dialog"
+          aria-pressed={existingInterval === -1}
+          className={s.custom}
+          onClick={() => setOpen(true)}>
+          <CalendarMonthOutlined fontSize="small" />
         </IconButton>
       </div>
     );

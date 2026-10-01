@@ -39,7 +39,7 @@ export function VolumeTick({
       y={y}
       dy="0.35em"
       textAnchor="end"
-      fill="var(--text-on-light)"
+      fill="var(--text-tertiary)"
       fontSize={11}>
       {format(payload.value)}
     </text>

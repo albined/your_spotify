@@ -12,7 +12,7 @@
   padding: 8px;
   padding-left: 16px;
   padding-right: 16px;
-  border-radius: 20px;
+  border-radius: 12px;
 }
 
 .search {
@@ -20,7 +20,8 @@
   border-radius: 10px;
   width: 100%;
   border: none;
-  outline: none;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font-size: 20px;
   font-family: var(--font);
 }

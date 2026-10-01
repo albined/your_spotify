@@ -15,25 +15,22 @@
 }
 
 .reference {
-  color: var(--text-on-light);
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  opacity: 0.65;
+  color: var(--text-secondary);
   margin-left: 8px;
 }
 
 .swatch {
   width: 16px;
   height: 1.5px;
-  background: var(--primary);
-  opacity: 0.35;
+  background: var(--chart-reference);
 }
 
 .averageMarker {
-  color: var(--text-on-light);
-  opacity: 0.65;
+  color: var(--text-secondary);
 }
 
 .averageMarker:focus-visible {
@@ -42,10 +39,10 @@
 }
 
 .tooltip {
-  background: var(--background);
+  background: var(--surface-raised);
   color: var(--text-on-light);
-  border: var(--content-border);
-  box-shadow: var(--shadow);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--overlay-shadow);
   border-radius: 6px;
   padding: 10px 12px;
   display: flex;
@@ -56,5 +53,5 @@
 }
 
 .referenceValue {
-  opacity: 0.7;
+  color: var(--text-secondary);
 }

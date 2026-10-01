@@ -1,11 +1,57 @@
-.radiogroup {
-  display: flex;
+.segmented {
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-card);
+  border-radius: 10px;
+  max-width: 100%;
 }
-
+.options {
+  display: flex;
+  gap: 2px;
+}
+.segment {
+  position: relative;
+  cursor: pointer;
+}
+.segment input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.segment span {
+  display: block;
+  padding: 10px 11px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  border-radius: 7px;
+}
+.segment:hover span {
+  background: var(--surface-raised);
+}
+.segment input:checked + span {
+  background: var(--surface-selected);
+  color: var(--text-strong);
+}
+.segment input:focus-visible + span {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.custom[aria-pressed="true"] {
+  background: var(--surface-selected);
+  color: var(--text-strong);
+}
+.compact {
+  min-width: 150px;
+  background: var(--surface-card);
+}
 .dialogcontent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  gap: 12px;
 }
