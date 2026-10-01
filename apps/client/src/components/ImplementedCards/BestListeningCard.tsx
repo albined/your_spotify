@@ -1,10 +1,11 @@
 import { Button, Skeleton } from "@mui/material";
 import clsx from "clsx";
-import { useCallback } from "react";
+import { CSSProperties, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import { api } from "../../services/apis/api";
+import { useArtworkTint } from "../../services/artworkTint";
 import { useListeningRequest } from "../../services/listeningTimeline";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import { msToMinutes } from "../../services/stats";
@@ -59,6 +60,7 @@ export default function BestListeningCard({
   }, [start, end, kind]);
   const { data, error, retry } = useListeningRequest(request);
   const winner = data?.[0];
+  const tint = useArtworkTint(winner?.image);
   const runners = data?.slice(1, 3) ?? [];
   const countLabel = (count: number) =>
     kind === "artist"
@@ -70,6 +72,7 @@ export default function BestListeningCard({
         : "plays";
   return (
     <TitleCard
+      style={tint ? ({ "--hero-tint": tint } as CSSProperties) : undefined}
       title={kind === "artist" ? "Best artist" : "Best song"}
       className={clsx(s.root, className)}
       contentClassName={s.content}>

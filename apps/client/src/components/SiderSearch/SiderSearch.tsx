@@ -1,14 +1,16 @@
 import { Popover } from "@mui/material";
 import clsx from "clsx";
 import { useRef, useState } from "react";
+
 import { api } from "../../services/apis/api";
 import { useConditionalAPI } from "../../services/hooks/hooks";
-import { Album, Artist, Track } from "../../services/types";
 import { useRegisterShortcut } from "../../services/shortcuts";
-import s from "./index.module.css";
-import { SearchPaper } from "./searchPaper/searchPaper";
-import { AbsoluteShortcut } from "../shortcut/shortcut";
 import { compact } from "../../services/tools";
+import { Album, Artist, Track } from "../../services/types";
+import { AbsoluteShortcut } from "../shortcut/shortcut";
+import { SearchPaper } from "./searchPaper/searchPaper";
+
+import s from "./index.module.css";
 
 interface SiderSearchProps {
   onTrackClick?: (track: Track) => void;
@@ -66,15 +68,15 @@ export default function SiderSearch({
 
   return (
     <>
-      <div
+      <button
+        type="button"
         className={clsx(s.input, inputClassname)}
-        role="button"
         onClick={() => setOpen(true)}>
         Search...
         {showShortcut && (
           <AbsoluteShortcut sequence="Meta+k" right={8} top={8} />
         )}
-      </div>
+      </button>
 
       <div
         ref={wrapperRef}
@@ -98,7 +100,7 @@ export default function SiderSearch({
           slotProps={{
             paper: {
               style: {
-                borderRadius: 20,
+                borderRadius: 12,
                 overflow: "hidden",
                 width: "min(600px, 95vw)",
               },

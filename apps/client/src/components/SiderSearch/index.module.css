@@ -1,17 +1,20 @@
 .input {
+  --shortcut-background: var(--sidebar-active);
   border: none;
   font-size: unset;
-  outline: none;
-  background-color: var(--secondary-dark);
-  color: lightgrey;
-  border-radius: var(--radius);
-  padding: 8px;
-  margin-bottom: 32px;
+  background-color: var(--sidebar-surface);
+  color: var(--sidebar-text);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: left;
+  font-family: var(--font);
+  font-size: 14px;
+  margin-bottom: 24px;
   width: 100%;
   cursor: pointer;
   position: relative;
 }
 
 .input:hover {
-  background-color: var(--secondary-dark-hover);
+  background-color: var(--sidebar-active);
 }

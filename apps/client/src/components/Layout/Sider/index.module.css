@@ -1,9 +1,9 @@
 .root {
   height: 100vh;
   overflow-y: scroll;
-  background-color: black;
-  color: white;
-  padding: 12px;
+  background-color: var(--sidebar-background);
+  color: var(--sidebar-strong);
+  padding: 26px 12px;
 }
 
 .root::-webkit-scrollbar {
@@ -19,7 +19,7 @@
   margin-top: 8px;
   margin-bottom: 32px;
   margin-left: 8px;
-  color: white;
+  color: var(--sidebar-strong);
 }
 
 .versionwrapper {
@@ -32,6 +32,6 @@
 }
 
 .version {
-  color: rgb(108, 108, 108);
+  color: var(--sidebar-text);
   transform: translateY(-1px);
 }

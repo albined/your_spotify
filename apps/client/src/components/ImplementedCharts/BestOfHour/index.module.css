@@ -16,9 +16,9 @@
 }
 
 .chart text {
-  fill: currentColor;
+  fill: var(--text-tertiary);
   font-size: 11px;
-  opacity: 0.6;
+  color: var(--text-secondary);
 }
 
 .tooltip {
@@ -33,10 +33,10 @@
   width: 240px;
   max-width: 100%;
   padding: 12px;
-  border: 1px solid rgba(var(--primary-tuple), 0.14);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: var(--background);
-  box-shadow: 0 6px 24px #0002;
+  background: var(--surface-raised);
+  box-shadow: var(--overlay-shadow);
   font-size: 12px;
 }
 
@@ -58,5 +58,5 @@
 }
 
 .tooltip span {
-  opacity: 0.7;
+  color: var(--text-secondary);
 }

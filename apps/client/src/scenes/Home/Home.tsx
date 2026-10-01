@@ -26,9 +26,9 @@ export default function Home() {
   return (
     <div>
       <Header
-        title={`Welcome, ${user.username} 🎉`}
+        title={`Welcome, ${user.username}`}
         tinyTitle="Welcome"
-        subtitle="Here is what happened for the period you chose on the right"
+        subtitle="Here is what happened for the period you chose."
       />
       <div className={s.content}>
         <ListeningOverviewProvider>

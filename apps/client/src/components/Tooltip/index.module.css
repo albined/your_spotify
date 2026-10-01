@@ -1,7 +1,9 @@
 .root {
   padding: 8px;
-  background-color: var(--content-background);
-  border: solid 1px var(--primary) !important;
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: var(--overlay-shadow);
   outline: none !important;
 }
 

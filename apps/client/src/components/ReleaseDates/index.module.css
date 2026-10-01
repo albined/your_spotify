@@ -16,14 +16,14 @@
 }
 
 .histogram text {
-  fill: currentColor;
-  opacity: 0.65;
+  fill: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .gridline {
-  stroke: currentColor;
-  opacity: 0.08;
+  stroke: var(--chart-grid);
+  stroke-dasharray: 3 5;
 }
 
 .bar:hover,
@@ -42,7 +42,7 @@
 }
 
 .rowLabel {
-  opacity: 0.75;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -63,7 +63,7 @@
 
 .dateLabel {
   white-space: nowrap;
-  opacity: 0.6;
+  color: var(--text-secondary);
   align-self: start;
   padding-top: 10px;
   font-size: 11px;

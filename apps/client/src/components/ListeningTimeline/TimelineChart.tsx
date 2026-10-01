@@ -25,8 +25,8 @@ import s from "./index.module.css";
 
 export const seriesColor = (index: number) =>
   index < 10
-    ? getColor([2, 10, 16, 4, 3, 5, 17, 26, 12, 24][index]!)
-    : `hsl(${(index * 137.508) % 360} 65% ${index % 2 ? 62 : 48}%)`;
+    ? getColor(index)
+    : `hsl(${(index * 137.508) % 360} 48% ${index % 2 ? 62 : 50}%)`;
 
 export function useTimelineDate(bounds: TimelineBounds) {
   const user = useSelector(selectUser);
@@ -119,23 +119,26 @@ export default function TimelineChart({
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
-              stroke="#888"
-              strokeOpacity={0.2}
+              stroke="var(--chart-grid)"
             />
             <XAxis
+              axisLine={false}
+              tickLine={false}
               dataKey="timestamp"
               type="number"
               scale="time"
               domain={[bounds.start, bounds.end]}
               tickFormatter={date.tick}
-              tick={{ fill: "var(--text-on-light)" }}
+              tick={{ fill: "var(--text-tertiary)" }}
               minTickGap={35}
             />
             <YAxis
+              axisLine={false}
+              tickLine={false}
               width={unit === "h/day" ? 80 : 65}
               allowDecimals={percent || unit === "h" || unit === "h/day"}
               tick={{
-                fill: "var(--text-on-light)",
+                fill: "var(--text-tertiary)",
                 ...(unit === "h/day" ? { fontSize: 12 } : {}),
               }}
               domain={percent ? [0, 100] : [0, "auto"]}

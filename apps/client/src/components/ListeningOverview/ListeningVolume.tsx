@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Area,
+  CartesianGrid,
   ComposedChart,
   Line,
   ReferenceLine,
@@ -41,7 +42,7 @@ function VolumeDot({
       cy={cy}
       r={3}
       fill="var(--background)"
-      stroke="var(--primary)"
+      stroke="var(--accent-green)"
       strokeWidth={1.5}
       opacity={payload?.partial ? 0.65 : 1}
     />
@@ -115,6 +116,11 @@ function VolumePlot({
           data={points}
           margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
           accessibilityLayer>
+          <CartesianGrid
+            vertical={false}
+            stroke="var(--chart-grid)"
+            strokeDasharray="3 5"
+          />
           <XAxis
             dataKey="start"
             type="number"
@@ -123,7 +129,7 @@ function VolumePlot({
             ticks={axis.ticks}
             interval={0}
             tickFormatter={(value: number) => tick.format(value)}
-            tick={{ fill: "var(--text-on-light)", fontSize: 11 }}
+            tick={{ fill: "var(--text-tertiary)", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             padding={{ left: 4, right: 4 }}
@@ -191,8 +197,8 @@ function VolumePlot({
             <Line
               dataKey="comparison"
               type="monotoneX"
-              stroke="var(--primary)"
-              strokeOpacity={0.25}
+              stroke="var(--chart-reference)"
+              strokeOpacity={0.8}
               strokeWidth={1.5}
               dot={points.length === 1 ? { r: 2 } : false}
               activeDot={false}
@@ -204,10 +210,10 @@ function VolumePlot({
             dataKey="value"
             type="monotoneX"
             baseValue={0}
-            stroke="var(--primary)"
+            stroke="var(--accent-green)"
             strokeWidth={1.8}
-            fill="var(--primary)"
-            fillOpacity={0.055}
+            fill="var(--accent-green)"
+            fillOpacity={0.14}
             dot={<VolumeDot single={points.length === 1} />}
             activeDot={{ r: 4, strokeWidth: 0 }}
             connectNulls={false}

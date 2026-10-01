@@ -6,6 +6,7 @@ import {
   Tooltip,
   YAxis,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import { ContentType } from "recharts/types/component/Tooltip";
 
@@ -36,13 +37,24 @@ export default function Bar({
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data}>
+        <CartesianGrid
+          vertical={false}
+          stroke="var(--chart-grid)"
+          strokeDasharray="3 5"
+        />
         <XAxis
           dataKey="x"
           tickFormatter={xFormat}
           tick={customXTick}
-          style={{ fontWeight: "bold" }}
+          axisLine={false}
+          tickLine={false}
         />
-        <YAxis tickFormatter={yFormat} width="auto" />
+        <YAxis
+          axisLine={false}
+          tickLine={false}
+          tickFormatter={yFormat}
+          width="auto"
+        />
         {Array.from(allKeys).map((k, index) => (
           <RBar
             key={k}
@@ -54,7 +66,7 @@ export default function Bar({
         ))}
         <Tooltip
           wrapperStyle={{ zIndex: 10 }}
-          contentStyle={{ backgroundColor: "var(--background)" }}
+          contentStyle={{ backgroundColor: "var(--surface-raised)" }}
           labelStyle={{ color: "var(--text-on-light)" }}
           content={customTooltip}
         />

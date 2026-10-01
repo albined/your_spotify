@@ -13,7 +13,7 @@
 .sticky {
   display: block;
   padding-bottom: 8px;
-  background-color: white;
+  background-color: var(--surface-raised);
 }
 
 .result {
@@ -53,5 +53,5 @@
 }
 
 .subtitle {
-  color: var(--text-grey)
+  color: var(--text-grey);
 }

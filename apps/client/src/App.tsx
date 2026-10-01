@@ -1,57 +1,58 @@
+import { GlobalStyles } from "@mui/material";
+import { ThemeProvider } from "@mui/system";
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useMediaQuery } from "@mui/material";
-import { ThemeProvider } from "@mui/system";
-import { useSelector } from "react-redux";
+
 import Layout from "./components/Layout";
 import Message from "./components/Message";
+import PlaylistDialog from "./components/PlaylistDialog";
 import PrivateRoute from "./components/PrivateRoute";
 import Wrapper from "./components/Wrapper";
 import Login from "./scenes/Account/Login";
+import AlbumStats from "./scenes/AlbumStats";
 import AllStats from "./scenes/AllStats";
 import ArtistStats from "./scenes/ArtistStats";
+import Benchmarks from "./scenes/Benchmarks";
+import Affinity from "./scenes/Collaborative/Affinity";
+import CollaborativeAlbums from "./scenes/Collaborative/Affinity/Albums";
+import CollaborativeArtists from "./scenes/Collaborative/Affinity/Artists";
+import CollaborativeSongs from "./scenes/Collaborative/Affinity/Songs";
+import Compete from "./scenes/Collaborative/Compete/Compete";
+import ApiEndpointSetToFronted from "./scenes/Error/ApiEndpointSetToFronted";
+import RegistrationsDisabled from "./scenes/Error/RegistrationsDisabled";
 import Home from "./scenes/Home";
 import Logout from "./scenes/Logout";
+import LongestSessions from "./scenes/LongestSessions";
 import Settings from "./scenes/Settings";
 import Albums from "./scenes/Tops/Albums";
 import Artists from "./scenes/Tops/Artists";
 import Songs from "./scenes/Tops/Songs";
-import CollaborativeSongs from "./scenes/Collaborative/Affinity/Songs";
-import CollaborativeAlbums from "./scenes/Collaborative/Affinity/Albums";
-import CollaborativeArtists from "./scenes/Collaborative/Affinity/Artists";
-import RegistrationsDisabled from "./scenes/Error/RegistrationsDisabled";
-import Affinity from "./scenes/Collaborative/Affinity";
-import Compete from "./scenes/Collaborative/Compete/Compete";
-import { useTheme } from "./services/theme";
-import { selectDarkMode } from "./services/redux/modules/user/selector";
-import PlaylistDialog from "./components/PlaylistDialog";
 import TrackStats from "./scenes/TrackStats";
-import LongestSessions from "./scenes/LongestSessions";
-import AlbumStats from "./scenes/AlbumStats";
-import Benchmarks from "./scenes/Benchmarks";
-import ApiEndpointSetToFronted from "./scenes/Error/ApiEndpointSetToFronted";
 import { useDetectPointerType } from "./services/pointer";
 import { ShortcutsContextProvider } from "./services/shortcuts";
+import { useTheme } from "./services/theme";
+import { themeVariables } from "./services/themePalette";
+
 import "./App.css";
 
 function App() {
-  const dark = useSelector(selectDarkMode);
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const theme = useTheme();
 
   useDetectPointerType();
 
   useEffect(() => {
-    const vars =
-      dark === "dark" || (dark === "follow" && prefersDarkMode)
-        ? "dark-vars"
-        : "light-vars";
-    document.body.setAttribute("class", vars);
-  }, [dark, prefersDarkMode]);
+    document.body.setAttribute("class", `${theme.palette.mode}-vars`);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme.palette.background.default);
+  }, [theme.palette.mode, theme.palette.background.default]);
 
   return (
     <ShortcutsContextProvider>
       <ThemeProvider theme={theme}>
+        <GlobalStyles
+          styles={{ ":root": themeVariables(theme.palette.mode === "dark") }}
+        />
         <div className="app">
           <BrowserRouter>
             <Wrapper />

@@ -1,10 +1,13 @@
 import clsx from "clsx";
-import Text from "../Text";
-import s from "./index.module.css";
+
 import { ITooltip } from "../iTooltip/iTooltip";
+import Text from "../Text";
+
+import s from "./index.module.css";
 
 interface TitleCardProps {
   className?: string;
+  style?: React.CSSProperties;
   contentClassName?: string;
   title: string;
   children: React.ReactNode;
@@ -17,6 +20,7 @@ interface TitleCardProps {
 
 export default function TitleCard({
   className,
+  style,
   contentClassName,
   title,
   children,
@@ -27,11 +31,13 @@ export default function TitleCard({
   info,
 }: TitleCardProps) {
   return (
-    <div className={clsx(s.root, className, { [s.noborder]: noBorder })}>
+    <div
+      style={style}
+      className={clsx(s.root, className, { [s.noborder]: noBorder })}>
       <div className={clsx(s.container, { [s.nopadding]: noPadding })}>
         <div className={s.title}>
           <div className={s.left}>
-            <Text element="h3" size="big">
+            <Text element="h3" size="normal">
               {title}
             </Text>
             <ITooltip content={info} />

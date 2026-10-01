@@ -162,8 +162,8 @@ export function Heatmap({
                       style={{
                         background:
                           cell.value > 0 && maximum > 0
-                            ? `color-mix(in srgb, ${dark ? "#65d6a0" : "#147d50"} ${floor + heatmapIntensity(cell.value, maximum, rowMaximum, rowWeight) * (100 - floor)}%, var(--background))`
-                            : "rgba(var(--primary-tuple), 0.07)",
+                            ? `color-mix(in srgb, var(--accent-green) ${floor + heatmapIntensity(cell.value, maximum, rowMaximum, rowWeight) * (100 - floor)}%, var(--background))`
+                            : "var(--surface-raised)",
                       }}
                     />
                   );

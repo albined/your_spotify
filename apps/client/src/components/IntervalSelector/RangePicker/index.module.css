@@ -33,10 +33,32 @@
     border-right: unset;
     margin-right: unset;
   }
+
+  .presets button {
+    flex-shrink: 0;
+    width: 112px;
+  }
+
+  .calendarRoot {
+    width: 100% !important;
+    max-width: 320px;
+    margin: 0 !important;
+  }
+
+  .calendarRoot :global(.MuiDayCalendar-header),
+  .calendarRoot :global(.MuiDayCalendar-weekContainer) {
+    justify-content: space-between;
+  }
+
+  .calendarRoot :global(.MuiDayCalendar-weekDayLabel),
+  .calendarRoot .day {
+    width: calc(100% / 7);
+    margin: 0;
+  }
 }
 
 .outside {
-  color: grey;
+  color: var(--text-tertiary);
 }
 
 .day {
@@ -49,19 +71,19 @@
 }
 
 .lonelyHovered {
-  color: var(--background) !important;
-  background-color: var(--primary) !important;
+  color: var(--text-inverse) !important;
+  background-color: var(--accent-green) !important;
   border-radius: 40px !important;
 }
 
 .hovering {
-  color: var(--background) !important;
-  background-color: rgba(var(--primary-tuple), 0.4) !important;
+  color: var(--text-inverse) !important;
+  background-color: var(--accent-green) !important;
 }
 
 .between {
-  color: var(--background) !important;
-  background-color: var(--primary) !important;
+  color: var(--text-inverse) !important;
+  background-color: var(--accent-green) !important;
 }
 
 .start {

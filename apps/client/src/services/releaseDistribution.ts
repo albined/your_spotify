@@ -14,7 +14,7 @@ export interface ReleaseDistribution {
 
 export function decadeColor(year: number) {
   const decade = Math.floor(year / 10);
-  return `hsl(${(((decade * 137.508) % 360) + 360) % 360} 58% 55%)`;
+  return `hsl(${(((decade * 137.508) % 360) + 360) % 360} 46% 55%)`;
 }
 
 // Integer source-bin boundaries preserve every hour, including silent bins.

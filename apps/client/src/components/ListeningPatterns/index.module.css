@@ -73,7 +73,7 @@
   height: 24px;
   font-size: 11px;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--text-on-light) 65%, var(--background));
+  color: var(--text-tertiary);
 }
 
 .hourChart {
@@ -128,13 +128,13 @@
 }
 
 .scatter text {
-  fill: currentColor;
+  fill: var(--text-tertiary);
   font-size: 11px;
 }
 
 .guide {
-  stroke: currentColor;
-  opacity: 0.12;
+  stroke: var(--chart-grid);
+  stroke-dasharray: 3 5;
 }
 
 .bubble {

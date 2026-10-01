@@ -1,34 +1,17 @@
 .review {
-  --review-text: color-mix(
-    in srgb,
-    var(--text-on-light) 88%,
-    var(--background)
-  );
-  --review-muted: color-mix(
-    in srgb,
-    var(--text-on-light) 62%,
-    var(--background)
-  );
-  --review-border: color-mix(
-    in srgb,
-    var(--text-on-light) 18%,
-    var(--background)
-  );
-  --review-panel: #f6f7f9;
-  --review-surface: #fff;
-  --review-action: #a03343;
-  --review-accent: color-mix(in srgb, var(--accent) 65%, var(--text-on-light));
+  --review-text: var(--text-primary);
+  --review-muted: var(--text-secondary);
+  --review-border: var(--border-subtle);
+  --review-panel: var(--surface-raised);
+  --review-surface: var(--surface-card);
+  --review-action: var(--accent-green);
+  --review-accent: var(--focus-ring);
   border-top: 1px solid var(--review-border);
   margin-top: 24px;
   padding-top: 20px;
   color: var(--review-text);
   font-size: 0.875rem;
   line-height: 1.5;
-}
-:global(.dark-vars) .review {
-  --review-panel: #16181b;
-  --review-surface: #202327;
-  --review-action: #f6a0a8;
 }
 .review > summary {
   cursor: pointer;

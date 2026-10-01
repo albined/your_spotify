@@ -24,7 +24,7 @@ export function distributionBandwidth(span: number) {
 export function artistColor(id: string) {
   let hash = 2166136261;
   for (const char of id) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
-  return `hsl(${(hash >>> 0) % 360} 52% 57%)`;
+  return `hsl(${(hash >>> 0) % 360} 44% 57%)`;
 }
 
 export function buildArtistStream(data: ArtistDistribution) {
