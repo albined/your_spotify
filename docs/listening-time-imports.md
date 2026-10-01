@@ -98,6 +98,11 @@ timestamp questions are resolved while retaining their original evidence;
 `outcome: extended-export` links their `resolvedBy` field to the precise source
 key. Reimporting the older file follows that link without recreating questions or
 lowering the accuracy of the saved duration. Explicit excluded listens stay excluded.
+Review and exclusion links check competing precise events in the upload, saved
+review evidence (including resolved decisions), and imported history. Reviewing
+one event cannot make an ambiguous minute row unique. If an earlier precise play
+lacks its original export labels, another play with the same minute and duration
+keeps the minute row unresolved until a fuller export establishes its identity.
 For extended-history timing questions, a known Spotify ID opens the saved-listen
 comparison directly; users do not need to select the already identified song again.
 
@@ -170,6 +175,10 @@ Live ingestion and import reconciliation share the application's write lock;
 imports cannot race polling between matching and insertion. Run one server writer
 per database, as in the supplied Compose deployment. Multiple independent server
 replicas writing the same database are not supported by this lock.
+API source identities stay authoritative after export enrichment. An export-only
+play may claim one matching API event durably; its other start/end timestamp
+cannot then suppress a distinct API repeat. Confirmed ISRC release aliases still
+refer to that same API event when its timestamp matches exactly.
 
 A persisted per-row mutation result lets retries recover an insert/correction that
 completed before its progress checkpoint. Added/corrected plays checkpoint

@@ -1746,6 +1746,129 @@ test(
           );
         },
       );
+      for (const exclude of [false, true])
+        for (const competitor of [
+          "pending",
+          "resolved",
+          "excluded",
+          "saved",
+          "none",
+          "other-owner",
+        ])
+          await t.test(
+            `${exclude ? "excluding" : "accepting"} a precise event checks ${competitor} competing evidence before resolving a minute row`,
+            async () => {
+              const {
+                reviewTiming,
+                applyTimingChoice,
+              } = require("../src/tools/importers/review");
+              const {
+                SpotifyReviewLinks,
+              } = require("../src/database/queries/privacyRules");
+              const owner = await UserModel.create({
+                username: "Precise uniqueness",
+                spotifyId: `unique-${exclude}-${competitor}`,
+                settings: { dateFormat: "default" },
+              });
+              const standard = row({
+                source: "privacy",
+                provider: "spotify",
+                isrc: undefined,
+                key: "minute",
+                at: new Date("2027-03-01T12:00:00Z"),
+                precisionMs: 60000,
+                listenedMs: 31000,
+              });
+              const a = {
+                ...standard,
+                source: "full-privacy",
+                spotifyId: targetId,
+                precisionMs: 1000,
+                key: "precise-a",
+                at: new Date(+standard.at + 20000),
+              };
+              const b = {
+                ...a,
+                key: "precise-b",
+                at: new Date(+standard.at + 51000),
+              };
+              const store = new ReviewStore();
+              await store.initialize(owner, [standard, a, b]);
+              for (const entry of [standard, a])
+                await store.save(
+                  owner,
+                  entry,
+                  "legacy",
+                  "Timing question",
+                  "import",
+                );
+              if (competitor === "saved") {
+                await reconcileImport(owner, b, track, "previous", 0);
+              } else if (competitor !== "none") {
+                const account = competitor === "other-owner" ? other : owner;
+                await store.save(
+                  account,
+                  b,
+                  "legacy",
+                  "Timing question",
+                  "earlier-import",
+                );
+                if (["resolved", "excluded"].includes(competitor))
+                  await ImportReviewModel.updateOne(
+                    { owner: owner._id, "record.key": b.key },
+                    {
+                      status: "resolved",
+                      outcome: competitor === "excluded" ? "excluded" : "added",
+                      excluded: competitor === "excluded",
+                    },
+                  );
+              }
+              const group = recordingKey(a);
+              const comparison = await reviewTiming(owner, group);
+              const result = await applyTimingChoice(
+                owner,
+                group,
+                comparison.rowId,
+                comparison.token,
+                null,
+                exclude,
+              );
+              assert.equal(result.outcome, exclude ? "excluded" : "added");
+              const unique = ["none", "other-owner"].includes(competitor);
+              const saved = await ImportReviewModel.findOne({
+                owner: owner._id,
+                "record.key": standard.key,
+              }).lean();
+              assert.equal(saved.status, unique ? "resolved" : "pending");
+              assert.equal(Boolean(saved.excluded), unique && exclude);
+              if (unique) {
+                assert.equal(saved.resolvedBy, a.key);
+                assert.equal(
+                  saved.outcome,
+                  exclude ? "excluded" : "extended-export",
+                );
+              } else {
+                assert.equal(saved.resolvedBy, undefined);
+              }
+              // The reverse import direction must obey the same uniqueness rule.
+              const links = new SpotifyReviewLinks();
+              await links.initialize(owner, [standard]);
+              assert.equal(links.isExcluded(standard), unique && exclude);
+              const before = await InfosModel.find({ owner: owner._id }).lean();
+              await applyTimingChoice(
+                owner,
+                group,
+                comparison.rowId,
+                comparison.token,
+                null,
+                exclude,
+              );
+              assert.deepEqual(
+                await InfosModel.find({ owner: owner._id }).lean(),
+                before,
+              );
+            },
+          );
     } finally {
       await mongoose.connection.dropDatabase();
       await mongoose.disconnect();

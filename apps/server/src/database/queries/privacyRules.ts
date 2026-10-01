@@ -100,38 +100,94 @@ const minuteIdentity = (row: ImportRecord) =>
 export class SpotifyReviewLinks {
   private links = new Map<string, ImportReview[]>();
   async initialize(user: User, rows: ImportRecord[]) {
-    const precise = new Map<string, Map<string, ImportRecord>>();
-    for (const row of rows) {
-      if (
-        row.provider !== "spotify" ||
-        row.invalid ||
-        row.ambiguous ||
-        (row.listenedMs ?? 0) < 30000
-      )
-        continue;
+    this.links.clear();
+    const valid = (row: ImportRecord) =>
+      row.provider === "spotify" &&
+      !row.invalid &&
+      Number.isFinite(row.at?.getTime()) &&
+      (row.listenedMs ?? 0) >= 30000;
+    const incoming = rows.filter((row) => valid(row) && !row.ambiguous);
+    if (!incoming.length) return;
+    const fromExtended = incoming[0]!.source === "full-privacy";
+    const identities = new Set(incoming.map(minuteIdentity));
+    const previous = (
+      await ImportReviewModel.find({
+        owner: user._id,
+        ...(fromExtended
+          ? {
+              "record.source": "privacy",
+              $or: [
+                { status: { $in: ["pending", "no-match"] } },
+                { excluded: true },
+              ],
+            }
+          : { "record.source": "full-privacy", excluded: true }),
+      }).lean()
+    ).filter(
+      (item) =>
+        valid(item.record) && identities.has(minuteIdentity(item.record)),
+    );
+    if (!previous.length) return;
+    const byIdentity = new Map<string, ImportReview[]>();
+    for (const item of previous) {
+      const key = minuteIdentity(item.record);
+      byIdentity.set(key, [...(byIdentity.get(key) ?? []), item]);
+    }
+
+    const minutes = previous.map((item) => Math.floor(+item.record.at / 60000));
+    const range = {
+      $gte: new Date(minutes.reduce((a, b) => Math.min(a, b)) * 60000),
+      $lt: new Date((minutes.reduce((a, b) => Math.max(a, b)) + 1) * 60000),
+    };
+    // Include resolved/excluded evidence too: deciding A cannot erase competitor B.
+    const evidence = await ImportReviewModel.find({
+      owner: user._id,
+      "record.source": "full-privacy",
+      "record.at": range,
+    })
+      .select("record")
+      .lean();
+    const precise = new Map<string, Set<string>>();
+    const knownKeys = new Set<string>();
+    for (const row of [...rows, ...evidence.map((item) => item.record)]) {
+      if (row.source !== "full-privacy" || !valid(row)) continue;
+      knownKeys.add(row.key);
       const identity = minuteIdentity(row);
-      const entries = precise.get(identity) ?? new Map();
-      entries.set(row.key, row);
+      const entries = precise.get(identity) ?? new Set<string>();
+      entries.add(row.key);
       precise.set(identity, entries);
     }
-    if (!precise.size) return;
-    const previous = await ImportReviewModel.find({
+    const saved = await InfosModel.find({
       owner: user._id,
-      ...(rows[0]?.source === "full-privacy"
-        ? {
-            "record.source": "privacy",
-            $or: [
-              { status: { $in: ["pending", "no-match"] } },
-              { excluded: true },
-            ],
-          }
-        : { "record.source": "full-privacy", excluded: true }),
-    }).lean();
-    for (const item of previous) {
-      const entries = precise.get(minuteIdentity(item.record));
-      if (entries?.size !== 1) continue;
-      const key = [...entries.keys()][0]!;
-      this.links.set(key, [...(this.links.get(key) ?? []), item]);
+      listeningSource: "full-privacy",
+      sourceEndedAt: range,
+      listenedMs: { $in: previous.map((item) => item.record.listenedMs) },
+    })
+      .select("sourceKeys sourceEndedAt listenedMs")
+      .lean();
+    const minuteDuration = (at: Date, ms: number | null | undefined) =>
+      `${Math.floor(+at / 60000)}:${ms}`;
+    const unknown = new Set(
+      saved
+        .filter((play) => !play.sourceKeys?.some((key) => knownKeys.has(key)))
+        .map((play) => minuteDuration(play.sourceEndedAt!, play.listenedMs)),
+    );
+    // Accepted plays may no longer have raw export labels. Without that evidence,
+    // another precise play in the same minute/duration prevents proving uniqueness.
+    for (const row of incoming) {
+      const identity = minuteIdentity(row);
+      const entries = precise.get(identity);
+      if (
+        entries?.size !== 1 ||
+        unknown.has(minuteDuration(row.at, row.listenedMs))
+      )
+        continue;
+      const [key] = entries;
+      if (fromExtended && key !== row.key) continue;
+      const linked = (byIdentity.get(identity) ?? []).filter(
+        (item) => fromExtended || item.record.key === key,
+      );
+      if (linked.length) this.links.set(row.key, linked);
     }
   }
   isExcluded(row: ImportRecord) {
