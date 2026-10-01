@@ -96,7 +96,6 @@ You can follow the instructions [here](https://github.com/Yooooomi/your_spotify/
 | LOG_LEVEL             | info | The log level, debug is useful if you encouter any bugs |
 | CORS                  | _not defined_ | List of comma-separated origin allowed (not required; defaults to CLIENT_ENDPOINT) |
 | COOKIE_VALIDITY_MS    | 1h | Validity time of the authentication cookie, following [this pattern](https://github.com/vercel/ms) |
-| MAX_IMPORT_CACHE_SIZE | Infinite | The maximum element in the cache when importing data from an outside source, more cache means less requests to Spotify, resulting in faster imports |
 | MONGO_NO_ADMIN_RIGHTS | false | Do not ask for admin right on the Mongo database |
 | PORT                  | 8080 | The port of the server, **do not** modify if you're using docker |
 | FRAME_ANCESTORS       | _not defined_ | Sites allowed to frame the website, comma separated list of URLs (`i-want-a-security-vulnerability-and-want-to-allow-all-frame-ancestors` to allow every website) |
@@ -130,9 +129,11 @@ To do so, you need to create a **Spotify application** [here](https://developer.
 
 # Importing past history
 
-By default, **YourSpotify** will only retrieve data for the past 24 hours once registered. This is a technical limitation. However, you can import previous data by two ways.
+By default, **YourSpotify** will only retrieve data for the past 24 hours once registered. This is a technical limitation. You can also import historical Spotify and Deezer exports.
 
-The import process uses cache to limit requests to the Spotify API. By default, the cache size is unlimited, but you can limit is with the `MAX_IMPORT_CACHE_SIZE` env variable in the **server**.
+Imports preserve reported listening time and reconcile overlapping plays. Check files before starting, then review the import receipt and any unresolved recordings in Settings.
+
+See [Listening time, imports and recovery](docs/listening-time-imports.md) for supported formats, matching rules, review choices and optional database backups.
 
 ## Supported import methods
 
