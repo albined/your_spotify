@@ -211,8 +211,16 @@ test(
       );
       assert(Math.abs(competition.series[0].values.at(-1) - 0.3) < 1e-10);
       const insights = await getCompetitionInsights(user, people, start, end);
-      assert(Math.abs(insights.series[0].values.at(-1) - 100 / 52) < 1e-10);
-      assert.equal(insights.series[1].values.at(-1), 1);
+      // Compare after the plays, then after they expire from the rolling window.
+      const afterListens = Math.ceil(
+        (Date.parse("2025-01-02") - insights.start) / insights.width,
+      );
+      assert(
+        Math.abs(insights.series[0].values[afterListens] - 100 / 52) < 1e-10,
+      );
+      assert.equal(insights.series[1].values[afterListens], 1);
+      assert.equal(insights.series[0].values.at(-1), 0);
+      assert.equal(insights.series[1].values.at(-1), 0);
       const affinity = await getCollaborativeBestArtists(
         people,
         start,
