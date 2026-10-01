@@ -11,7 +11,6 @@ import { Artist } from "../database/schemas/artist";
 import { Infos } from "../database/schemas/info";
 import { SpotifyTrack, Track } from "../database/schemas/track";
 import { SpotifyAPI } from "../tools/apis/spotifyApi";
-import { longWriteDbLock } from "../tools/lock";
 import { logger } from "../tools/logger";
 import { Metrics } from "../tools/metrics";
 import { minOfArray, uniqBy } from "../tools/misc";
@@ -65,19 +64,6 @@ export const getArtists = async (userId: string, ids: string[]) => {
   return spotifyArtists;
 };
 
-const getTracksAndRelatedAlbumArtists = async (
-  userId: string,
-  ids: string[],
-) => {
-  const tracks = await getTracks(userId, ids);
-
-  return {
-    tracks,
-    artists: [...new Set(tracks.flatMap((e) => e.artists)).values()],
-    albums: [...new Set(tracks.map((e) => e.album)).values()],
-  };
-};
-
 export const getTracksAlbumsArtists = async (
   userId: string,
   spotifyTracks: SpotifyTrack[],
@@ -88,17 +74,27 @@ export const getTracksAlbumsArtists = async (
     (id) =>
       !storedTracks.find((stored) => stored.id.toString() === id.toString()),
   );
+  const recordings = spotifyTracks.map(({ id, external_ids }) => ({
+    id,
+    external_ids,
+  }));
 
   if (missingTrackIds.length === 0) {
-    logger.info("No missing tracks, passing...");
-    return { tracks: [], albums: [], artists: [] };
+    return { tracks: [], albums: [], artists: [], recordings };
   }
 
-  const {
-    tracks,
-    artists: relatedArtists,
-    albums: relatedAlbums,
-  } = await getTracksAndRelatedAlbumArtists(userId, missingTrackIds);
+  // The API/import resolver already supplied full track objects.
+  const missing = new Set(missingTrackIds);
+  const tracks: Track[] = uniqBy(spotifyTracks, (track) => track.id)
+    .filter((track) => missing.has(track.id))
+    .map((track) => ({
+      ...track,
+      album: track.album.id,
+      artists: track.artists.map((artist) => artist.id),
+    }));
+  const relatedArtists = [...new Set(tracks.flatMap((track) => track.artists))];
+  const relatedAlbums = [...new Set(tracks.map((track) => track.album))];
+  Metrics.ingestedTracksTotal.inc({ user: userId }, tracks.length);
 
   const storedAlbums: Album[] = await AlbumModel.find({
     id: { $in: relatedAlbums },
@@ -123,27 +119,76 @@ export const getTracksAlbumsArtists = async (
       ? await getArtists(userId, missingArtistIds)
       : [];
 
-  return { tracks, albums, artists };
+  return { tracks, albums, artists, recordings };
 };
+
+/** Enrich old catalog entries without replacing their release metadata. */
+export async function storeRecordingIds(
+  tracks: Pick<Track, "id" | "external_ids">[],
+) {
+  const recordings = uniqBy(tracks, (track) => track.id).filter(
+    (track) => track.external_ids?.isrc,
+  );
+  if (!recordings.length) return;
+  await TrackModel.bulkWrite(
+    recordings.map((track) => ({
+      updateOne: {
+        filter: { id: track.id, "external_ids.isrc": { $in: [null, ""] } },
+        update: {
+          $set: {
+            "external_ids.isrc": track.external_ids!.isrc!.toUpperCase(),
+          },
+        },
+      },
+    })),
+  );
+}
 
 export async function storeTrackAlbumArtist({
   tracks,
   albums,
   artists,
+  recordings,
 }: {
   tracks?: Track[];
   albums?: Album[];
   artists?: Artist[];
+  recordings?: Pick<Track, "id" | "external_ids">[];
 }) {
   if (tracks) {
-    await TrackModel.create(uniqBy(tracks, (item) => item.id));
+    await Promise.all(
+      uniqBy(tracks, (item) => item.id).map((track) =>
+        TrackModel.updateOne(
+          { id: track.id },
+          { $setOnInsert: track },
+          { upsert: true },
+        ),
+      ),
+    );
   }
   if (albums) {
-    await AlbumModel.create(uniqBy(albums, (item) => item.id));
+    await Promise.all(
+      uniqBy(albums, (item) => item.id).map((album) =>
+        AlbumModel.updateOne(
+          { id: album.id },
+          { $setOnInsert: album },
+          { upsert: true },
+        ),
+      ),
+    );
   }
   if (artists) {
-    await ArtistModel.create(uniqBy(artists, (item) => item.id));
+    await Promise.all(
+      uniqBy(artists, (item) => item.id).map((artist) =>
+        ArtistModel.updateOne(
+          { id: artist.id },
+          { $setOnInsert: artist },
+          { upsert: true },
+        ),
+      ),
+    );
   }
+  await storeRecordingIds(recordings ?? tracks ?? []);
 }
 
 export async function storeIterationOfLoop(
@@ -153,10 +198,9 @@ export async function storeIterationOfLoop(
   albums: Album[],
   artists: Artist[],
   infos: Omit<Infos, "owner">[],
+  recordings?: Pick<Track, "id" | "external_ids">[],
 ) {
-  await longWriteDbLock.lock();
-
-  await storeTrackAlbumArtist({ tracks, albums, artists });
+  await storeTrackAlbumArtist({ tracks, albums, artists, recordings });
 
   await addTrackIdsToUser(userId, infos);
 
@@ -172,6 +216,4 @@ export async function storeIterationOfLoop(
       await storeFirstListenedAtIfLess(userId, minInfo);
     }
   }
-
-  longWriteDbLock.unlock();
 }

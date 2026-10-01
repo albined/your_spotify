@@ -1,9 +1,9 @@
 import { PipelineStage, Types } from "mongoose";
 
 import { getWithDefault } from "../../tools/env";
+import { statisticsFor } from "../listeningDuration";
 import { AlbumModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { getStatisticsArtists, normalizeArtistCredits } from "./artistGroups";
 import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
@@ -32,11 +32,13 @@ export async function getCompetitionArtists(
   userIds: string[],
   start: Date,
   end: Date,
+  user?: User,
 ) {
+  const Statistics = statisticsFor(user);
   const accounts = await requireCompetitionParticipants(userIds);
   const ids = accounts.map((account) => account._id.toHexString());
   if (!ids.length) return [];
-  const ranked = await StatisticsInfosModel.aggregate<{
+  const ranked = await Statistics.aggregate<{
     _id: string;
     minimumDuration: number;
     totalDuration: number;
@@ -93,6 +95,7 @@ export async function getTopTimeline(
   end: Date,
   kind: TopTimelineKind,
 ) {
+  const Statistics = statisticsFor(user);
   const bounds = timelineBounds(start, end, 200);
   const field = (
     { songs: "id", albums: "albumId", artists: "primaryArtistId" } as const
@@ -107,7 +110,7 @@ export async function getTopTimeline(
   // Inspect every contender at actual play timestamps, independently of the
   // chart's display resolution. Stream plays to keep memory bounded by entries.
   const race = new RaceLeaders();
-  const plays = StatisticsInfosModel.aggregate<{
+  const plays = Statistics.aggregate<{
     item: string;
     played_at: Date;
     durationMs: number;
@@ -128,7 +131,7 @@ export async function getTopTimeline(
   const top = race.select(crownEnd);
   const ids = top.map((item) => item._id);
   const buckets = ids.length
-    ? await StatisticsInfosModel.aggregate<{
+    ? await Statistics.aggregate<{
         _id: { item: string; bucket: number };
         duration: number;
       }>([
@@ -225,6 +228,7 @@ export async function getCompetitionTimeline(
   metric: CompetitionMetric,
   artistId?: string,
 ) {
+  const Statistics = statisticsFor(user);
   const bounds = timelineBounds(start, end, 200);
   const accounts = await requireCompetitionParticipants(userIds);
   const ids = accounts.map((account) => account._id.toHexString());
@@ -269,7 +273,7 @@ export async function getCompetitionTimeline(
           },
         },
       ];
-  const rows = await StatisticsInfosModel.aggregate<{
+  const rows = await Statistics.aggregate<{
     _id: { owner: Types.ObjectId; bucket: number };
     value: number;
   }>([

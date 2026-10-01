@@ -10,6 +10,7 @@ export interface Track {
   duration_ms: number;
   explicit: boolean;
   external_urls: any;
+  external_ids?: { isrc?: string };
   href: string;
   id: string;
   is_local: boolean;
@@ -38,10 +39,11 @@ export const TrackSchema = new Schema<Track>(
     duration_ms: Number,
     explicit: Boolean,
     external_urls: Object,
+    external_ids: { isrc: { type: String, index: true } },
     href: String,
     id: { type: String, unique: true },
     is_local: Boolean,
-    name: String,
+    name: { type: String, index: true },
     preview_url: String,
     track_number: Number,
     type: String,

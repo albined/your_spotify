@@ -4,7 +4,15 @@ import { toBoolean, toNumber } from "./zod";
 
 const validators = {
   CLIENT_ENDPOINT: z.string(),
-  MAX_IMPORT_CACHE_SIZE: z.preprocess(toNumber, z.number().optional()),
+  IMPORT_DIR: z.string().optional(),
+  BACKUPS_ENABLED: z.preprocess(toBoolean, z.boolean().optional()),
+  BACKUP_BEFORE_IMPORT: z.preprocess(toBoolean, z.boolean().optional()),
+  BACKUP_DIR: z.string().optional(),
+  BACKUP_SCHEDULE: z.string().optional(),
+  BACKUP_RETENTION_DAYS: z.preprocess(
+    toNumber,
+    z.number().int().min(1).optional(),
+  ),
   CORS: z.string().optional(),
   MONGO_ENDPOINT: z.string().optional(),
   SPOTIFY_PUBLIC: z.string(),

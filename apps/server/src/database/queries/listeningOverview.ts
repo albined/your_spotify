@@ -5,6 +5,7 @@ import {
   statisticsTimezone,
 } from "../../tools/allTimeStart";
 import { Timesplit } from "../../tools/types";
+import { statisticsFor } from "../listeningDuration";
 import { InfosModel } from "../Models";
 import { User } from "../schemas/user";
 import { overviewPlan, OverviewPeriod } from "./listeningOverviewBuckets";
@@ -21,6 +22,7 @@ export async function getListeningOverview(
   end: Date,
   period: OverviewPeriod,
 ) {
+  const Statistics = statisticsFor(user);
   const timezone = statisticsTimezone(user);
   const plan = overviewPlan(start, end, period, timezone);
   const { buckets } = plan;
@@ -49,7 +51,7 @@ export async function getListeningOverview(
       ranges[0]!.start,
       ...ranges.map((bucket) => bucket.end),
     ].map((at) => new Date(at));
-    return InfosModel.aggregate<Totals & { _id: Date }>([
+    return Statistics.aggregate<Totals & { _id: Date }>([
       {
         $match: {
           ...match,
@@ -90,7 +92,7 @@ export async function getListeningOverview(
   if (comparison === "average") {
     if (coverage > plan.averageStart) comparison = null;
     else {
-      const rows = await InfosModel.aggregate<Totals & { _id: number }>([
+      const rows = await Statistics.aggregate<Totals & { _id: number }>([
         {
           $match: {
             ...match,

@@ -46,6 +46,13 @@ import { up as add_language_to_user } from "./migrations/1708973485302-add_langu
 import { up as add_all_time_start_date } from "./migrations/1790035200000-add_all_time_start_date";
 import { up as add_competition_preference } from "./migrations/1790035200001-add_competition_preference";
 import { up as add_artist_groups } from "./migrations/1790121600000-add_artist_groups";
+import { up as add_listening_durations } from "./migrations/1790592000000-add_listening_durations";
+import { up as index_import_recordings } from "./migrations/1790592000001-index_import_recordings";
+import { up as add_import_recording_repairs } from "./migrations/1790592000002-add_import_recording_repairs";
+import { up as add_import_review } from "./migrations/1790592000003-add_import_review";
+import { up as add_no_match_review } from "./migrations/1790592000004-add_no_match_review";
+import { up as add_deezer_import_rules } from "./migrations/1790592000005-add_deezer_import_rules";
+import { up as add_excluded_import_listens } from "./migrations/1790592000006-add_excluded_import_listens";
 
 function noop() {}
 
@@ -91,6 +98,34 @@ export function runMigrations() {
         },
         "1790121600000-add_artist_groups.js": {
           up: add_artist_groups,
+          down: noop,
+        },
+        "1790592000000-add_listening_durations.js": {
+          up: add_listening_durations,
+          down: noop,
+        },
+        "1790592000001-index_import_recordings.js": {
+          up: index_import_recordings,
+          down: noop,
+        },
+        "1790592000003-add_import_review.js": {
+          up: add_import_review,
+          down: noop,
+        },
+        "1790592000004-add_no_match_review.js": {
+          up: add_no_match_review,
+          down: noop,
+        },
+        "1790592000005-add_deezer_import_rules.js": {
+          up: add_deezer_import_rules,
+          down: noop,
+        },
+        "1790592000006-add_excluded_import_listens.js": {
+          up: add_excluded_import_listens,
+          down: noop,
+        },
+        "1790592000002-add_import_recording_repairs.js": {
+          up: add_import_recording_repairs,
           down: noop,
         },
       },

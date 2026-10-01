@@ -4,7 +4,7 @@ WORKDIR /app
 
 ENV MONGO_ENDPOINT=mongodb://mongo:27017/your_spotify
 
-RUN apk add python3 gcc g++ make cmake
+RUN apk add python3 gcc g++ make cmake mongodb-tools
 RUN npm install -g pnpm nodemon
 
 COPY pnpm-lock.yaml pnpm-lock.yaml

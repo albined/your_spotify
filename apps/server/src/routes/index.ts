@@ -46,6 +46,7 @@ const settingsSchema = z.object({
     toNumber,
     z.number().min(5).max(50).default(10).optional(),
   ),
+  useFullSongDurations: z.boolean().optional(),
   metricUsed: z.enum(["number", "duration"]).optional(),
   darkMode: z.enum(["follow", "dark", "light"]).optional(),
   timezone: z

@@ -1,5 +1,6 @@
 import { getWithDefault } from "../../tools/env";
-import { AlbumModel, InfosModel } from "../Models";
+import { statisticsFor } from "../listeningDuration";
+import { AlbumModel } from "../Models";
 import { User } from "../schemas/user";
 import { bucketExpression, HOUR_MS } from "./listeningTimelineTools";
 
@@ -21,13 +22,14 @@ export async function getReleaseDistribution(
   start: Date,
   end: Date,
 ) {
+  const Statistics = statisticsFor(user);
   const bounds = {
     start: start.getTime(),
     end: end.getTime(),
     count: 256,
     width: (end.getTime() - start.getTime()) / 256,
   };
-  const rows = await InfosModel.aggregate<{
+  const rows = await Statistics.aggregate<{
     _id: { album: string; bucket: number };
     plays: number;
     hours: number;

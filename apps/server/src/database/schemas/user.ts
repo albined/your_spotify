@@ -13,7 +13,7 @@ export interface User {
   accessToken: string | null;
   refreshToken: string | null;
   lastTimestamp: number;
-  tracks: Schema.Types.ObjectId[];
+  tracks: Types.ObjectId[];
   settings: {
     historyLine: boolean;
     preferredStatsPeriod: string;
@@ -24,6 +24,7 @@ export interface User {
     dateFormat: string;
     allTimeStartDate?: string | null;
     allowCompetitions?: boolean;
+    useFullSongDurations?: boolean;
     blacklistedArtists: string[];
   };
   lastImport: string | null;
@@ -65,6 +66,7 @@ export const UserSchema = new Schema<User>(
       dateFormat: { type: String, required: true },
       allTimeStartDate: { type: String, default: null },
       allowCompetitions: { type: Boolean, default: true },
+      useFullSongDurations: { type: Boolean, default: false },
     },
     lastImport: { type: String, default: null },
     publicToken: { type: String, default: null, index: true },

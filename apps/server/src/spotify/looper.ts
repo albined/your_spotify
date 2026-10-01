@@ -1,11 +1,13 @@
 import { MongoServerSelectionError } from "mongodb";
 
-import { getCloseTrackId, getUser, getUserCount } from "../database";
+import { getUser, getUserCount } from "../database";
+import { hasLivePlay } from "../database/queries/importListening";
 import { Infos } from "../database/schemas/info";
 import { RecentlyPlayedTrack } from "../database/schemas/track";
 import { User } from "../database/schemas/user";
 import { HttpError } from "../tools/apis/queueHttpClient";
 import { SpotifyAPI } from "../tools/apis/spotifyApi";
+import { longWriteDbLock } from "../tools/lock";
 import { logger } from "../tools/logger";
 import { retryPromise, wait } from "../tools/misc";
 import { getTracksAlbumsArtists, storeIterationOfLoop } from "./dbTools";
@@ -49,47 +51,60 @@ const loop = async (user: User) => {
   }
 
   const spotifyTracks = items.map((e) => e.track);
-  const { tracks, albums, artists } = await getTracksAlbumsArtists(
+  const { tracks, albums, artists, recordings } = await getTracksAlbumsArtists(
     user._id.toString(),
     spotifyTracks,
   );
-  const infos: Omit<Infos, "owner">[] = [];
-  for (let i = 0; i < items.length; i += 1) {
-    const item = items[i]!;
-    const date = new Date(item.played_at);
-    const duplicate = await getCloseTrackId(
-      user._id.toString(),
-      item.track.id,
-      date,
-      30,
-    );
-    if (duplicate.length === 0) {
-      const isBlacklisted = user.settings.blacklistedArtists.find(
-        (a) => a === item.track.artists[0]?.id,
+  await longWriteDbLock.lock();
+  try {
+    const infos: Omit<Infos, "owner">[] = [];
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i]!;
+      const date = new Date(item.played_at);
+      const duplicate = await hasLivePlay(
+        user._id,
+        item.track.id,
+        date,
+        item.track.external_ids?.isrc,
       );
-      const [primaryArtist] = item.track.artists;
-      if (!primaryArtist) {
-        continue;
+      const inBatch = infos.some(
+        (info) =>
+          info.id === item.track.id &&
+          info.played_at.getTime() === date.getTime(),
+      );
+      if (!duplicate && !inBatch) {
+        const isBlacklisted = user.settings.blacklistedArtists.find(
+          (a) => a === item.track.artists[0]?.id,
+        );
+        const [primaryArtist] = item.track.artists;
+        if (!primaryArtist) {
+          continue;
+        }
+        infos.push({
+          played_at: new Date(item.played_at),
+          durationMs: item.track.duration_ms,
+          provider: "spotify",
+          sourceKeys: [`api:${item.track.id}:${date.toISOString()}`],
+          albumId: item.track.album.id,
+          primaryArtistId: primaryArtist.id,
+          artistIds: item.track.artists.map((e) => e.id),
+          id: item.track.id,
+          ...(isBlacklisted ? { blacklistedBy: "artist" } : {}),
+        });
       }
-      infos.push({
-        played_at: new Date(item.played_at),
-        durationMs: item.track.duration_ms,
-        albumId: item.track.album.id,
-        primaryArtistId: primaryArtist.id,
-        artistIds: item.track.artists.map((e) => e.id),
-        id: item.track.id,
-        ...(isBlacklisted ? { blacklistedBy: "artist" } : {}),
-      });
     }
+    await storeIterationOfLoop(
+      user._id.toString(),
+      lastTimestamp,
+      tracks,
+      albums,
+      artists,
+      infos,
+      recordings,
+    );
+  } finally {
+    longWriteDbLock.unlock();
   }
-  await storeIterationOfLoop(
-    user._id.toString(),
-    lastTimestamp,
-    tracks,
-    albums,
-    artists,
-    infos,
-  );
   logger.info(
     `[${user.username}]: ${tracks.length} tracks, ${albums.length} albums, ${artists.length} artists`,
   );

@@ -1,12 +1,13 @@
 import { statisticsTimezone } from "../../tools/allTimeStart";
+import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { getStatisticsArtists } from "./artistGroups";
 import { HOUR_MS } from "./listeningTimelineTools";
 
 export async function getArtistHours(user: User, start: Date, end: Date) {
+  const Statistics = statisticsFor(user);
   const timezone = statisticsTimezone(user);
-  const ranked = await StatisticsInfosModel.aggregate<{
+  const ranked = await Statistics.aggregate<{
     _id: string;
     duration: number;
     hours: { hour: number; duration: number }[];

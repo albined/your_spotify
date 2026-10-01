@@ -1,53 +1,75 @@
 import { Types } from "mongoose";
 
-export interface HistoryImporter<T extends ImporterStateType> {
-  init: (
-    existingState: ImporterStateFromType<T> | null,
-    requiredData: ImporterStateFromType<T>["metadata"],
-  ) => Promise<{ total: number } | null>;
-  run: (id: string) => Promise<boolean>;
-  cleanup: (
-    requiredData: ImporterStateFromType<T>["metadata"],
-  ) => Promise<void>;
-}
+import { ImportSource } from "./records";
 
 export type ImporterStateStatus =
+  | "ready"
   | "progress"
   | "success"
   | "failure"
   | "failure-removed";
-
-export interface BaseImporterState {
+export type ImportStage =
+  | "ready"
+  | "backup"
+  | "importing"
+  | "complete"
+  | "failed";
+export interface ImportSummary {
+  added: number;
+  updated: number;
+  unchanged: number;
+  short: number;
+  invalid: number;
+  unresolved: number;
+  noMatch: number;
+  duplicates: number;
+  excluded: number;
+  ambiguous: number;
+  deltaMs: number;
+}
+export const emptySummary = (): ImportSummary => ({
+  added: 0,
+  updated: 0,
+  unchanged: 0,
+  short: 0,
+  invalid: 0,
+  unresolved: 0,
+  noMatch: 0,
+  duplicates: 0,
+  excluded: 0,
+  ambiguous: 0,
+  deltaMs: 0,
+});
+export interface ImporterState {
   _id: Types.ObjectId;
   user: Types.ObjectId;
-  type: string;
+  type: ImportSource;
   current: number;
   total: number;
   status: ImporterStateStatus;
-}
-export interface PrivacyImporterState extends BaseImporterState {
-  type: "privacy";
   metadata: string[];
+  timezone?: string;
+  repairLegacyDeezer?: boolean;
+  deezerPolicyVersion?: number;
+  estimated?: number;
+  fingerprint?: string;
+  fingerprintVersion?: number;
+  stage?: ImportStage;
+  summary?: ImportSummary;
+  range?: { start: string | null; end: string | null };
+  issueCounts?: {
+    recording: number;
+    legacy: number;
+    timestamp: number;
+    invalid: number;
+  };
+  issues?: { row: number; title: string; reason: string }[];
+  error?: string;
+  backup?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
-
-export interface FullPrivacyImporterState extends BaseImporterState {
-  type: "full-privacy";
-  metadata: string[];
-}
-
-export interface DeezerImporterState extends BaseImporterState {
-  type: "deezer";
-  metadata: string[];
-}
-
-export type ImporterState =
-  | PrivacyImporterState
-  | FullPrivacyImporterState
-  | DeezerImporterState;
-export type ImporterStateType = ImporterState["type"];
-
-
-export type ImporterStateFromType<T extends ImporterStateType> = Extract<
-  ImporterState,
-  { type: T }
->;
+export type ImporterStateType = ImportSource;
+export type ImporterStateFromType<T extends ImportSource> = ImporterState & {
+  type: T;
+};

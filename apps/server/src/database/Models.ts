@@ -5,6 +5,10 @@ import { ArtistSchema } from "./schemas/artist";
 import { ArtistGroupSchema } from "./schemas/artistGroup";
 import { GlobalPreferencesSchema } from "./schemas/globalPreference";
 import { ImporterStateSchema } from "./schemas/import";
+import {
+  ImportMappingSchema,
+  ImportReviewSchema,
+} from "./schemas/importReview";
 import { InfosSchema } from "./schemas/info";
 import { MigrationSchema } from "./schemas/migration";
 import { PrivateDataSchema } from "./schemas/privateData";
@@ -24,3 +28,6 @@ export const GlobalPreferencesModel = model(
 );
 export const ImporterStateModel = model("ImporterState", ImporterStateSchema);
 export const PrivateDataModel = model("PrivateData", PrivateDataSchema);
+
+export const ImportReviewModel = model("ImportReview", ImportReviewSchema);
+export const ImportMappingModel = model("ImportMapping", ImportMappingSchema);

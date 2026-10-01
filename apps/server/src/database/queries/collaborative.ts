@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
 import { Timesplit } from "../../tools/types";
+import { statisticsFor } from "../listeningDuration";
+import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
 import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
@@ -280,13 +282,14 @@ export const getCollaborativeTimePer = async (
   end: Date,
   timeSplit: Timesplit,
   artistId?: string,
+  viewer?: User,
 ) => {
   await requireCompetitionParticipants(userIds);
   const match: any = basicMatchUsers(userIds, start, end);
   if (artistId) {
     match.primaryArtistId = artistId;
   }
-  return StatisticsInfosModel.aggregate([
+  return statisticsFor(viewer).aggregate([
     { $match: match },
     {
       $project: {

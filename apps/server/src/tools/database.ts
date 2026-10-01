@@ -131,6 +131,6 @@ export class Database {
   static async startup() {
     await Database.detectUpgrade();
     await Database.fixMissingTrackData();
-    await Database.deletePossibleDuplicates();
+    // Imports reconcile events explicitly; proximity alone cannot prove duplication.
   }
 }

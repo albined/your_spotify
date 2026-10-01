@@ -1,6 +1,7 @@
 import { PipelineStage } from "mongoose";
 
 import { getWithDefault } from "../../tools/env";
+import { statisticsFor } from "../listeningDuration";
 import { AlbumModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
@@ -22,6 +23,7 @@ export async function getListeningDistribution(
   start: Date,
   end: Date,
 ) {
+  const Statistics = statisticsFor(user);
   const bounds = timelineBounds(start, end, 200);
   const match = {
     owner: user._id,
@@ -30,7 +32,7 @@ export async function getListeningDistribution(
   };
   // Find discovery dates before filtering the selected period. An old favourite
   // must not become "new" simply because the user changes the date selector.
-  const rows = await StatisticsInfosModel.aggregate<{
+  const rows = await Statistics.aggregate<{
     _id: { bucket: number; artist: string };
     duration: number;
     newDuration: number;
@@ -154,6 +156,7 @@ function rankedSeries(field: string): PipelineStage.FacetPipelineStage[] {
 }
 
 export async function getArtistTimeline(user: User, artistId: string) {
+  const Statistics = statisticsFor(user);
   // Like existing artist detail statistics, include this artist even when it is
   // excluded from the user's global statistics by the blacklist.
   const match = {
@@ -171,7 +174,7 @@ export async function getArtistTimeline(user: User, artistId: string) {
     .lean();
   if (!first) return null;
   const bounds = timelineBounds(first.played_at, end, 200);
-  const [result] = await StatisticsInfosModel.aggregate<{
+  const [result] = await Statistics.aggregate<{
     total: Bucket[];
     albums: RankedSeries[];
     songs: RankedSeries[];

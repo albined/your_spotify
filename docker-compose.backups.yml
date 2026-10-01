@@ -1,0 +1,17 @@
+# Add to the existing stack: docker compose -f docker-compose.yml -f docker-compose.backups.yml up -d --build server
+# Uses the existing database; this file does not start a second Mongo service.
+services:
+  server:
+    stop_grace_period: 11m
+    environment:
+      BACKUPS_ENABLED: ${BACKUPS_ENABLED:-false}
+      BACKUP_BEFORE_IMPORT: ${BACKUP_BEFORE_IMPORT:-true}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 3 * * *}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_DIR: /backups
+      IMPORT_DIR: /data/imports
+    volumes:
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+      - import-files:/data/imports
+volumes:
+  import-files:
