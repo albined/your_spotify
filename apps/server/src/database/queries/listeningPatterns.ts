@@ -1,6 +1,6 @@
 import { getWithDefault } from "../../tools/env";
+import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { getStatisticsArtists } from "./artistGroups";
 import { DAY_MS, HOUR_MS } from "./listeningTimelineTools";
 
@@ -18,8 +18,9 @@ function context(user: User, start: Date, end: Date) {
 }
 
 export async function getListeningHeatmaps(user: User, start: Date, end: Date) {
+  const Statistics = statisticsFor(user);
   const { timezone, match } = context(user, start, end);
-  const [result] = await StatisticsInfosModel.aggregate<{
+  const [result] = await Statistics.aggregate<{
     days: { _id: string; hours: number }[];
     rhythms: { _id: { weekday: number; hour: number }; hours: number }[];
   }>([
@@ -94,14 +95,12 @@ export function summarizeArtistDays(days: { date: string; hours: number }[]) {
 }
 
 export async function getArtistActivity(user: User, start: Date, end: Date) {
+  const Statistics = statisticsFor(user);
   const { timezone, match } = context(user, start, end);
   const base = { start: start.getTime(), end: end.getTime(), timezone };
   if (end.getTime() - start.getTime() < 7 * DAY_MS)
     return { ...base, artists: [] };
-  const totals = await StatisticsInfosModel.aggregate<{
-    _id: string;
-    hours: number;
-  }>([
+  const totals = await Statistics.aggregate<{ _id: string; hours: number }>([
     { $match: { ...match, primaryArtistId: { $type: "string", $ne: "" } } },
     {
       $group: {
@@ -115,7 +114,7 @@ export async function getArtistActivity(user: User, start: Date, end: Date) {
   if (!totals.length) return { ...base, artists: [] };
   const ids = totals.map((row) => row._id);
   const [daily, metadata] = await Promise.all([
-    StatisticsInfosModel.aggregate<{
+    Statistics.aggregate<{
       _id: { artist: string; date: string };
       hours: number;
     }>([

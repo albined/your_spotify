@@ -1,6 +1,6 @@
 import { getWithDefault } from "../../tools/env";
+import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { getStatisticsArtists } from "./artistGroups";
 import { bucketExpression, HOUR_MS } from "./listeningTimelineTools";
 
@@ -15,6 +15,7 @@ export async function getArtistDistribution(
   start: Date,
   end: Date,
 ) {
+  const Statistics = statisticsFor(user);
   const span = Math.max(1, end.getTime() - start.getTime());
   const count = Math.min(
     ARTIST_DISTRIBUTION_MAX_BINS,
@@ -26,7 +27,7 @@ export async function getArtistDistribution(
     count,
     width: span / count,
   };
-  const rows = await StatisticsInfosModel.aggregate<{
+  const rows = await Statistics.aggregate<{
     _id: string;
     total: number;
     bins: { bucket: number; duration: number }[];

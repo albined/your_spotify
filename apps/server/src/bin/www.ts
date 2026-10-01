@@ -4,6 +4,7 @@ import { app } from "../app";
 import { checkBlacklistConsistency, connect } from "../database";
 import { fixRunningImportsAtStart } from "../database/queries/importer";
 import { dbLoop } from "../spotify/looper";
+import { startBackupSchedule } from "../tools/backups";
 import { get, getWithDefault } from "../tools/env";
 import { logger } from "../tools/logger";
 
@@ -44,13 +45,14 @@ export function startServer() {
 
   connect()
     .then(async () => {
+      if (!get("DISABLE_BACKGROUND_JOBS")) await fixRunningImportsAtStart();
       server.listen(port);
       server.on("error", onError);
       server.on("listening", onListening);
       // Local snapshot previews serve a copied database without polling Spotify
       // or resuming imports and repair jobs from that copy.
       if (get("DISABLE_BACKGROUND_JOBS")) return;
-      fixRunningImportsAtStart().catch(logger.error);
+      startBackupSchedule();
       checkBlacklistConsistency().catch(logger.error);
       const domain = get("CLIENT_ENDPOINT");
       if (domain.toLowerCase().includes("spotify")) {

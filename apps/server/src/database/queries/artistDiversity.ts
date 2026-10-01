@@ -1,8 +1,8 @@
 import type { PipelineStage } from "mongoose";
 
 import { statisticsTimezone } from "../../tools/allTimeStart";
+import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { diversityWindowDays } from "./diversityWindow";
 import { overviewPlan, OverviewPeriod } from "./listeningOverviewBuckets";
 import {
@@ -100,6 +100,7 @@ export async function getPersonalArtistDiversity(
   end: Date,
   period: OverviewPeriod = "custom",
 ) {
+  const Statistics = statisticsFor(user);
   const plan = overviewPlan(start, end, period, statisticsTimezone(user));
   start = new Date(plan.start);
   const windowDays = diversityWindowDays(start, end);
@@ -108,7 +109,7 @@ export async function getPersonalArtistDiversity(
   const bounds = timelineBounds(start, cutoff > start ? cutoff : end, 200);
   const changes =
     cutoff > start
-      ? await StatisticsInfosModel.aggregate<DiversityChange>([
+      ? await Statistics.aggregate<DiversityChange>([
           {
             $match: {
               owner: user._id,

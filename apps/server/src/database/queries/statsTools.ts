@@ -136,7 +136,7 @@ export const getGroupByDateProjection = (userTimezone: string | undefined) => ({
   },
 });
 
-export const getTrackSumType = (user: User, idField = "$track.duration_ms") => {
+export const getTrackSumType = (user: User, idField = "$durationMs") => {
   if (user.settings.metricUsed === "number") {
     return 1;
   }

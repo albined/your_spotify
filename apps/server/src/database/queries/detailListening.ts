@@ -5,6 +5,7 @@ import {
   startOfCalendarDate,
   statisticsTimezone,
 } from "../../tools/allTimeStart";
+import { statisticsFor } from "../listeningDuration";
 import { TrackModel } from "../Models";
 import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
@@ -22,6 +23,7 @@ export async function getDetailListening(
   kind: ListeningItemKind,
   id: string,
 ) {
+  const Statistics = statisticsFor(user);
   const end = new Date();
   const timezone = statisticsTimezone(user);
   const field = { song: "id", album: "albumId", artist: "primaryArtistId" }[
@@ -100,7 +102,7 @@ export async function getDetailListening(
     ];
   }
   const [[result], overall, eras] = await Promise.all([
-    StatisticsInfosModel.aggregate<{
+    Statistics.aggregate<{
       days: { _id: string; hours: number }[];
       activity?: { _id: number; hours: number }[];
       hours?: { _id: number; hours: number }[];
@@ -110,7 +112,7 @@ export async function getDetailListening(
       allowDiskUse: true,
     }),
     kind === "artist"
-      ? StatisticsInfosModel.aggregate<{ _id: number; hours: number }>([
+      ? Statistics.aggregate<{ _id: number; hours: number }>([
           {
             $match: {
               ...base,

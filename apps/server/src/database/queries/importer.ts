@@ -31,8 +31,15 @@ export const setImporterStateMetadata = <T extends ImporterState["metadata"]>(
 export const setImporterStateCurrent = (id: string, current: number) =>
   ImporterStateModel.findByIdAndUpdate(id, { current });
 
-export const getUserImporterState = async (userId: string) =>
+export const getUserImporterState = (userId: string) =>
   ImporterStateModel.find({ user: userId }).sort({ createdAt: -1 });
 
 export const fixRunningImportsAtStart = () =>
-  ImporterStateModel.updateMany({ status: "progress" }, { status: "failure" });
+  ImporterStateModel.updateMany(
+    { status: "progress" },
+    {
+      status: "failure",
+      stage: "failed",
+      error: "Server restarted. Retry to resume from the last saved row.",
+    },
+  );

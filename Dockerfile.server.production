@@ -36,6 +36,8 @@ RUN CI=true pnpm install --production --frozen-lockfile
 
 FROM node:25-alpine
 
+RUN apk add --no-cache mongodb-tools
+
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV:-production}
 

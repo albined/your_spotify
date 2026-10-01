@@ -500,7 +500,16 @@ router.get(
       normalizeUserIdsQuery(req.query),
       competitionTimelineSchema,
     );
-    res.status(200).send(await getCompetitionArtists(userIds, start, end));
+    res
+      .status(200)
+      .send(
+        await getCompetitionArtists(
+          userIds,
+          start,
+          end,
+          (req as LoggedRequest).user,
+        ),
+      );
   },
 );
 
@@ -545,6 +554,7 @@ router.get(
       end,
       timeSplit,
       artistId,
+      (req as LoggedRequest).user,
     );
     res.status(200).send(result);
   },

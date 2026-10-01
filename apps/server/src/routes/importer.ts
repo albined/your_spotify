@@ -1,192 +1,139 @@
+import { mkdirSync } from "node:fs";
+import { unlink } from "node:fs/promises";
+
 import { Router } from "express";
 import multer from "multer";
 import { z } from "zod";
 
-import {
-  getImporterState,
-  getUserImporterState,
-} from "../database/queries/importer";
+import { ImporterStateModel } from "../database/Models";
+import { getUserImporterState } from "../database/queries/importer";
+import { listeningAccuracy } from "../database/queries/listeningAccuracy";
+import { backupStatus } from "../tools/backups";
+import { getWithDefault } from "../tools/env";
 import {
   canUserImport,
   cleanupImport,
+  prepareImport,
   runImporter,
 } from "../tools/importers/importer";
-import { ImporterStateType } from "../tools/importers/types";
 import { logger } from "../tools/logger";
-import { logged, notAlreadyImporting, validate } from "../tools/middleware";
+import { admin, logged, validate } from "../tools/middleware";
 import { LoggedRequest } from "../tools/types";
+import { router as reviewRouter } from "./importReview";
 
 export const router = Router();
-
+router.use(reviewRouter);
+const importDir = getWithDefault("IMPORT_DIR", "/tmp/imports");
+mkdirSync(importDir, { recursive: true, mode: 0o700 });
 const upload = multer({
-  dest: "/tmp/imports/",
-  limits: {
-    files: 50,
-    fileSize: 1024 * 1024 * 20, // 20 mo
-  },
+  dest: importDir,
+  limits: { files: 50, fileSize: 20 * 1024 * 1024 },
 });
-
-router.post(
-  "/import/privacy",
-  logged,
-  notAlreadyImporting,
-  upload.array("imports", 50),
-  async (req, res) => {
-    const { files, user } = req as LoggedRequest;
-
-    if (!files) {
-      res.status(400).end();
-      return;
-    }
-
-    if (!canUserImport(user._id.toString())) {
-      res.status(400).send({ code: "ALREADY_IMPORTING" });
-      return;
-    }
-
-    runImporter(
-      null,
-      "privacy",
-      user._id.toString(),
-      (files as Express.Multer.File[]).map((f) => f.path),
-      (success) => {
-        if (success) {
-          res.status(200).send({ code: "IMPORT_STARTED" });
-          return;
-        }
-        res.status(400).send({ code: "IMPORT_INIT_FAILED" });
-        return;
-      },
-    ).catch(logger.error);
-  },
-);
-
-router.post(
-  "/import/full-privacy",
-  logged,
-  notAlreadyImporting,
-  upload.array("imports", 50),
-  async (req, res) => {
-    const { files, user } = req as LoggedRequest;
-
-    if (!files) {
-      res.status(400).end();
-      return;
-    }
-
-    if (!canUserImport(user._id.toString())) {
-      res.status(400).send({ code: "ALREADY_IMPORTING" });
-      return;
-    }
-
-    runImporter(
-      null,
-      "full-privacy",
-      user._id.toString(),
-      (files as Express.Multer.File[]).map((f) => f.path),
-      (success) => {
-        if (success) {
-          res.status(200).send({ code: "IMPORT_STARTED" });
-          return;
-        }
-        res.status(400).send({ code: "IMPORT_INIT_FAILED" });
-        return;
-      },
-    ).catch(logger.error);
-  },
-);
-
-router.post(
-  "/import/deezer",
-  logged,
-  notAlreadyImporting,
-  upload.array("imports", 50),
-  async (req, res) => {
-    const { files, user } = req as LoggedRequest;
-
-    if (!files) {
-      res.status(400).end();
-      return;
-    }
-
-    if (!canUserImport(user._id.toString())) {
-      res.status(400).send({ code: "ALREADY_IMPORTING" });
-      return;
-    }
-
-    runImporter(
-      null,
-      "deezer",
-      user._id.toString(),
-      (files as Express.Multer.File[]).map(f => f.path),
-      success => {
-        if (success) {
-          res.status(200).send({ code: "IMPORT_STARTED" });
-          return;
-        }
-        res.status(400).send({ code: "IMPORT_INIT_FAILED" });
-        return;
-      },
-    ).catch(logger.error);
-  },
-);
-
-const retrySchema = z.object({ existingStateId: z.string() });
-
-router.post("/import/retry", logged, notAlreadyImporting, async (req, res) => {
-  const { user } = req as LoggedRequest;
-  const { existingStateId } = validate(req.body, retrySchema);
-
-  const importState =
-    await getImporterState<ImporterStateType>(existingStateId);
-  if (!importState || importState.user.toString() !== user._id.toString()) {
-    res.status(404).end();
-    return;
-  }
-
-  if (importState.status !== "failure") {
-    res.status(400).end();
-    return;
-  }
-
-  runImporter(
-    importState._id.toString(),
-    importState.type,
-    user._id.toString(),
-    importState.metadata,
-    (success) => {
-      if (success) {
-        res.status(200).send({ code: "IMPORT_STARTED" });
-        return;
+const timezoneSchema = z.object({
+  repairLegacyDeezer: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  timezone: z
+    .string()
+    .default("UTC")
+    .refine((value) => {
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: value });
+        return true;
+      } catch {
+        return false;
       }
-      res.status(400).send({ code: "IMPORT_INIT_FAILED" });
-      return;
-    },
-  ).catch(logger.error);
+    }, "Invalid timezone"),
 });
 
-const cleanupImportSchema = z.object({ id: z.string() });
+for (const type of ["privacy", "full-privacy", "deezer"] as const) {
+  router.post(
+    `/import/${type}`,
+    logged,
+    upload.array("imports", 50),
+    async (req, res) => {
+      const { user } = req as LoggedRequest;
+      const files = ((req.files as Express.Multer.File[]) ?? []).map(
+        (file) => file.path,
+      );
+      try {
+        if (!canUserImport(user._id.toString())) {
+          res.status(409).send({ code: "ALREADY_IMPORTING" });
+          await Promise.all(files.map((file) => unlink(file).catch(() => {})));
+          return;
+        }
+        const { timezone, repairLegacyDeezer } = validate(
+          req.body,
+          timezoneSchema,
+        );
+        const state = await prepareImport(
+          user,
+          type,
+          files,
+          timezone,
+          repairLegacyDeezer,
+        );
+        res.status(200).send({ code: "IMPORT_READY", id: state._id });
+      } catch (error) {
+        await Promise.all(files.map((file) => unlink(file).catch(() => {})));
+        logger.error("Import validation failed", error);
+        res.status(400).send({ code: "IMPORT_INIT_FAILED" });
+      }
+    },
+  );
+}
 
+const startSchema = z.object({
+  existingStateId: z.string().regex(/^[a-f\d]{24}$/i),
+});
+for (const path of ["/import/start", "/import/retry"]) {
+  router.post(path, logged, async (req, res) => {
+    const { user } = req as LoggedRequest;
+    const { existingStateId } = validate(req.body, startSchema);
+    const state = await ImporterStateModel.findOne({
+      _id: existingStateId,
+      user: user._id,
+      status: { $in: ["ready", "failure"] },
+    });
+    if (!state) {
+      res.status(404).end();
+      return;
+    }
+    if (!canUserImport(user._id.toString())) {
+      res.status(409).send({ code: "ALREADY_IMPORTING" });
+      return;
+    }
+    // Register in the running set synchronously before accepting another request.
+    void runImporter(existingStateId, user).catch(logger.error);
+    res.status(202).send({ code: "IMPORT_STARTED" });
+  });
+}
+
+const cleanupSchema = z.object({ id: z.string().regex(/^[a-f\d]{24}$/i) });
 router.delete("/import/clean/:id", logged, async (req, res) => {
   const { user } = req as LoggedRequest;
-  const { id } = validate(req.params, cleanupImportSchema);
-
-  const importState = await getImporterState(id);
-  if (!importState) {
+  const { id } = validate(req.params, cleanupSchema);
+  const state = await ImporterStateModel.findOne({ _id: id, user: user._id });
+  if (!state) {
     res.status(404).end();
     return;
   }
-  if (importState.user.toString() !== user._id.toString()) {
-    res.status(404).end();
+  if (state.status === "progress") {
+    res.status(409).end();
     return;
   }
-  await cleanupImport(importState._id.toString());
+  await cleanupImport(id);
   res.status(204).end();
 });
-
 router.get("/imports", logged, async (req, res) => {
   const { user } = req as LoggedRequest;
-
-  const state = await getUserImporterState(user._id.toString());
-  res.status(200).send(state);
+  // Do not expose server upload paths to the browser.
+  res.send(await getUserImporterState(user._id.toString()).select("-metadata"));
+});
+router.get("/imports/accuracy", logged, async (req, res) => {
+  res.send(await listeningAccuracy((req as LoggedRequest).user));
+});
+router.get("/imports/backups", logged, admin, async (_req, res) => {
+  res.send(await backupStatus());
 });

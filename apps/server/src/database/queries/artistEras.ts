@@ -1,6 +1,6 @@
 import { statisticsTimezone } from "../../tools/allTimeStart";
+import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { ArtistPeriod, selectEraArtists } from "./artistErasSelection";
 import { getStatisticsArtists } from "./artistGroups";
 import {
@@ -11,6 +11,7 @@ import {
 } from "./listeningTimelineTools";
 
 export async function getArtistEras(user: User, start: Date, end: Date) {
+  const Statistics = statisticsFor(user);
   const bounds = timelineBounds(start, end, 256);
   const timezone = statisticsTimezone(user);
   const unit = bounds.end - bounds.start >= 180 * DAY_MS ? "month" : "week";
@@ -21,7 +22,7 @@ export async function getArtistEras(user: User, start: Date, end: Date) {
     primaryArtistId: { $type: "string", $ne: "" },
     durationMs: { $type: "number", $gt: 0, $lte: Number.MAX_SAFE_INTEGER },
   };
-  const periods = await StatisticsInfosModel.aggregate<ArtistPeriod>([
+  const periods = await Statistics.aggregate<ArtistPeriod>([
     { $match: match },
     {
       $group: {
@@ -52,7 +53,7 @@ export async function getArtistEras(user: User, start: Date, end: Date) {
   const ids = selections[20];
   const [buckets, metadata] = await Promise.all([
     ids.length
-      ? StatisticsInfosModel.aggregate<{
+      ? Statistics.aggregate<{
           _id: { artist: string; bucket: number };
           duration: number;
         }>([

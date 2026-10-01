@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
 
 import { statisticsTimezone } from "../../tools/allTimeStart";
+import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { StatisticsInfosModel } from "../StatisticsInfos";
 import { artistDiversity, artistDiversityStages } from "./artistDiversity";
 import { requireCompetitionParticipants } from "./competitionParticipants";
 import { diversityWindowDays } from "./diversityWindow";
@@ -16,6 +16,7 @@ export async function getCompetitionInsights(
   start: Date,
   end: Date,
 ) {
+  const Statistics = statisticsFor(user);
   const accounts = await requireCompetitionParticipants(userIds);
   const windowDays = diversityWindowDays(start, end);
   const windowMs = windowDays * DAY_MS;
@@ -25,7 +26,7 @@ export async function getCompetitionInsights(
   const load = async (account: (typeof accounts)[number]) => {
     // Hour-of-day uses each participant's local clock, for comparing habits.
     const timezone = statisticsTimezone(account);
-    const [result] = await StatisticsInfosModel.aggregate<{
+    const [result] = await Statistics.aggregate<{
       artists: {
         _id: { artist: string; bucket: number };
         durationMs: number;
