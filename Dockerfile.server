@@ -5,7 +5,7 @@ WORKDIR /app
 ENV MONGO_ENDPOINT=mongodb://mongo:27017/your_spotify
 
 RUN apk add python3 gcc g++ make cmake mongodb-tools
-RUN npm install -g pnpm nodemon
+RUN npm install -g pnpm@12.3.4 nodemon
 
 COPY pnpm-lock.yaml pnpm-lock.yaml
 COPY package.json package.json
@@ -13,6 +13,7 @@ COPY pnpm-workspace.yaml pnpm-workspace.yaml
 
 COPY apps/dev/package.json apps/dev/package.json
 COPY apps/dev/tsconfig.json apps/dev/tsconfig.json
+COPY apps/client/package.json apps/client/package.json
 
 COPY apps/server/package.json apps/server/package.json
 COPY apps/server/tsconfig.json apps/server/tsconfig.json
