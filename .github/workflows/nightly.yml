@@ -39,7 +39,7 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Docker metadata
         id: docker-meta
         uses: docker/metadata-action@v5
