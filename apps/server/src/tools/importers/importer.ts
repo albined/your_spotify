@@ -108,6 +108,8 @@ export async function runImporter(id: string, user: User) {
       if (state.type !== "deezer") rows = await planSpotifyRows(user, rows, id);
       const resolver = new ImportResolver(userId);
       const identity = new ImportContext(state.repairLegacyDeezer, rows);
+      for (const track of await resolver.prefetchSpotifyTimeline(rows))
+        identity.remember(track);
       const review = new ReviewStore();
       await review.initialize(user, rows);
       const spotifyLinks = new SpotifyReviewLinks();

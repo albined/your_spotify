@@ -191,6 +191,16 @@ export async function reconcileImport(
         $or: [{ provider: row.provider }, { provider: { $exists: false } }],
         $and: [importMatchTimeFilter(row, track)],
       });
+      // Unavailable recording metadata must not let this event claim a play
+      // that a closer, unresolved release may own once its identity is known.
+      if (
+        identity.hasUnresolvedSpotifyCompetitor(
+          row,
+          found.filter((play) => canLinkImportListen(row, play)),
+          matches.confirmed,
+        )
+      )
+        return { outcome: "ambiguous", deltaMs: 0 };
       const candidateMatch = (play: Infos) =>
         identity.spotifyEndMatch(row, play, matches.confirmed);
       const candidates = found.filter(

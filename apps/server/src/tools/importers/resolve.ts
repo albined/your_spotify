@@ -70,6 +70,25 @@ export class ImportResolver {
     if (isrc) this.recordings.set(isrc, track);
   }
 
+  async prefetchSpotifyTimeline(rows: ImportRecord[]) {
+    const ids = [
+      ...new Set(
+        rows
+          .filter((row) => row.source === "full-privacy" && !row.invalid)
+          .map((row) => row.spotifyId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    // All competing releases must be known before any event claims an API play.
+    // Include skips and excluded rows: they still explain nearby API timestamps.
+    await this.prefetchIds(ids, true);
+    return ids.flatMap((id) => {
+      const track = this.cache.get(id);
+      // A relinked response identifies both the uploaded ID and its replacement.
+      return track ? [track, { ...track, id }] : [];
+    });
+  }
+
   async prefetch(rows: ImportRecord[]) {
     const ids = [
       ...new Set(
@@ -81,11 +100,20 @@ export class ImportResolver {
           .map((row) => row.spotifyId)
           .filter((id): id is string => Boolean(id)),
       ),
-    ].filter((id) => !this.cache.has(id));
+    ];
+    await this.prefetchIds(ids);
+  }
+
+  private async prefetchIds(ids: string[], refreshRecordingIds = false) {
+    ids = ids.filter((id) => !this.cache.has(id));
     if (!ids.length) return;
     const stored = await TrackModel.find({ id: { $in: ids } }).lean();
     for (const track of stored) this.cache.set(track.id, track);
-    const missing = ids.filter((id) => !this.cache.has(id));
+    const missing = ids.filter(
+      (id) =>
+        !this.cache.has(id) ||
+        (refreshRecordingIds && !this.cache.get(id)?.external_ids?.isrc),
+    );
     for (let offset = 0; offset < missing.length; offset += 45) {
       const batch = missing.slice(offset, offset + 45);
       const found = await retryPromise(() => this.api.getTracks(batch), 3, 30);
@@ -111,7 +139,7 @@ export class ImportResolver {
                 album: track.album.id,
                 artists: track.artists.map((artist) => artist.id),
               }
-            : null,
+            : (this.cache.get(id) ?? null),
         );
       }
     }
