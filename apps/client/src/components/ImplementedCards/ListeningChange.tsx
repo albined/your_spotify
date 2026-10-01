@@ -7,15 +7,17 @@ export default function ListeningChange({
   percent: number;
   unit: string;
 }) {
-  const direction = percent < 0 ? "less" : percent > 0 ? "more" : "same";
+  const description =
+    percent === 0
+      ? `No change from last ${unit}`
+      : `${Math.abs(percent)}% ${percent < 0 ? "less" : "more"} than last ${unit}`;
   return (
-    <span
-      className={s.delta}
-      aria-label={`${Math.abs(percent)}% ${direction} than last ${unit}`}>
-      <span aria-hidden="true">
-        {percent < 0 ? "↓" : percent > 0 ? "↑" : "→"}
+    <span className={s.delta}>
+      <span className={s.screenReaderOnly}>{description}</span>
+      <span className={s.deltaVisual} aria-hidden="true">
+        <span>{percent < 0 ? "↓" : percent > 0 ? "↑" : "→"}</span>
+        {Math.abs(percent)}% vs last {unit}
       </span>
-      {Math.abs(percent)}% vs last {unit}
     </span>
   );
 }
