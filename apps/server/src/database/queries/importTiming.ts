@@ -65,33 +65,33 @@ async function timingPlan(user: User, group: string, rowId?: string) {
   };
   const matches = await identity.matchingTracks(row, track);
   const keys = row.deezerPolicy?.sourceKeys ?? [row.key];
-  const candidates = await InfosModel.find({
+  // Recover committed links independently of the nearby-candidate limit and
+  // time window. Once linked, only that listen can complete this review.
+  const linked = await InfosModel.find({
     owner: user._id,
-    $and: [
-      { $or: [{ provider: row.provider }, { provider: { $exists: false } }] },
-      {
-        $or: [
-          { sourceKeys: { $in: keys, $type: "string" } },
+    sourceKeys: { $in: keys, $type: "string" },
+  }).sort({ played_at: -1, _id: 1 });
+  const candidates = linked.length
+    ? linked
+    : await InfosModel.find({
+        owner: user._id,
+        $and: [
           {
-            $and: [importMatchTimeFilter(row, track)],
-            $or: [
-              { id: { $in: [...matches.confirmed, ...matches.uncertain] } },
-              {
-                played_at: row.at,
-                listeningSource: { $exists: false },
-                sourceKeys: { $exists: false },
-              },
-            ],
+            $or: [{ provider: row.provider }, { provider: { $exists: false } }],
+          },
+          importMatchTimeFilter(row, track),
+        ],
+        $or: [
+          { id: { $in: [...matches.confirmed, ...matches.uncertain] } },
+          {
+            played_at: row.at,
+            listeningSource: { $exists: false },
+            sourceKeys: { $exists: false },
           },
         ],
-      },
-    ],
-  })
-    .sort({ played_at: -1, _id: 1 })
-    .limit(21);
-  const linked = candidates.filter((play) =>
-    play.sourceKeys?.some((key) => keys.includes(key)),
-  );
+      })
+        .sort({ played_at: -1, _id: 1 })
+        .limit(21);
   const canUse = (play: (typeof candidates)[number]) =>
     linked.length
       ? linked.length === 1 && linked[0]!._id.equals(play._id)

@@ -1869,6 +1869,72 @@ test(
               );
             },
           );
+      for (const newer of [20, 30, 0])
+        await t.test(
+          `timing recovery exposes the linked listen ${newer ? `behind ${newer} newer candidates` : "outside the time window"}`,
+          async () => {
+            const {
+              reviewTiming,
+              applyTimingChoice,
+            } = require("../src/tools/importers/review");
+            const owner = await UserModel.create({
+              username: "Interrupted review",
+              spotifyId: `interrupted-${newer}`,
+              settings: { dateFormat: "default" },
+            });
+            const entry = row({
+              source: "full-privacy",
+              provider: "spotify",
+              spotifyId: track.id,
+              isrc: undefined,
+              key: `interrupted-${newer}`,
+              at: new Date("2027-03-01T12:00:00Z"),
+            });
+            await reconcileImport(owner, entry, track, "interrupted", 0);
+            const linked = await InfosModel.findOne({ owner: owner._id });
+            if (!newer) {
+              linked.played_at = new Date(+entry.at - 86400000);
+              await linked.save();
+            }
+            const store = new ReviewStore();
+            await store.initialize(owner, [entry]);
+            await store.save(owner, entry, "legacy", "Timing question", "job");
+            await InfosModel.insertMany(
+              Array.from({ length: newer }, (_, index) => ({
+                owner: owner._id,
+                id: track.id,
+                albumId: track.album,
+                primaryArtistId: track.artists[0],
+                durationMs: track.duration_ms,
+                provider: "spotify",
+                played_at: new Date(+entry.at + (index + 1) * 1000),
+              })),
+            );
+            const group = recordingKey(entry);
+            const comparison = await reviewTiming(owner, group);
+            assert.equal(comparison.canAdd, false);
+            const usable = comparison.candidates.filter((play) => play.canUse);
+            assert.deepEqual(
+              usable.map((play) => play.id),
+              [String(linked._id)],
+            );
+            await applyTimingChoice(
+              owner,
+              group,
+              comparison.rowId,
+              comparison.token,
+              String(linked._id),
+            );
+            assert.equal(
+              await InfosModel.countDocuments({ owner: owner._id }),
+              newer + 1,
+            );
+            assert.equal(
+              (await ImportReviewModel.findById(comparison.rowId)).status,
+              "resolved",
+            );
+          },
+        );
     } finally {
       await mongoose.connection.dropDatabase();
       await mongoose.disconnect();
