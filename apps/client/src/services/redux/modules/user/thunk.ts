@@ -1,4 +1,5 @@
 import { api } from "../../../apis/api";
+import { ArtistVisibilityEntry } from "../../../artistVisibility";
 import { DateFormatter } from "../../../date";
 import { myAsyncThunk } from "../../tools";
 import { alertMessage } from "../message/reducer";
@@ -26,6 +27,24 @@ export const checkLogged = myAsyncThunk<User | null, void>(
     return null;
   },
 );
+
+export const saveArtistVisibility = myAsyncThunk<
+  ArtistVisibilityEntry[],
+  { artistId: string; hidden: boolean | null }
+>("@user/save-artist-visibility", async ({ artistId, hidden }, tapi) => {
+  try {
+    if (hidden === null) await api.removeArtistVisibility(artistId);
+    else await api.setArtistVisibility(artistId, hidden);
+    const { data } = await api.artistVisibility();
+    return data;
+  } catch (e) {
+    const response = e as { response?: { data?: { message?: string } } };
+    return tapi.rejectWithValue(
+      response.response?.data?.message ??
+        "Could not save artist visibility. Please try again.",
+    );
+  }
+});
 
 export const changeUsername = myAsyncThunk<void, string>(
   "@user/change-username",

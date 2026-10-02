@@ -18,7 +18,7 @@ import {
   ArtistVisibilityEntry,
   VisibilityArtist,
 } from "../../../services/artistVisibility";
-import { checkLogged } from "../../../services/redux/modules/user/thunk";
+import { saveArtistVisibility } from "../../../services/redux/modules/user/thunk";
 import { useAppDispatch } from "../../../services/redux/tools";
 
 import s from "./index.module.css";
@@ -80,17 +80,16 @@ export default function ArtistVisibility() {
     setSaving(true);
     setError(undefined);
     try {
-      if (hidden === null) await api.removeArtistVisibility(artistId);
-      else await api.setArtistVisibility(artistId, hidden);
-      const { data } = await api.artistVisibility();
+      const data = await dispatch(
+        saveArtistVisibility({ artistId, hidden }),
+      ).unwrap();
       setEntries(data);
       setQuery("");
-      await dispatch(checkLogged()).unwrap();
     } catch (e) {
-      const response = e as { response?: { data?: { message?: string } } };
       setError(
-        response.response?.data?.message ??
-          "Could not save artist visibility. Please try again.",
+        typeof e === "string"
+          ? e
+          : "Could not save artist visibility. Please try again.",
       );
     } finally {
       setSaving(false);
