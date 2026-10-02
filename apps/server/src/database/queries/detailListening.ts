@@ -42,6 +42,7 @@ export async function getDetailListening(
     durationMs: { ...base.durationMs, $type: "number" },
   };
   const first = await StatisticsInfosModel.findOne({ ...base, [field]: id })
+    .setOptions({ includeHiddenArtists: true })
     .sort({ played_at: 1 })
     .select("played_at")
     .maxTimeMS(15_000)
@@ -110,6 +111,7 @@ export async function getDetailListening(
     }>([{ $match: match }, { $facet: facets }]).option({
       maxTimeMS: 15_000,
       allowDiskUse: true,
+      includeHiddenArtists: true,
     }),
     kind === "artist"
       ? Statistics.aggregate<{ _id: number; hours: number }>([

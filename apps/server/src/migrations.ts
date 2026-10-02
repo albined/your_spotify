@@ -53,6 +53,7 @@ import { up as add_import_review } from "./migrations/1790592000003-add_import_r
 import { up as add_no_match_review } from "./migrations/1790592000004-add_no_match_review";
 import { up as add_deezer_import_rules } from "./migrations/1790592000005-add_deezer_import_rules";
 import { up as add_excluded_import_listens } from "./migrations/1790592000006-add_excluded_import_listens";
+import { up as add_artist_visibility } from "./migrations/1790899200000-add_artist_visibility";
 
 function noop() {}
 
@@ -126,6 +127,10 @@ export function runMigrations() {
         },
         "1790592000002-add_import_recording_repairs.js": {
           up: add_import_recording_repairs,
+          down: noop,
+        },
+        "1790899200000-add_artist_visibility.js": {
+          up: add_artist_visibility,
           down: noop,
         },
       },

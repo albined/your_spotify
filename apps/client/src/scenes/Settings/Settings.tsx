@@ -19,6 +19,7 @@ import AccountInfos from "./AccountInfos";
 import AllowRegistration from "./AllowRegistration";
 import AllTimeStartDate from "./AllTimeStartDate";
 import ArtistGroups from "./ArtistGroups/ArtistGroups";
+import ArtistVisibility from "./ArtistVisibility/ArtistVisibility";
 import Backups from "./Backups";
 import BlacklistArtist from "./BlacklistArtist";
 import CompetitionParticipation from "./CompetitionParticipation";
@@ -127,6 +128,7 @@ export default function Settings() {
               <Masonry>
                 {!isPublic && <ListeningTime />}
                 {!isPublic && <AllTimeStartDate />}
+                {!isPublic && <ArtistVisibility />}
                 {!isPublic && <BlacklistArtist />}
                 {!isPublic && <Timezone />}
                 {!isPublic && <DateFormat />}

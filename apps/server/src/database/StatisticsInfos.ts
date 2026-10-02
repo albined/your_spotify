@@ -1,5 +1,9 @@
 import { model, PipelineStage } from "mongoose";
 
+import {
+  artistVisibilityFilter,
+  filterStatisticsPipeline,
+} from "./artistVisibility";
 import { artistGroups, GroupArtist } from "./queries/artistGroups";
 import { InfosSchema } from "./schemas/info";
 
@@ -70,15 +74,22 @@ export function expandArtistMatch(
 // blacklist writes continue to use InfosModel and untouched Spotify identities.
 const schema = InfosSchema.clone();
 schema.pre("aggregate", async function () {
-  const { artists } = await artistGroups();
-  if (!artists.length) return;
   const pipeline = this.pipeline();
   if (pipeline.some((stage) => "$out" in stage || "$merge" in stage))
     throw new Error("Statistics aggregations are read-only.");
+  const { artists } = await artistGroups();
+  const initial = pipeline[0];
+  if (artists.length && initial && "$match" in initial)
+    initial.$match = expandArtistMatch(initial.$match, artists);
+  if (!this.options.includeHiddenArtists) {
+    const filter = await artistVisibilityFilter(
+      initial && "$match" in initial ? initial.$match.owner : undefined,
+    );
+    if (filter) filterStatisticsPipeline(pipeline, filter);
+  }
+  if (!artists.length) return;
   const first = pipeline[0];
   const offset = first && "$match" in first ? 1 : 0;
-  if (first && "$match" in first)
-    first.$match = expandArtistMatch(first.$match, artists);
   pipeline.splice(offset, 0, {
     $set: {
       primaryArtistId: mappedId("$primaryArtistId", artists),
@@ -139,6 +150,10 @@ schema.pre("findOne", async function () {
   const { artists } = await artistGroups();
   if (artists.length)
     this.setQuery(expandArtistMatch(this.getQuery(), artists));
+  if (!this.getOptions().includeHiddenArtists) {
+    const filter = await artistVisibilityFilter(this.getQuery().owner);
+    if (filter) this.setQuery({ $and: [this.getQuery(), filter] });
+  }
 });
 
 export const StatisticsInfosModel = model("StatisticsInfos", schema, "infos");

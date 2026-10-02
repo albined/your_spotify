@@ -26,6 +26,7 @@ export interface User {
     allowCompetitions?: boolean;
     useFullSongDurations?: boolean;
     blacklistedArtists: string[];
+    artistVisibility?: { artistId: string; hidden: boolean }[];
   };
   lastImport: string | null;
   publicToken: string | null;
@@ -62,6 +63,15 @@ export const UserSchema = new Schema<User>(
         default: "follow",
       },
       blacklistedArtists: [{ type: String }],
+      artistVisibility: {
+        type: [
+          new Schema(
+            { artistId: { type: String, required: true }, hidden: Boolean },
+            { _id: false },
+          ),
+        ],
+        default: [],
+      },
       timezone: { type: String, default: undefined, required: false },
       dateFormat: { type: String, required: true },
       allTimeStartDate: { type: String, default: null },

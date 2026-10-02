@@ -28,7 +28,9 @@ export const getArtistInfos = (_artistId: string) => [
 
 export const getFirstAndLastListened = async (user: User, artistId: string) => {
   // Non sense to compute blacklist here
-  const res = await statisticsFor(user).aggregate([
+  const res = await statisticsFor(user, {
+    includeHiddenArtists: true,
+  }).aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
     { $sort: { played_at: 1 } },
@@ -70,7 +72,9 @@ export const getMostListenedSongOfArtist = async (
   artistId: string,
   count: number,
 ) => {
-  const res = await statisticsFor(user).aggregate([
+  const res = await statisticsFor(user, {
+    includeHiddenArtists: true,
+  }).aggregate([
     // Non sense to compute blacklist here
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
@@ -101,7 +105,9 @@ export const getMostListenedSongOfArtist = async (
 
 export const bestPeriodOfArtist = async (user: User, artistId: string) => {
   // Non sense to compute blacklist here
-  const res = await statisticsFor(user).aggregate([
+  const res = await statisticsFor(user, {
+    includeHiddenArtists: true,
+  }).aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
     {
@@ -133,7 +139,9 @@ export const getTotalListeningOfArtist = async (
   artistId: string,
 ) => {
   // Non sense to compute blacklist here
-  const res = await statisticsFor(user).aggregate([
+  const res = await statisticsFor(user, {
+    includeHiddenArtists: true,
+  }).aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     ...getArtistInfos(artistId),
     {
@@ -155,7 +163,9 @@ export const getMostListenedAlbumOfArtist = async (
   user: User,
   artistId: string,
 ) => {
-  const res = await statisticsFor(user).aggregate([
+  const res = await statisticsFor(user, {
+    includeHiddenArtists: true,
+  }).aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     {
       $lookup: {
@@ -183,7 +193,7 @@ export const getMostListenedAlbumOfArtist = async (
 
 export const getDayRepartitionOfArtist = (user: User, artistId: string) =>
   // Non sense to compute blacklist here
-  statisticsFor(user).aggregate([
+  statisticsFor(user, { includeHiddenArtists: true }).aggregate([
     { $match: { owner: user._id, primaryArtistId: artistId } },
     { $addFields: getGroupByDateProjection(user.settings.timezone) },
     ...getArtistInfos(artistId),

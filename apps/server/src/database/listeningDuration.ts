@@ -12,7 +12,10 @@ export const reportedDuration = {
 };
 
 /** Only transforms query results. Stored song lengths remain unchanged. */
-export function statisticsFor(user?: Pick<User, "settings">) {
+export function statisticsFor(
+  user?: Pick<User, "settings">,
+  options: { includeHiddenArtists?: boolean } = {},
+) {
   return {
     aggregate<T = any>(pipeline: PipelineStage[]) {
       const stages = [...pipeline];
@@ -27,7 +30,7 @@ export function statisticsFor(user?: Pick<User, "settings">) {
           },
         });
       }
-      return StatisticsInfosModel.aggregate<T>(stages);
+      return StatisticsInfosModel.aggregate<T>(stages).option(options);
     },
   };
 }

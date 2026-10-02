@@ -70,7 +70,7 @@ export const getFirstAndLastListenedAlbum = async (
         { $unwind: `$${e}.track` },
       ])
       .flat(1),
-  ]);
+  ]).option({ includeHiddenArtists: true });
   return res[0];
 };
 
@@ -89,6 +89,6 @@ export const getAlbumSongs = async (user: User, albumId: string) => {
       },
     },
     { $unwind: "$track" },
-  ]);
+  ]).option({ includeHiddenArtists: true });
   return res;
 };

@@ -20,7 +20,7 @@ export async function getArtistItemEras(
   start: Date,
   end: Date,
 ) {
-  const Statistics = statisticsFor(user);
+  const Statistics = statisticsFor(user, { includeHiddenArtists: true });
   const bounds = timelineBounds(start, end, 256);
   const timezone = statisticsTimezone(user);
   const unit = bounds.end - bounds.start >= 180 * DAY_MS ? "month" : "week";
