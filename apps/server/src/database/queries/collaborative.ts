@@ -82,7 +82,13 @@ export const getCollaborativeBestSongs = (
       $addFields: fromPairs(
         users.map((user) => [
           `percent_${user.toString()}`,
-          { $divide: [`$${user.toString()}`, `$total_${user.toString()}`] },
+          {
+            $cond: [
+              { $gt: [`$total_${user.toString()}`, 0] },
+              { $divide: [`$${user.toString()}`, `$total_${user.toString()}`] },
+              0,
+            ],
+          },
         ]),
       ),
     },
@@ -166,7 +172,13 @@ export const getCollaborativeBestAlbums = (
       $addFields: fromPairs(
         users.map((user) => [
           `percent_${user.toString()}`,
-          { $divide: [`$${user.toString()}`, `$total_${user.toString()}`] },
+          {
+            $cond: [
+              { $gt: [`$total_${user.toString()}`, 0] },
+              { $divide: [`$${user.toString()}`, `$total_${user.toString()}`] },
+              0,
+            ],
+          },
         ]),
       ),
     },
@@ -249,7 +261,13 @@ export const getCollaborativeBestArtists = (
       $addFields: fromPairs(
         users.map((user) => [
           `percent_${user.toString()}`,
-          { $divide: [`$${user.toString()}`, `$total_${user.toString()}`] },
+          {
+            $cond: [
+              { $gt: [`$total_${user.toString()}`, 0] },
+              { $divide: [`$${user.toString()}`, `$total_${user.toString()}`] },
+              0,
+            ],
+          },
         ]),
       ),
     },

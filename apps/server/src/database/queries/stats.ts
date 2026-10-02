@@ -743,5 +743,7 @@ export const getRankOf = async (
       },
     },
   ]);
-  return res[0];
+  return res[0]?.index >= 0
+    ? res[0]
+    : { index: -1, isMax: false, isMin: false, results: [] };
 };

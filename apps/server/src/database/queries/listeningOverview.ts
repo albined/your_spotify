@@ -6,8 +6,8 @@ import {
 } from "../../tools/allTimeStart";
 import { Timesplit } from "../../tools/types";
 import { statisticsFor } from "../listeningDuration";
-import { InfosModel } from "../Models";
 import { User } from "../schemas/user";
+import { StatisticsInfosModel } from "../StatisticsInfos";
 import { overviewPlan, OverviewPeriod } from "./listeningOverviewBuckets";
 import { HOUR_MS } from "./listeningTimelineTools";
 
@@ -71,7 +71,7 @@ export async function getListeningOverview(
   const [current, first] = await Promise.all([
     aggregate(buckets),
     plan.comparison && buckets.length
-      ? InfosModel.findOne(match)
+      ? StatisticsInfosModel.findOne(match)
           .sort({ played_at: 1 })
           .select({ played_at: 1 })
           .lean()

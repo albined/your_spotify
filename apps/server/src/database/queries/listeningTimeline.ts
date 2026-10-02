@@ -156,7 +156,7 @@ function rankedSeries(field: string): PipelineStage.FacetPipelineStage[] {
 }
 
 export async function getArtistTimeline(user: User, artistId: string) {
-  const Statistics = statisticsFor(user);
+  const Statistics = statisticsFor(user, { includeHiddenArtists: true });
   // Like existing artist detail statistics, include this artist even when it is
   // excluded from the user's global statistics by the blacklist.
   const match = {
@@ -169,6 +169,7 @@ export async function getArtistTimeline(user: User, artistId: string) {
     ...match,
     played_at: { $lte: end },
   })
+    .setOptions({ includeHiddenArtists: true })
     .sort({ played_at: 1 })
     .select("played_at")
     .lean();

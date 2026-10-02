@@ -23,6 +23,7 @@ export interface User {
     allowCompetitions?: boolean;
     useFullSongDurations?: boolean;
     blacklistedArtists: string[] | undefined;
+    artistVisibility?: { artistId: string; hidden: boolean }[];
   };
   publicToken: string | null;
   firstListenedAt: string;

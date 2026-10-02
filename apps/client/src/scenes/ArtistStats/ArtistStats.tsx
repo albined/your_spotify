@@ -1,4 +1,4 @@
-import { CircularProgress, Grid } from "@mui/material";
+import { Alert, CircularProgress, Grid } from "@mui/material";
 import { useSelector } from "react-redux";
 
 import Header from "../../components/Header";
@@ -14,7 +14,10 @@ import Text from "../../components/Text";
 import TitleCard from "../../components/TitleCard";
 import { ArtistStatsResponse } from "../../services/apis/api";
 import { DateFormatter } from "../../services/date";
-import { selectBlacklistedArtists } from "../../services/redux/modules/user/selector";
+import {
+  selectBlacklistedArtists,
+  selectUser,
+} from "../../services/redux/modules/user/selector";
 import { buildFromDateId } from "../../services/stats";
 import ArtistContextMenu from "./ArtistContextMenu";
 import ArtistRank from "./ArtistRank/ArtistRank";
@@ -32,6 +35,13 @@ interface ArtistStatsProps {
 
 export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
   const blocked = useSelector(selectBlacklistedArtists);
+  const user = useSelector(selectUser);
+  const members = stats?.artist.memberIds ?? [artistId];
+  const hidden = members.filter((id) =>
+    user?.settings.artistVisibility?.some(
+      (entry) => entry.artistId === id && entry.hidden,
+    ),
+  );
   const blacklisted = (stats?.artist.memberIds ?? [artistId]).every((id) =>
     blocked.includes(id),
   );
@@ -67,8 +77,15 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
         hideInterval
       />
       <div className={s.content}>
+        {hidden.length > 0 && (
+          <Alert severity="info">
+            {hidden.length === members.length
+              ? "Hidden from your statistics. Your saved history is still shown here."
+              : "Some artists in this group are hidden from your statistics. This page shows the full saved history."}
+          </Alert>
+        )}
         <div className={s.header}>
-          <ArtistRank artistId={artistId} />
+          {hidden.length < members.length && <ArtistRank artistId={artistId} />}
         </div>
         <Grid
           container

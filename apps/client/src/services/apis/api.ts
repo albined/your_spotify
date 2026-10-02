@@ -6,6 +6,10 @@ import type {
   ArtistGroupInput,
   ArtistGroupsData,
 } from "../artistGroups";
+import type {
+  ArtistVisibilityEntry,
+  VisibilityArtist,
+} from "../artistVisibility";
 import type { CompetitionInsights } from "../competitionInsights";
 import type {
   DetailListeningData,
@@ -585,6 +589,13 @@ export const api = {
       results: { id: string; count: number }[];
     }>(`/track/${id}/rank`),
   blacklistArtist: (artistId: string) => post(`/artist/blacklist/${artistId}`),
+  artistVisibility: () => get<ArtistVisibilityEntry[]>("/artist-visibility"),
+  searchVisibilityArtists: (query: string) =>
+    get<VisibilityArtist[]>("/artist-visibility/search", { query }),
+  setArtistVisibility: (artistId: string, hidden: boolean) =>
+    put(`/artist-visibility/${encodeURIComponent(artistId)}`, { hidden }),
+  removeArtistVisibility: (artistId: string) =>
+    delet(`/artist-visibility/${encodeURIComponent(artistId)}`),
   unblacklistArtist: (artistId: string) =>
     post(`/artist/unblacklist/${artistId}`),
   getLongestSessions: (start: Date, end: Date, offset = 0, limit = 5) =>
