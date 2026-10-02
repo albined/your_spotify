@@ -1,4 +1,5 @@
 import { createAction, createReducer } from "@reduxjs/toolkit";
+
 import { api } from "../../../apis/api";
 import { presetIntervals } from "../../../intervals";
 import {
@@ -6,6 +7,7 @@ import {
   checkLogged,
   deletePublicToken,
   generateNewPublicToken,
+  saveArtistVisibility,
   setDarkMode,
 } from "./thunk";
 import { ReduxIntervalDetail, User } from "./types";
@@ -48,6 +50,14 @@ export default createReducer(initialState, (builder) => {
     state.loaded = true;
     if (state.user) {
       state.user.isGuest = !!api.publicToken;
+    }
+  });
+
+  builder.addCase(saveArtistVisibility.fulfilled, (state, { payload }) => {
+    if (state.user) {
+      state.user.settings.artistVisibility = payload.map(
+        ({ artistId, hidden }) => ({ artistId, hidden }),
+      );
     }
   });
 
