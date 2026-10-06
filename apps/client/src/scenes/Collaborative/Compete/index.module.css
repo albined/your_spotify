@@ -84,3 +84,115 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.overlap {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.venn {
+  width: 100%;
+  height: auto;
+}
+
+.region {
+  fill: transparent;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+/* A focused region is highlighted; a box around its circle would mislead. */
+.region:focus,
+.region:focus-visible {
+  outline: none;
+}
+
+.region[data-active="true"] {
+  fill: color-mix(in srgb, var(--text-on-light) 22%, transparent);
+}
+
+.share,
+.person {
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.share {
+  fill: var(--text-secondary);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.share[data-active="true"] {
+  fill: var(--text-on-light);
+  font-weight: 600;
+}
+
+.person {
+  font-weight: 600;
+}
+
+.overlapDetail {
+  min-width: 0;
+}
+
+.overlapTitle {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+}
+
+.overlapTitle span,
+.overlapArtists span {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.overlapArtists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2px 24px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.overlapArtists li {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.overlapArtists img,
+.overlapNoImage {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--border-subtle);
+}
+
+.overlapArtists a {
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overlapArtists a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .overlap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
