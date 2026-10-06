@@ -37,6 +37,13 @@ export function GridRowWrapper({
   );
 }
 
+export function GridHeaderWrapper({
+  className,
+  ...other
+}: GridRowWrapperProps) {
+  return <GridRowWrapper className={clsx(s.header, className)} {...other} />;
+}
+
 type GridWrapperProps = HTMLProps<"div">;
 
 export function GridWrapper(props: GridWrapperProps) {

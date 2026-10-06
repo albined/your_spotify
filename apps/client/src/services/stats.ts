@@ -302,7 +302,8 @@ export const msToDuration = (ms: number) => {
   if (days > 0) parts.push(`${days}d`);
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0) parts.push(`${minutes}m`);
-  if (seconds > 0) parts.push(`${seconds}s`);
+  // Seconds are noise once a duration is measured in hours.
+  if (seconds > 0 && days === 0 && hours === 0) parts.push(`${seconds}s`);
 
   return parts.join(" ");
 };

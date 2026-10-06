@@ -1,0 +1,11 @@
+.root {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(
+      in srgb,
+      var(--hero-tint, var(--surface-card)) calc(var(--hero-tint-weight) * 0.75),
+      var(--surface-card)
+    ),
+    var(--surface-card) 200px
+  );
+}

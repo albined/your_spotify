@@ -38,6 +38,7 @@ import {
   CompetitionMetric,
   CompetitionTimeline,
   ListeningDistribution,
+  TopMovement,
   TopTimeline,
   TopTimelineKind,
 } from "../listeningTimeline";
@@ -487,6 +488,8 @@ export const api = {
     ),
   getTopTimeline: (kind: TopTimelineKind, start: Date, end: Date) =>
     get<TopTimeline>("/spotify/top/listening-timeline", { kind, start, end }),
+  getTopMovement: (kind: TopTimelineKind, start: Date, end: Date) =>
+    get<TopMovement>("/spotify/top/movement", { kind, start, end }),
 
   getCompetitionTimeline: (
     userIds: string[],

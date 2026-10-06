@@ -14,6 +14,7 @@ export type TextProps<T extends HTMLTag> = HTMLProps<T> & {
   size: keyof typeof sizes;
   weight?: "bold";
   greyed?: boolean;
+  secondary?: boolean;
 };
 
 export default function Text<T extends HTMLElementType = "span">({
@@ -25,6 +26,7 @@ export default function Text<T extends HTMLElementType = "span">({
   size,
   weight,
   greyed,
+  secondary,
   ...other
 }: TextProps<T>) {
   return React.createElement(
@@ -33,7 +35,11 @@ export default function Text<T extends HTMLElementType = "span">({
       style: {
         fontSize: sizes[size],
         fontWeight: weight,
-        color: greyed ? "var(--text-grey)" : undefined,
+        color: greyed
+          ? "var(--text-grey)"
+          : secondary
+            ? "var(--text-secondary)"
+            : undefined,
       },
       className: clsx(
         noStyle ? undefined : onDark ? s.onDark : s.root,

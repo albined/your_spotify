@@ -2,10 +2,6 @@
   height: 48px;
 }
 
-.header {
-  margin-bottom: 16px;
-}
-
 .names > :first-child {
   margin-bottom: 4px;
 }

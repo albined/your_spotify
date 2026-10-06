@@ -54,19 +54,23 @@ export default function Track({
     {
       ...trackGrid.album,
       node: !isTablet && album && (
-        <InlineAlbum className="otext" size="normal" album={album} />
+        <InlineAlbum className="otext" size="normal" album={album} secondary />
       ),
     },
     {
       ...trackGrid.duration,
       node: !isMobile && (
-        <Text size="normal">{msToDuration(track.duration_ms)}</Text>
+        <Text size="normal" secondary>
+          {msToDuration(track.duration_ms)}
+        </Text>
       ),
     },
     {
       ...trackGrid.listened,
       node: listenedAt && !isMobile && (
-        <Text size="normal">{DateFormatter.listenedAt(listenedAt)}</Text>
+        <Text size="normal" secondary>
+          {DateFormatter.listenedAt(listenedAt)}
+        </Text>
       ),
     },
     { ...trackGrid.option, node: !isMobile && <TrackOptions track={track} /> },
