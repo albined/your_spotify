@@ -23,6 +23,12 @@
   margin-left: 8px;
 }
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .swatch {
   width: 16px;
   height: 1.5px;

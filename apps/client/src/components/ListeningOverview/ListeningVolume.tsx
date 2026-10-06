@@ -1,3 +1,4 @@
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import clsx from "clsx";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -54,7 +55,7 @@ function VolumePlot({
   metric,
 }: {
   data: ListeningOverview;
-  metric: "hours" | "songs";
+  metric: VolumeMetric;
 }) {
   const user = useSelector(selectUser);
   const [width, setWidth] = useState(640);
@@ -236,13 +237,18 @@ function VolumePlot({
   );
 }
 
+type VolumeMetric = "hours" | "songs";
+
 export default function ListeningVolume({
-  metric,
+  metric: initialMetric,
+  switchable,
   className,
 }: {
-  metric: "hours" | "songs";
+  metric: VolumeMetric;
+  switchable?: boolean;
   className?: string;
 }) {
+  const [metric, setMetric] = useState(initialMetric);
   const { data, error, retry } = useListeningOverview();
   return (
     <TitleCard
@@ -250,17 +256,31 @@ export default function ListeningVolume({
       className={clsx(s.card, className)}
       contentClassName={s.content}
       right={
-        data?.comparison &&
-        !data.average && (
-          <span className={s.reference}>
-            <span className={s.swatch} />
-            {data.comparison === "average"
-              ? "Typical day"
-              : data.comparison === "previousYear"
-                ? "Previous year"
-                : "Previous 365 days"}
-          </span>
-        )
+        <div className={s.controls}>
+          {data?.comparison && !data.average && (
+            <span className={s.reference}>
+              <span className={s.swatch} />
+              {data.comparison === "average"
+                ? "Typical day"
+                : data.comparison === "previousYear"
+                  ? "Previous year"
+                  : "Previous 365 days"}
+            </span>
+          )}
+          {switchable && (
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={metric}
+              aria-label="Listening measure"
+              onChange={(_, value: VolumeMetric | null) => {
+                if (value !== null) setMetric(value);
+              }}>
+              <ToggleButton value="hours">Time</ToggleButton>
+              <ToggleButton value="songs">Plays</ToggleButton>
+            </ToggleButtonGroup>
+          )}
+        </div>
       }>
       {!data ? (
         <RequestState error={error} retry={retry} />
