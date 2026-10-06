@@ -9,7 +9,7 @@ interface TitleCardProps {
   className?: string;
   style?: React.CSSProperties;
   contentClassName?: string;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   fade?: boolean;
   right?: React.ReactNode;
@@ -35,15 +35,19 @@ export default function TitleCard({
       style={style}
       className={clsx(s.root, className, { [s.noborder]: noBorder })}>
       <div className={clsx(s.container, { [s.nopadding]: noPadding })}>
-        <div className={s.title}>
-          <div className={s.left}>
-            <Text element="h3" size="normal">
-              {title}
-            </Text>
-            <ITooltip content={info} />
+        {(title || info || right) && (
+          <div className={s.title}>
+            <div className={s.left}>
+              {title && (
+                <Text element="h3" size="normal">
+                  {title}
+                </Text>
+              )}
+              <ITooltip content={info} />
+            </div>
+            <div>{right}</div>
           </div>
-          <div>{right}</div>
-        </div>
+        )}
         <div className={clsx(s.content, { fade }, contentClassName)}>
           {children}
         </div>
