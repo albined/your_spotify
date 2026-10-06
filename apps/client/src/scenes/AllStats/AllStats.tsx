@@ -25,11 +25,7 @@ export default function AllStats() {
 
   return (
     <div className={s.root}>
-      <Header
-        title="All stats"
-        subtitle="You can find here all kind of stats based on the time span on the
-          right"
-      />
+      <Header title="All stats" />
       <div className={s.content}>
         <ListeningOverviewProvider>
           <Grid container spacing={2}>

@@ -49,10 +49,6 @@ export default function ArtistHours() {
           <ToggleButton value={20}>20</ToggleButton>
         </ToggleButtonGroup>
       }>
-      <p>
-        Top artists by total listening time. Stronger color means more listening
-        hours; times use {data?.timezone ?? "your configured timezone"}.
-      </p>
       <div className={s.plot}>
         {!data ? (
           <RequestState error={error} retry={retry} />

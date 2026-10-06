@@ -20,7 +20,7 @@ interface HeaderProps {
   right?: React.ReactNode;
   title: React.ReactNode;
   tinyTitle?: string;
-  subtitle: ReactNode;
+  subtitle?: ReactNode;
   hideInterval?: boolean;
 }
 
@@ -57,7 +57,7 @@ export default function Header({
           <Text element="h1" size="pagetitle">
             {siderIsDrawer && tinyTitle ? tinyTitle : title}
           </Text>
-          {!siderIsDrawer && <Text size="small">{subtitle}</Text>}
+          {!siderIsDrawer && subtitle && <Text size="small">{subtitle}</Text>}
         </div>
       </div>
       {right}
