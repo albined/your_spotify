@@ -6,8 +6,10 @@ import InlineArtist from "../../../../components/InlineArtist";
 import InlineTrack from "../../../../components/InlineTrack";
 import Text from "../../../../components/Text";
 import PlayButton from "../../../../components/PlayButton";
+import Rank from "../../../../components/Rank";
 import TrackOptions from "../../../../components/TrackOptions";
 import { useMobile } from "../../../../services/hooks/hooks";
+import { RankChange } from "../../../../services/topMovement";
 import { GridRowWrapper } from "../../../../components/Grid";
 import InlineAlbum from "../../../../components/InlineAlbum";
 import LongClickableTrack from "../../../../components/LongClickableTrack";
@@ -20,14 +22,13 @@ interface TrackProps {
   album?: Album;
   playable?: boolean;
   count: number;
-  totalCount: number;
   duration: number;
-  totalDuration: number;
   rank: number;
+  movement?: RankChange;
 }
 
 export default function Track(props: TrackProps) {
-  const [isMobile, isTablet, isDesktop] = useMobile();
+  const [isMobile, isTablet] = useMobile();
   const trackGrid = useTrackGrid();
 
   const {
@@ -36,21 +37,13 @@ export default function Track(props: TrackProps) {
     artists,
     playable,
     duration,
-    totalDuration,
     count,
-    totalCount,
     rank,
+    movement,
   } = props;
 
   const columns = [
-    {
-      ...trackGrid.rank,
-      node: (
-        <Text size="normal" element="strong" className={s.mlrank}>
-          #{rank}
-        </Text>
-      ),
-    },
+    { ...trackGrid.rank, node: <Rank rank={rank} movement={movement} /> },
     {
       ...trackGrid.cover,
       node: playable && (
@@ -81,13 +74,14 @@ export default function Track(props: TrackProps) {
           className="otext"
           album={album}
           size="normal"
+          secondary
         />
       ),
     },
     {
       ...trackGrid.duration,
       node: !isMobile && (
-        <Text element="div" size="normal">
+        <Text element="div" size="normal" secondary>
           {msToDuration(track.duration_ms)}
         </Text>
       ),
@@ -98,32 +92,17 @@ export default function Track(props: TrackProps) {
         <Text
           element="div"
           size="normal"
+          secondary
           className={isMobile ? "right" : undefined}>
           {count}
-          {!isMobile && (
-            <>
-              {" "}
-              <Text size="normal">
-                ({Math.floor((count / totalCount) * 10000) / 100}%)
-              </Text>
-            </>
-          )}
         </Text>
       ),
     },
     {
       ...trackGrid.total,
       node: !isMobile && (
-        <Text element="div" className="center" size="normal">
+        <Text element="div" className="center" size="normal" secondary>
           {msToDuration(duration)}
-          {isDesktop && (
-            <>
-              {" "}
-              <Text size="normal">
-                ({Math.floor((duration / totalDuration) * 10000) / 100}%)
-              </Text>
-            </>
-          )}
         </Text>
       ),
     },

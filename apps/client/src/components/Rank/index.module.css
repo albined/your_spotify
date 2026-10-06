@@ -1,0 +1,45 @@
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.marker {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.up {
+  border-bottom: 6px solid var(--accent-green);
+}
+
+.down {
+  border-top: 6px solid var(--color-error);
+  opacity: 0.75;
+}
+
+.fresh {
+  width: 6px;
+  height: 6px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent-blue);
+}
+
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

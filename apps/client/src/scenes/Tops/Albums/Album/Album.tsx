@@ -9,38 +9,31 @@ import { ColumnDescription, GridRowWrapper } from "../../../../components/Grid";
 import IdealImage from "../../../../components/IdealImage";
 import { useAlbumGrid } from "./AlbumGrid";
 import InlineAlbum from "../../../../components/InlineAlbum";
+import Rank from "../../../../components/Rank";
+import { RankChange } from "../../../../services/topMovement";
 
 interface AlbumProps {
   artists: Artist[];
   album: AlbumType;
   count: number;
-  totalCount: number;
   duration: number;
-  totalDuration: number;
   rank: number;
+  movement?: RankChange;
 }
 
 export default function Album({
   album,
   artists,
   duration,
-  totalDuration,
   count,
-  totalCount,
   rank,
+  movement,
 }: AlbumProps) {
-  const [isMobile, _, isDesktop] = useMobile();
+  const [isMobile] = useMobile();
   const albumGrid = useAlbumGrid();
 
   const columns: ColumnDescription[] = [
-    {
-      ...albumGrid.rank,
-      node: (
-        <Text size="normal" element="strong" className={s.mlrank}>
-          #{rank}
-        </Text>
-      ),
-    },
+    { ...albumGrid.rank, node: <Rank rank={rank} movement={movement} /> },
     {
       ...albumGrid.cover,
       node: (
@@ -75,32 +68,19 @@ export default function Album({
     {
       ...albumGrid.count,
       node: (
-        <Text size="normal" className={isMobile ? "right" : undefined}>
+        <Text
+          size="normal"
+          secondary
+          className={isMobile ? "right" : undefined}>
           {count}
-          {!isMobile && (
-            <>
-              {" "}
-              <Text size="normal">
-                ({Math.floor((count / totalCount) * 10000) / 100}%)
-              </Text>
-            </>
-          )}
         </Text>
       ),
     },
     {
       ...albumGrid.total,
       node: !isMobile && (
-        <Text size="normal" className="center">
+        <Text size="normal" className="center" secondary>
           {msToDuration(duration)}
-          {isDesktop && (
-            <>
-              {" "}
-              <Text size="normal">
-                ({Math.floor((duration / totalDuration) * 10000) / 100}%)
-              </Text>
-            </>
-          )}
         </Text>
       ),
     },

@@ -22,6 +22,11 @@ export interface TopTimeline extends TimelineBounds {
   series: ListeningSeries[];
 }
 
+export interface TopMovement {
+  since: string | null;
+  items: { id: string; change: number | null }[];
+}
+
 export interface CompetitionTimeline extends TimelineBounds {
   series: { id: string; name: string; values: number[] }[];
 }

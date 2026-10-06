@@ -4,10 +4,12 @@ import { GridWrapper } from "../../../components/Grid";
 import Header from "../../../components/Header";
 import InfiniteList from "../../../components/InfiniteList";
 import TopListeningRace from "../../../components/ListeningTimeline/TopListeningRace";
-import TitleCard from "../../../components/TitleCard";
+import TableCard from "../../../components/TableCard";
 import { api } from "../../../services/apis/api";
 import { useInfiniteScroll } from "../../../services/hooks/scrolling";
 import { selectRawIntervalDetail } from "../../../services/redux/modules/user/selector";
+import { getImage } from "../../../services/tools";
+import { useTopMovement } from "../../../services/topMovement";
 import Album from "./Album";
 import AlbumHeader from "./Album/AlbumHeader";
 
@@ -15,6 +17,7 @@ import s from "./index.module.css";
 
 export default function Albums() {
   const { interval } = useSelector(selectRawIntervalDetail);
+  const movement = useTopMovement("albums");
   const { items, hasMore, onNext, loading, error } = useInfiniteScroll(
     interval,
     api.getBestAlbums,
@@ -22,13 +25,10 @@ export default function Albums() {
 
   return (
     <div>
-      <Header
-        title="Top albums"
-        subtitle="Here are the albums you listened to the most"
-      />
+      <Header title="Top albums" />
       <div className={s.content}>
         <TopListeningRace kind="albums" />
-        <TitleCard title="Top albums" noBorder>
+        <TableCard artwork={items[0] && getImage(items[0].album)}>
           <InfiniteList
             next={onNext}
             hasMore={hasMore}
@@ -41,17 +41,16 @@ export default function Albums() {
                 <Album
                   key={item.album.id}
                   rank={rank + 1}
+                  movement={movement.get(item.album.id)}
                   artists={[item.artist]}
                   album={item.album}
                   count={item.count}
-                  totalCount={item.total_count}
                   duration={item.duration_ms}
-                  totalDuration={item.total_duration_ms}
                 />
               ))}
             </GridWrapper>
           </InfiniteList>
-        </TitleCard>
+        </TableCard>
       </div>
     </div>
   );

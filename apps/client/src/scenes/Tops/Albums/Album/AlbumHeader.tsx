@@ -1,26 +1,24 @@
-import Text from "../../../../components/Text";
-import { GridRowWrapper } from "../../../../components/Grid";
-import s from "./index.module.css";
-import { useAlbumGrid } from "./AlbumGrid";
+import { GridHeaderWrapper } from "../../../../components/Grid";
 import { useMobile } from "../../../../services/hooks/hooks";
+import { useAlbumGrid } from "./AlbumGrid";
 
 export default function AlbumHeader() {
   const [isMobile] = useMobile();
   const albumGrid = useAlbumGrid();
 
   const columns = [
+    { ...albumGrid.rank, node: <div className="center">#</div> },
     { ...albumGrid.cover, node: <div /> },
-    { ...albumGrid.title, node: <Text size="normal">Album name</Text> },
-    { ...albumGrid.count, node: <Text size="normal">Count</Text> },
+    { ...albumGrid.title, node: <div>Album</div> },
+    {
+      ...albumGrid.count,
+      node: <div className={isMobile ? "right" : undefined}>Plays</div>,
+    },
     {
       ...albumGrid.total,
-      node: !isMobile && (
-        <Text size="normal" className="center">
-          Total
-        </Text>
-      ),
+      node: !isMobile && <div className="center">Total</div>,
     },
   ];
 
-  return <GridRowWrapper columns={columns} className={s.header} />;
+  return <GridHeaderWrapper columns={columns} />;
 }

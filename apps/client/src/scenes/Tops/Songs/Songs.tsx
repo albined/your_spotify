@@ -12,12 +12,15 @@ import {
   Selectable,
   SelectableContextProvider,
 } from "../../../components/Selectable/Selectable.context";
-import TitleCard from "../../../components/TitleCard";
+import TableCard from "../../../components/TableCard";
 import { api } from "../../../services/apis/api";
+import { useIsGuest } from "../../../services/hooks/hooks";
 import { useInfiniteScroll } from "../../../services/hooks/scrolling";
 import { useSelectTracks } from "../../../services/hooks/useSelectTrack";
 import { PlaylistContext } from "../../../services/redux/modules/playlist/types";
 import { selectRawIntervalDetail } from "../../../services/redux/modules/user/selector";
+import { getImage } from "../../../services/tools";
+import { useTopMovement } from "../../../services/topMovement";
 import Track from "./Track";
 import TrackHeader from "./Track/TrackHeader";
 
@@ -25,6 +28,8 @@ import s from "./index.module.css";
 
 export default function Songs() {
   const { interval } = useSelector(selectRawIntervalDetail);
+  const isGuest = useIsGuest();
+  const movement = useTopMovement("songs");
 
   const { items, hasMore, onNext, loading, error } = useInfiniteScroll(
     interval,
@@ -43,16 +48,12 @@ export default function Songs() {
   return (
     <>
       <div>
-        <Header
-          title="Top songs"
-          subtitle="Here are the songs you listened to the most"
-        />
+        <Header title="Top songs" />
         <div className={s.content}>
           <TopListeningRace kind="songs" />
-          <TitleCard
-            noBorder
-            title="Top songs"
-            right={<AddToPlaylist context={context} />}>
+          <TableCard
+            artwork={items[0] && getImage(items[0].album)}
+            right={isGuest ? undefined : <AddToPlaylist context={context} />}>
             <SelectableContextProvider
               selected={selectedTracks}
               setSelected={setSelectedTracks}>
@@ -70,13 +71,12 @@ export default function Songs() {
                         <Track
                           playable
                           rank={index + 1}
+                          movement={movement.get(item.track.id)}
                           track={item.track}
                           album={item.album}
                           artists={[item.artist]}
                           count={item.count}
-                          totalCount={item.total_count}
                           duration={item.duration_ms}
-                          totalDuration={item.total_duration_ms}
                         />
                       </RightClickable>
                     </Selectable>
@@ -84,7 +84,7 @@ export default function Songs() {
                 </GridWrapper>
               </InfiniteList>
             </SelectableContextProvider>
-          </TitleCard>
+          </TableCard>
         </div>
       </div>
       <TrackSelectionPopup

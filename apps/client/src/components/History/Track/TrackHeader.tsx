@@ -1,7 +1,7 @@
-import Text from "../../Text";
-import { GridRowWrapper } from "../../Grid";
+import { AccessTime } from "@mui/icons-material";
+
 import { useMobile } from "../../../services/hooks/hooks";
-import s from "./index.module.css";
+import { GridHeaderWrapper } from "../../Grid";
 import { trackGrid } from "./TrackGrid";
 
 export default function TrackHeader() {
@@ -9,21 +9,19 @@ export default function TrackHeader() {
 
   const columns = [
     { ...trackGrid.cover, node: <div /> },
-    { ...trackGrid.title, node: <Text size="normal">Title</Text> },
-    {
-      ...trackGrid.album,
-      node: !isTablet && <Text size="normal">Album name</Text>,
-    },
+    { ...trackGrid.title, node: <div>Title</div> },
+    { ...trackGrid.album, node: !isTablet && <div>Album</div> },
     {
       ...trackGrid.duration,
-      node: !isMobile && <Text size="normal">Duration</Text>,
+      node: !isMobile && (
+        <div>
+          <AccessTime titleAccess="Duration" />
+        </div>
+      ),
     },
-    {
-      ...trackGrid.listened,
-      node: !isMobile && <Text size="normal">Listened at</Text>,
-    },
-    { ...trackGrid.option, node: !isMobile && <div className="center" /> },
+    { ...trackGrid.listened, node: !isMobile && <div>Listened at</div> },
+    { ...trackGrid.option, node: !isMobile && <div /> },
   ];
 
-  return <GridRowWrapper className={s.header} columns={columns} />;
+  return <GridHeaderWrapper columns={columns} />;
 }

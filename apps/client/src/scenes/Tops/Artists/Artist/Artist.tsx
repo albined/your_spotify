@@ -5,40 +5,33 @@ import Text from "../../../../components/Text";
 import { useMobile } from "../../../../services/hooks/hooks";
 import { ColumnDescription, GridRowWrapper } from "../../../../components/Grid";
 import IdealImage from "../../../../components/IdealImage";
+import Rank from "../../../../components/Rank";
+import { RankChange } from "../../../../services/topMovement";
 import s from "./index.module.css";
 import { useArtistGrid } from "./ArtistGrid";
 
 interface ArtistProps {
   artist: ArtistType;
   count: number;
-  totalCount: number;
   duration: number;
-  totalDuration: number;
   rank: number;
+  movement?: RankChange;
 }
 
 export default function Artist({
   artist,
   duration,
-  totalDuration,
   count,
-  totalCount,
   rank,
+  movement,
 }: ArtistProps) {
-  const [isMobile, isTablet, isDesktop] = useMobile();
+  const [isMobile, isTablet] = useMobile();
   const artistGrid = useArtistGrid();
 
   const genres = artist.genres.join(", ");
 
   const columns: ColumnDescription[] = [
-    {
-      ...artistGrid.rank,
-      node: (
-        <Text size="normal" element="strong" className={s.mlrank}>
-          #{rank}
-        </Text>
-      ),
-    },
+    { ...artistGrid.rank, node: <Rank rank={rank} movement={movement} /> },
     {
       ...artistGrid.cover,
       node: (
@@ -63,7 +56,7 @@ export default function Artist({
     {
       ...artistGrid.genres,
       node: !isTablet && (
-        <Text size="normal" className="otext" title={genres}>
+        <Text size="normal" className="otext" title={genres} secondary>
           {genres}
         </Text>
       ),
@@ -71,32 +64,19 @@ export default function Artist({
     {
       ...artistGrid.count,
       node: (
-        <Text size="normal" className={isMobile ? "right" : undefined}>
+        <Text
+          size="normal"
+          secondary
+          className={isMobile ? "right" : undefined}>
           {count}
-          {!isMobile && (
-            <>
-              {" "}
-              <Text size="normal">
-                ({Math.floor((count / totalCount) * 10000) / 100}%)
-              </Text>
-            </>
-          )}
         </Text>
       ),
     },
     {
       ...artistGrid.total,
       node: !isMobile && (
-        <Text size="normal" className="center">
+        <Text size="normal" className="center" secondary>
           {msToDuration(duration)}
-          {isDesktop && (
-            <>
-              {" "}
-              <Text size="normal">
-                ({Math.floor((duration / totalDuration) * 10000) / 100}%)
-              </Text>
-            </>
-          )}
         </Text>
       ),
     },

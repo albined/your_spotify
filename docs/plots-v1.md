@@ -90,6 +90,16 @@ chart in two columns on narrow screens. Detailed totals remain in the existing
 table and chart tooltip. Race tooltip entries follow the standings at the hovered
 date, from highest to lowest, keeping their original series colors.
 
+The first 100 rows of the top songs, artists and albums tables mark movement
+in the standings beside the rank: up, down, or a dot for an entry first played
+after the reference. The reference is a quarter of the selected range before
+its end (or before now, for ranges ending in the future), capped at 365 days;
+ranges under 14 days have no markers. Both standings use the list's own metric
+and tie-break, and the hover text gives the places moved and the reference
+date. `/spotify/top/movement` runs once per range, not per page.
+`test/rankMovement.test.cjs` covers the reference date, ties, new entries and
+the row limit.
+
 Top songs, artists, albums and listening history recheck the list footer after
 each page loads. If it remains visible on a tall screen, they fetch another batch
 without waiting for a scroll, stopping when the footer leaves the preload area or

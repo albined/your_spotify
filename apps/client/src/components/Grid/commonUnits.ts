@@ -6,5 +6,5 @@ export const commonUnits = {
   date: "200px",
   mainTitle: "3fr",
   secondaryTitle: "2fr",
-  percentage: (isMobile: boolean) => (isMobile ? "50px" : "140px"),
+  stat: (isMobile: boolean) => (isMobile ? "50px" : "140px"),
 } as const;

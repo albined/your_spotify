@@ -1,7 +1,5 @@
-import Text from "../../../../components/Text";
+import { GridHeaderWrapper } from "../../../../components/Grid";
 import { useMobile } from "../../../../services/hooks/hooks";
-import { GridRowWrapper } from "../../../../components/Grid";
-import s from "./index.module.css";
 import { useArtistGrid } from "./ArtistGrid";
 
 export default function ArtistHeader() {
@@ -9,22 +7,19 @@ export default function ArtistHeader() {
   const artistGrid = useArtistGrid();
 
   const columns = [
+    { ...artistGrid.rank, node: <div className="center">#</div> },
     { ...artistGrid.cover, node: <div /> },
-    { ...artistGrid.title, node: <Text size="normal">Artist name</Text> },
+    { ...artistGrid.title, node: <div>Artist</div> },
+    { ...artistGrid.genres, node: !isTablet && <div>Genres</div> },
     {
-      ...artistGrid.genres,
-      node: !isTablet && <Text size="normal">Genres</Text>,
+      ...artistGrid.count,
+      node: <div className={isMobile ? "right" : undefined}>Plays</div>,
     },
-    { ...artistGrid.count, node: <Text size="normal">Count</Text> },
     {
       ...artistGrid.total,
-      node: !isMobile && (
-        <Text className="center" size="normal">
-          Total
-        </Text>
-      ),
+      node: !isMobile && <div className="center">Total</div>,
     },
   ];
 
-  return <GridRowWrapper columns={columns} className={s.header} />;
+  return <GridHeaderWrapper columns={columns} />;
 }

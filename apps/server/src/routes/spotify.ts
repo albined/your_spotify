@@ -46,6 +46,7 @@ import {
   getCompetitionTimeline,
   getTopTimeline,
 } from "../database/queries/raceTimeline";
+import { getRankMovement } from "../database/queries/rankMovement";
 import { getReleaseDistribution } from "../database/queries/releaseDistribution";
 import { DateFormatter, intervalToDisplay } from "../tools/date";
 import { logger } from "../tools/logger";
@@ -219,6 +220,12 @@ router.get("/top/listening-timeline", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
   const { start, end, kind } = validate(req.query, topTimelineSchema);
   res.status(200).send(await getTopTimeline(user, start, end, kind));
+});
+
+router.get("/top/movement", isLoggedOrGuest, async (req, res) => {
+  const { user } = req as LoggedRequest;
+  const { start, end, kind } = validate(req.query, topTimelineSchema);
+  res.status(200).send(await getRankMovement(user, start, end, kind));
 });
 
 router.get("/listened_to", isLoggedOrGuest, async (req, res) => {
