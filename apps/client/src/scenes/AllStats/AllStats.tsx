@@ -5,10 +5,9 @@ import ArtistDistribution from "../../components/ArtistDistribution/ArtistDistri
 import Header from "../../components/Header";
 import BestArtistsBar from "../../components/ImplementedCharts/BestArtistsBar";
 import ListeningRepartition from "../../components/ImplementedCharts/ListeningRepartition";
-import SongsListenedPer from "../../components/ImplementedCharts/SongsListenedPer";
-import TimeListenedPer from "../../components/ImplementedCharts/TimeListenedPer";
 import ArtistDiversity from "../../components/ListeningOverview/ArtistDiversity";
 import { ListeningOverviewProvider } from "../../components/ListeningOverview/context";
+import ListeningVolume from "../../components/ListeningOverview/ListeningVolume";
 import ArtistActivity from "../../components/ListeningPatterns/ArtistActivity";
 import ListeningHeatmaps from "../../components/ListeningPatterns/ListeningHeatmaps";
 import ReleaseDates from "../../components/ReleaseDates/ReleaseDates";
@@ -48,10 +47,7 @@ export default function AllStats() {
               <ArtistActivity />
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 6 }}>
-              <SongsListenedPer className={s.chart} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 12, lg: 6 }}>
-              <TimeListenedPer className={s.chart} />
+              <ListeningVolume metric="hours" switchable className={s.chart} />
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 6 }}>
               <ArtistDiversity className={s.chart} />
