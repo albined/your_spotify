@@ -43,7 +43,6 @@ test(
     } = require("../src/database/queries/detailListening");
     const {
       getArtistTimeline,
-      getListeningDistribution,
     } = require("../src/database/queries/listeningTimeline");
     const {
       getArtistActivity,
@@ -176,8 +175,6 @@ test(
       assert(!eras.series.some((row) => ["a", "b"].includes(row.id)));
       const activity = await getArtistActivity(user, start, end);
       assert(JSON.stringify(activity).includes(id));
-      const overall = await getListeningDistribution(user, start, end);
-      assert(overall.series.some((row) => row.id === id));
       for (const alias of [id, "a", "b"]) {
         const detail = await getDetailListening(user, "artist", alias);
         assert(

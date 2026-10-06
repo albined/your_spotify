@@ -37,7 +37,6 @@ import {
   CompetitionArtist,
   CompetitionMetric,
   CompetitionTimeline,
-  ListeningDistribution,
   TopMovement,
   TopTimeline,
   TopTimelineKind,
@@ -296,11 +295,6 @@ export const api = {
       results: { id: string; count: number }[];
     }>(`/album/${id}/rank`),
   getArtists: (ids: string[]) => get<Artist[]>(`/artist/${ids.join(",")}`),
-  getListeningDistribution: (start: Date, end: Date) =>
-    get<ListeningDistribution>("/spotify/listening-distribution", {
-      start,
-      end,
-    }),
   getArtistDistribution: (start: Date, end: Date) =>
     get<ArtistDistribution>("/spotify/artist-distribution", { start, end }),
   getReleaseDistribution: (start: Date, end: Date) =>
