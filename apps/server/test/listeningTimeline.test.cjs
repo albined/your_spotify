@@ -21,12 +21,6 @@ const {
   HOUR_MS,
 } = require("../src/database/queries/listeningTimelineTools");
 
-// The chart transformations are pure, even though they share a module with a hook.
-const {
-  distributionPoints,
-  rollingDailyAverage,
-} = require("../../client/src/services/listeningTimeline");
-
 test("timelines keep long ranges detailed and preserve sparse totals", () => {
   const bounds = timelineBounds(new Date(0), new Date(365 * DAY_MS), 100);
   assert.equal(bounds.count, 100);
@@ -41,27 +35,6 @@ test("timelines keep long ranges detailed and preserve sparse totals", () => {
   assert.equal(cumulative[50], 1);
   assert.equal(cumulative.at(-1), 3);
   assert.equal(timelineBounds(new Date(0), new Date(HOUR_MS), 100).count, 1);
-});
-
-test("share, cumulative and smoothing handle silent intervals without NaN", () => {
-  const bounds = timelineBounds(new Date(0), new Date(3 * DAY_MS), 3);
-  const result = {
-    ...bounds,
-    series: [{ hours: [1, 0, 2] }, { hours: [3, 0, 0] }],
-  };
-  const share = distributionPoints(result, "share", false);
-  assert.equal(share[0].series0, 25);
-  assert.equal(share[0].series1, 75);
-  assert.equal(share[1].series0, 0);
-  assert.equal(share[1].series1, 0);
-  const cumulative = distributionPoints(result, "cumulative", true);
-  assert.equal(cumulative[0].timestamp, bounds.start);
-  assert.equal(cumulative.at(-1).timestamp, bounds.end);
-  assert.equal(cumulative.at(-1).series0, 3);
-  assert.equal(cumulative.at(-1).series1, 3);
-  assert.deepEqual(rollingDailyAverage([2, 2, 2], DAY_MS), [2, 2, 2]);
-  // A window beginning halfway through a bucket counts only the overlap.
-  assert.equal(rollingDailyAverage([40, 0], 20 * DAY_MS)[1], 16 / 28);
 });
 
 test(
@@ -85,7 +58,6 @@ test(
       TrackModel,
     } = require("../src/database/Models");
     const {
-      getListeningDistribution,
       getArtistTimeline,
     } = require("../src/database/queries/listeningTimeline");
     const dbName = `timeline_test_${Date.now()}_${process.pid}`;
@@ -145,64 +117,6 @@ test(
         { id: "song-a", name: "Song A", album: "album-a" },
         { id: "song-b", name: "Song B", album: "album-b" },
       ]);
-      const distribution = await getListeningDistribution(user, start, at(365));
-      assert.equal(distribution.count, 200);
-      assert.equal(distribution.timezone, "Europe/Stockholm");
-      assert.equal(
-        distribution.totalHours.reduce((a, b) => a + b, 0),
-        37,
-      );
-      assert.equal(
-        distribution.newHours.reduce((a, b) => a + b, 0),
-        21,
-      );
-      assert.equal(
-        distribution.familiarHours.reduce((a, b) => a + b, 0),
-        16,
-      );
-      assert.equal(distribution.series.length, 7);
-      assert.equal(distribution.series[0].id, "a");
-      assert.equal(distribution.series[1].id, "new-5");
-      assert.equal(distribution.series.at(-1).id, "new-0");
-      assert.ok(distribution.topFiveShare.some((value) => value === null));
-      assert.ok(
-        distribution.topFiveShare.some((value) => value > 0 && value < 1),
-      );
-      distribution.totalHours.forEach((total, i) => {
-        assert.equal(
-          distribution.series.reduce((sum, series) => sum + series.hours[i], 0),
-          total,
-        );
-      });
-      // Keep ten artist bands and preserve every remaining listen in the line.
-      const extra = Array.from({ length: 30 }, (_, index) => ({
-        owner,
-        played_at: at(10),
-        durationMs: HOUR_MS,
-        primaryArtistId: `extra-${index}`,
-        albumId: "extra",
-        id: "extra",
-      }));
-      await InfosModel.collection.insertMany(extra);
-      const expanded = await getListeningDistribution(user, start, at(365));
-      assert.equal(expanded.series.length, 11);
-      assert.equal(expanded.series.at(-1).id, "other");
-      assert.equal(expanded.series.at(-1).lineOnly, true);
-      assert.equal(
-        expanded.series.reduce(
-          (total, series) => total + series.hours.reduce((a, b) => a + b, 0),
-          0,
-        ),
-        67,
-      );
-      assert.equal(
-        expanded.totalHours.reduce((a, b) => a + b, 0),
-        67,
-      );
-      await InfosModel.deleteMany({
-        owner,
-        primaryArtistId: { $in: extra.map((item) => item.primaryArtistId) },
-      });
       // Remove the boundary fixture before testing lifetime results.
       await InfosModel.deleteOne({ owner, played_at: at(365) });
       const history = await getArtistTimeline(user, "a");
@@ -223,9 +137,6 @@ test(
         ),
       );
       assert.equal(await getArtistTimeline(user, "never-played"), null);
-      const empty = await getListeningDistribution(user, at(200), at(201));
-      assert.equal(empty.series.length, 0);
-      assert.ok(empty.totalHours.every((value) => value === 0));
       // Explicit artist detail follows the existing inclusion of blacklisted artists.
       assert.equal(
         (await getArtistTimeline(user, "blocked")).total.at(-1),

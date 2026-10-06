@@ -40,7 +40,6 @@ import {
   getArtistActivity,
   getListeningHeatmaps,
 } from "../database/queries/listeningPatterns";
-import { getListeningDistribution } from "../database/queries/listeningTimeline";
 import {
   getCompetitionArtists,
   getCompetitionTimeline,
@@ -129,12 +128,6 @@ const listeningDistributionSchema = interval.refine(
   ({ start, end }) => start < end,
   { message: "Start must be before end" },
 );
-
-router.get("/listening-distribution", isLoggedOrGuest, async (req, res) => {
-  const { user } = req as LoggedRequest;
-  const { start, end } = validate(req.query, listeningDistributionSchema);
-  res.status(200).send(await getListeningDistribution(user, start, end));
-});
 
 router.get("/artist-distribution", isLoggedOrGuest, async (req, res) => {
   const { user } = req as LoggedRequest;
