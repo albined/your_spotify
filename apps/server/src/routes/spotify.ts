@@ -47,6 +47,7 @@ import {
 } from "../database/queries/raceTimeline";
 import { getRankMovement } from "../database/queries/rankMovement";
 import { getReleaseDistribution } from "../database/queries/releaseDistribution";
+import { getTasteOverlap } from "../database/queries/tasteOverlap";
 import { DateFormatter, intervalToDisplay } from "../tools/date";
 import { logger } from "../tools/logger";
 import {
@@ -510,6 +511,20 @@ router.get(
           (req as LoggedRequest).user,
         ),
       );
+  },
+);
+
+router.get(
+  "/collaborative/taste-overlap",
+  logged,
+  affinityAllowed,
+  async (req, res) => {
+    const { user } = req as LoggedRequest;
+    const { start, end, userIds } = validate(
+      normalizeUserIdsQuery(req.query),
+      competitionTimelineSchema,
+    );
+    res.status(200).json(await getTasteOverlap(user, userIds, start, end));
   },
 );
 

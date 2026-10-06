@@ -47,6 +47,7 @@ import { Playlist, PlaylistContext } from "../redux/modules/playlist/types";
 import { User } from "../redux/modules/user/types";
 import type { ReleaseDistribution } from "../releaseDistribution";
 import type { ListeningSession } from "../sessionBars";
+import type { TasteOverlap } from "../tasteOverlap";
 import {
   Album,
   Artist,
@@ -512,6 +513,12 @@ export const api = {
     ),
   getCompetitionInsights: (userIds: string[], start: Date, end: Date) =>
     get<CompetitionInsights>("/spotify/collaborative/competition-insights", {
+      userIds,
+      start,
+      end,
+    }),
+  getTasteOverlap: (userIds: string[], start: Date, end: Date) =>
+    get<TasteOverlap | null>("/spotify/collaborative/taste-overlap", {
       userIds,
       start,
       end,

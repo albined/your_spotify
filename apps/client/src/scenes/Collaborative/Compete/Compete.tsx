@@ -24,6 +24,7 @@ import {
   selectUser,
 } from "../../../services/redux/modules/user/selector";
 import CompetitionInsights from "./CompetitionInsights";
+import TasteOverlap from "./TasteOverlap";
 
 import s from "./index.module.css";
 
@@ -249,6 +250,14 @@ export default function Compete() {
             start={start}
             end={end}
           />
+          {(userIds.length === 2 || userIds.length === 3) && (
+            <TasteOverlap
+              key={`overlap:${artistScope}`}
+              userIds={userIds}
+              start={start}
+              end={end}
+            />
+          )}
           <CompetitionInsights userIds={userIds} start={start} end={end} />
         </div>
       </div>

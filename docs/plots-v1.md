@@ -232,10 +232,22 @@ of its exact trailing window across short, long and overlapping date ranges. It
 also covers warm-up history, expiry boundaries, empty windows, future dates and
 keeping the warm-up history out of the selected-period hourly histogram.
 
+With two or three people selected, Competition shows a taste overlap Venn
+diagram; with any other number the card is absent. Each circle is all of one
+person's selected-period listening time, split by primary artist. An artist
+counts as shared up to the smallest share among the people in a region, and the
+excess belongs to whoever plays it more, so every person's regions add up to
+100%. Two circles are drawn to scale; three use a fixed layout with the
+percentages written in. Hovering, focusing or selecting a region lists its top
+twelve artists. `/spotify/collaborative/taste-overlap` applies the same
+participant, blacklist and duration rules as the other competition queries and
+returns null when someone has no listening in the range.
+`test/tasteOverlap.test.cjs` covers the split, the region totals and those rules.
+
 Home and All stats share zero-based listening-volume lines with gentle
-interpolation through the actual totals and a faint fill. There are no gridlines
-or chart controls. One `/spotify/listening-overview` request supplies both hours
-and play counts on All stats. Daily/hourly/monthly/yearly buckets use the
+interpolation through the actual totals and a faint fill. There are no
+gridlines. One `/spotify/listening-overview` request supplies both hours and
+play counts; All stats shows them in one card with a Time/Plays switch. Daily/hourly/monthly/yearly buckets use the
 statistics timezone; missing buckets remain zero, and hollow points identify
 partial periods. Long histories use monthly points up to 200 calendar months;
 larger ranges fall back to annual totals without truncating the selected range.
