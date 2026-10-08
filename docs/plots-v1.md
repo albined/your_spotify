@@ -350,5 +350,16 @@ song, Best album, Time listened, Artist distribution, Listening distribution
 over day, History. The best cards are one row there: the winner with the two
 runners-up stacked beside it. Line charts draw their scale inside the plot so
 the plot and its two-column legend share the card's edges, and Artist
-distribution doubles its smoothing below 480px. Switching between the Top lists
-slides the lists past each other where the browser supports view transitions.
+distribution doubles its smoothing below 480px.
+
+Page changes on a phone are animated where the browser supports view
+transitions and reduced motion is off. The pressed link is styled at once and
+the pages are swapped as soon as the new one is drawn: a 120ms cross-fade
+between unrelated pages such as the bottom bar's tabs, a short push from the
+right into an artist, album or song page, and a full slide between the Top
+lists. Stepping between ranking neighbours keeps the page, dimmed, until the
+next has loaded.
+
+Changing the period keeps the previous period's figures, charts and lists on
+screen until the new ones arrive (`useHeldOverPeriod`), so the page does not
+blank in between. Reloads for any other reason still start empty.
