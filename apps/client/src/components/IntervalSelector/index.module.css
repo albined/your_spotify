@@ -9,7 +9,14 @@
 }
 .options {
   display: flex;
+  align-items: center;
   gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.options::-webkit-scrollbar {
+  display: none;
 }
 .segment {
   position: relative;
@@ -41,9 +48,36 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+.custom {
+  flex-shrink: 0;
+  margin-left: 2px !important;
+}
 .custom[aria-pressed="true"] {
   background: var(--surface-selected);
   color: var(--text-strong);
+}
+/* On phones the periods are separate chips in a row that scrolls sideways. */
+@media (max-width: 900px) {
+  .segmented {
+    display: flex;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+  }
+  .options {
+    gap: 8px;
+    padding: 2px 16px;
+    scroll-padding: 0 16px;
+  }
+  .segment span {
+    padding: 9px 14px;
+    background: var(--surface-card);
+    border-radius: 999px;
+  }
+  .custom {
+    margin-left: 0 !important;
+    background: var(--surface-card);
+  }
 }
 @media (forced-colors: active) {
   .segment input:checked + span {
