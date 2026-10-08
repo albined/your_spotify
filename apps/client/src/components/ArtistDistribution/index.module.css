@@ -1,5 +1,16 @@
+/* In a card with a fixed height the stream gives up its own height to fit. */
+.content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .plot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
   color: var(--text-on-light);
   position: relative;
 }
@@ -7,6 +18,7 @@
 .viewport {
   position: relative;
   min-width: 0;
+  min-height: 0;
   height: 340px;
 }
 
@@ -21,6 +33,7 @@
 }
 
 .axis {
+  flex-shrink: 0;
   color: var(--text-secondary);
   font-size: 12px;
   display: block;
@@ -70,7 +83,8 @@
 }
 
 .loading {
-  min-height: 340px;
+  height: 340px;
+  min-height: 0;
   color: var(--text-on-light);
   justify-content: center;
   align-items: center;

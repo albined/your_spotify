@@ -65,10 +65,12 @@ and label spacing on desktop/mobile, including DST and a fractional-offset zone.
 It uses the same external Playwright variables as the other browser regressions;
 `PROFILE_WEB_URL` and `PROFILE_API_URL` optionally override the preview addresses.
 
-The home page's Best artist and Best song cards each request the top three using
-the existing ranking endpoint and selected page range. The winner remains above
+The home page's Best artist, Best song and Best album cards each request the top
+three using the existing ranking endpoint and selected page range. The winner remains above
 two compact runner-ups, with linked images/names and shortened song/play and
-minute counts. Both cards retain their 300px height and share the same layout.
+minute counts. All three retain their 300px height and share the same layout.
+Best album sits beside Artist distribution, which shrinks its stream to fit the
+same 300px row on Home and keeps its full height on All stats.
 
 The home history table has no title or controls: it starts at the end of the
 selected range and scrolls back through everything before it.

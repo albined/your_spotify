@@ -242,7 +242,11 @@ function Stream({ data }: { data: Distribution }) {
   );
 }
 
-export default function ArtistDistribution() {
+export default function ArtistDistribution({
+  className,
+}: {
+  className?: string;
+}) {
   const { interval } = useSelector(selectRawIntervalDetail);
   const start = interval.start.getTime();
   const end = interval.end.getTime();
@@ -252,7 +256,10 @@ export default function ArtistDistribution() {
   );
   const { data, error, retry } = useListeningRequest(request);
   return (
-    <TitleCard title="Artist distribution">
+    <TitleCard
+      title="Artist distribution"
+      className={className}
+      contentClassName={s.content}>
       {error ? (
         <div className={s.loading}>
           Could not load artist distribution.{" "}
