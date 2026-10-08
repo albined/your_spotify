@@ -27,11 +27,11 @@ export function artistColor(id: string) {
   return `hsl(${(hash >>> 0) % 360} 44% 57%)`;
 }
 
-export function buildArtistStream(data: ArtistDistribution) {
+export function buildArtistStream(data: ArtistDistribution, smoothing = 1) {
   const span = data.end - data.start;
   if (span <= 0) return { bands: [], maximum: 0, samples: SAMPLES };
   const step = span / (SAMPLES - 1);
-  const sigma = distributionBandwidth(span);
+  const sigma = distributionBandwidth(span) * smoothing;
   const radius = Math.ceil((sigma * 4) / step);
   // Cache kernels once per occupied time bin and share across artists.
   const kernels = new Map<number, { index: number; weights: number[] }>();

@@ -33,13 +33,13 @@ export default function ArtistsListened({ className }: ArtistsListenedProps) {
 
   if (!result || !resultOld) {
     return (
-      <TitleCard title="Artists listened" className={className} fade>
+      <TitleCard title="Artists" className={className} fade>
         <div className={s.root}>
           <Text size="normal">
             <Skeleton width={50} />
           </Text>
           <Text size="normal">
-            <Skeleton width={200} />
+            <Skeleton style={{ width: 200, maxWidth: "100%" }} />
           </Text>
         </div>
       </TitleCard>
@@ -52,10 +52,11 @@ export default function ArtistsListened({ className }: ArtistsListenedProps) {
   const percentMore = getPercentMore(oldCount, count);
 
   return (
-    <TitleCard title="Artists listened" className={className} fade>
+    <TitleCard title="Artists" className={className} fade>
       <div className={s.root}>
         <Text size="huge" className={s.value}>
-          {count} different
+          {count}
+          <span className={s.wide}> different</span>
         </Text>
         <ListeningChange percent={percentMore} unit={unit} />
       </div>

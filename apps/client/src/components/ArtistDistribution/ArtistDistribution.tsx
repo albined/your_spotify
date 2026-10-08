@@ -31,7 +31,12 @@ function Stream({ data }: { data: Distribution }) {
     x: number;
     y: number;
   } | null>(null);
-  const stream = useMemo(() => buildArtistStream(data), [data]);
+  // A narrow card has too few pixels for the finer shape, which reads as noise.
+  const smoothing = size.width > 0 && size.width < 480 ? 2 : 1;
+  const stream = useMemo(
+    () => buildArtistStream(data, smoothing),
+    [data, smoothing],
+  );
   const { bands, maximum, samples } = stream;
   const activeBand = hover?.band;
   const axis = useMemo(() => {

@@ -52,9 +52,9 @@ const api = process.env.PROFILE_API_URL || "http://127.0.0.1:8082";
     await today.check();
 
     for (const [title, visible, spoken] of [
-      ["Songs listened", "25% vs last day", "25% more than last day"],
-      ["Time listened", "25% vs last day", "25% less than last day"],
-      ["Artists listened", "0% vs last day", "No change from last day"],
+      ["Plays", "25% vs last day", "25% more than last day"],
+      ["Time", "25% vs last day", "25% less than last day"],
+      ["Artists", "0% vs last day", "No change from last day"],
     ]) {
       const card = page
         .getByRole("heading", { name: title, exact: true })

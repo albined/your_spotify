@@ -17,6 +17,9 @@ import { selectUser } from "../../services/redux/modules/user/selector";
 
 import s from "./index.module.css";
 
+// One column on a phone: the three best cards together, then the charts.
+const phoneOrder = (order: number) => ({ order: { xs: order, md: 0 } });
+
 export default function Home() {
   const user = useSelector(selectUser);
 
@@ -30,34 +33,34 @@ export default function Home() {
       <div className={s.content}>
         <ListeningOverviewProvider>
           <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
-            <Grid size={{ xs: 12, md: 12, lg: 4 }}>
+            <Grid size={{ xs: 4 }}>
               <SongsListened />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid size={{ xs: 4 }}>
               <TimeListened />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid size={{ xs: 4 }}>
               <ArtistsListened />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 8 }} sx={phoneOrder(4)}>
               <TimeListenedPer className={s.timelisten} />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} sx={phoneOrder(1)}>
               <BestArtist />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 8 }} sx={phoneOrder(6)}>
               <ListeningRepartition className={s.timelisten} />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} sx={phoneOrder(2)}>
               <BestSong />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 8 }} sx={phoneOrder(5)}>
               <ArtistDistribution className={s.timelisten} />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} sx={phoneOrder(3)}>
               <BestAlbum />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12 }} sx={phoneOrder(7)}>
               <History />
             </Grid>
           </Grid>

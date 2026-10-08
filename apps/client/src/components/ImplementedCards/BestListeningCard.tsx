@@ -98,6 +98,11 @@ export default function BestListeningCard({
             ? "Best album"
             : "Best song"
       }
+      right={
+        <Link to={`/top/${kind}s`} className={s.viewall}>
+          View all
+        </Link>
+      }
       className={clsx(s.root, className)}
       contentClassName={s.content}>
       {error ? (
