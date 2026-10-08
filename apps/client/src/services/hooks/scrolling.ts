@@ -25,6 +25,7 @@ export function useInfiniteScroll<T>(
     offset: number;
     busy: boolean;
     more: boolean;
+    first: boolean;
   } | null>(null);
 
   const onNext = useCallback(async () => {
@@ -51,10 +52,13 @@ export function useInfiniteScroll<T>(
           ? result.data.filter(filterRef.current)
           : result.data;
       } while (!visible.length && page.more);
-      setItems((previous) => [...previous, ...visible]);
+      const replace = page.first;
+      page.first = false;
+      setItems((previous) => (replace ? visible : [...previous, ...visible]));
       setHasMore(page.more);
     } catch {
       if (cursor.current !== page) return;
+      if (page.first) setItems([]);
       setError(true);
       setHasMore(false);
     } finally {
@@ -65,8 +69,8 @@ export function useInfiniteScroll<T>(
 
   useEffect(() => {
     // Reset only when the date values/request change, not Date object identity.
-    cursor.current = { offset: 0, busy: false, more: true };
-    setItems([]);
+    // The previous list stays until the first page of the new one replaces it.
+    cursor.current = { offset: 0, busy: false, more: true, first: true };
     setHasMore(true);
     void onNext();
     return () => {
