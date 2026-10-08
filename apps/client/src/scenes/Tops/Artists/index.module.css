@@ -1,5 +1,4 @@
-@media screen and (min-width: 960px) {
-  .content {
-    padding: var(--page-padding);
-  }
+.content {
+  padding: var(--page-padding);
+  view-transition-name: tops-content;
 }

@@ -5,6 +5,7 @@ import Header from "../../../components/Header";
 import InfiniteList from "../../../components/InfiniteList";
 import TopListeningRace from "../../../components/ListeningTimeline/TopListeningRace";
 import TableCard from "../../../components/TableCard";
+import TopsSwitch from "../../../components/TopsSwitch";
 import { api } from "../../../services/apis/api";
 import { useInfiniteScroll } from "../../../services/hooks/scrolling";
 import { selectRawIntervalDetail } from "../../../services/redux/modules/user/selector";
@@ -25,7 +26,7 @@ export default function Artists() {
 
   return (
     <div>
-      <Header title="Top artists" />
+      <Header title="Top artists" phoneTitle={<TopsSwitch />} />
       <div className={s.content}>
         <TopListeningRace kind="artists" />
         <TableCard artwork={items[0] && getImage(items[0].artist)}>

@@ -3,6 +3,16 @@
   object-fit: cover;
 }
 
+.names {
+  min-width: 0;
+}
+
+.names > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .names > :first-child {
   margin-bottom: 4px;
 }

@@ -8,7 +8,7 @@ export function useAlbumGrid() {
     rank: { unit: commonUnits.rank, key: "rank" },
     cover: { unit: commonUnits.cover, key: "cover" },
     title: { unit: commonUnits.mainTitle, key: "title" },
-    count: { unit: commonUnits.stat(isMobile), key: "count" },
+    count: { unit: commonUnits.rowStat(isMobile), key: "count" },
     total: { unit: commonUnits.stat(isMobile), key: "total" },
   } as const;
 }

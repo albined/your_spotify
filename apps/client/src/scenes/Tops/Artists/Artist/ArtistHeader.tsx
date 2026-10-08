@@ -21,5 +21,6 @@ export default function ArtistHeader() {
     },
   ];
 
+  if (isMobile) return null;
   return <GridHeaderWrapper columns={columns} />;
 }

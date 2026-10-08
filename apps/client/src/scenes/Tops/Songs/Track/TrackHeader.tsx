@@ -33,5 +33,6 @@ export default function TrackHeader() {
     { ...trackGrid.options, node: !isMobile && <div /> },
   ];
 
+  if (isMobile) return null;
   return <GridHeaderWrapper columns={columns} />;
 }

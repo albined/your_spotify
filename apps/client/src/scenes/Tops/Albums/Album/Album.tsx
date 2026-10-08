@@ -1,16 +1,19 @@
 import { Fragment } from "react";
-import s from "./index.module.css";
-import { msToDuration } from "../../../../services/stats";
-import { Artist, Album as AlbumType } from "../../../../services/types";
+
+import { ColumnDescription, GridRowWrapper } from "../../../../components/Grid";
+import { RowStat } from "../../../../components/Grid/RowStat";
+import IdealImage from "../../../../components/IdealImage";
+import InlineAlbum from "../../../../components/InlineAlbum";
 import InlineArtist from "../../../../components/InlineArtist";
+import Rank from "../../../../components/Rank";
 import Text from "../../../../components/Text";
 import { useMobile } from "../../../../services/hooks/hooks";
-import { ColumnDescription, GridRowWrapper } from "../../../../components/Grid";
-import IdealImage from "../../../../components/IdealImage";
-import { useAlbumGrid } from "./AlbumGrid";
-import InlineAlbum from "../../../../components/InlineAlbum";
-import Rank from "../../../../components/Rank";
+import { msToDuration } from "../../../../services/stats";
 import { RankChange } from "../../../../services/topMovement";
+import { Artist, Album as AlbumType } from "../../../../services/types";
+import { useAlbumGrid } from "./AlbumGrid";
+
+import s from "./index.module.css";
 
 interface AlbumProps {
   artists: Artist[];
@@ -67,11 +70,10 @@ export default function Album({
     },
     {
       ...albumGrid.count,
-      node: (
-        <Text
-          size="normal"
-          secondary
-          className={isMobile ? "right" : undefined}>
+      node: isMobile ? (
+        <RowStat count={count} duration={duration} />
+      ) : (
+        <Text size="normal" secondary>
           {count}
         </Text>
       ),
