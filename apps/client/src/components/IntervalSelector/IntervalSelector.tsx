@@ -5,17 +5,12 @@ import {
   IconButton,
   MenuItem,
   Select,
-  useMediaQuery,
 } from "@mui/material";
 import { endOfDay, startOfDay } from "date-fns";
-import React, { useId, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 
 import { getAppropriateTimesplitFromRange } from "../../services/date";
-import {
-  allIntervals,
-  getAllIndexFromIntervalDetail,
-  IntervalDetail,
-} from "../../services/intervals";
+import { IntervalDetail, selectorIntervals } from "../../services/intervals";
 import Dialog from "../Dialog";
 import RangePicker from "./RangePicker";
 import { Range } from "./RangePicker/RangePicker";
@@ -35,21 +30,33 @@ export function IntervalSelector({
   selectType,
   forceTiny,
 }: IntervalSelectorProps) {
-  const upmd = useMediaQuery("(min-width: 1200px)") && !forceTiny;
   const groupName = useId();
+  const options = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [customIntervalDate, setCustomIntervalDate] = useState<Range>([
     undefined,
     undefined,
   ]);
 
-  const existingInterval = getAllIndexFromIntervalDetail(value);
+  const existingInterval = selectorIntervals.findIndex(
+    (inter) => inter.type === value.type && inter.name === value.name,
+  );
+
+  // Bring the selected period into view when the row is scrolled sideways.
+  useEffect(() => {
+    const row = options.current;
+    const selected =
+      row?.querySelector<HTMLElement>("input:checked")?.parentElement;
+    if (!row || !selected) return;
+    row.scrollLeft =
+      selected.offsetLeft - (row.clientWidth - selected.offsetWidth) / 2;
+  }, [existingInterval]);
 
   const internOnChange = (index: number) => {
     if (index === -1) {
       setOpen(true);
     } else {
-      const interval = allIntervals[index];
+      const interval = selectorIntervals[index];
       if (!interval) {
         return;
       }
@@ -59,7 +66,7 @@ export function IntervalSelector({
 
   let content: React.ReactNode;
 
-  if (!upmd) {
+  if (forceTiny) {
     content = (
       <Select
         variant={selectType ?? "outlined"}
@@ -68,7 +75,7 @@ export function IntervalSelector({
         inputProps={{ "aria-label": "Listening period" }}
         value={existingInterval}
         onChange={(ev) => internOnChange(ev.target.value as number)}>
-        {allIntervals.map((inter, index) => (
+        {selectorIntervals.map((inter, index) => (
           <MenuItem key={inter.name} value={index}>
             {inter.name}
           </MenuItem>
@@ -82,10 +89,11 @@ export function IntervalSelector({
     content = (
       <div className={s.segmented}>
         <div
+          ref={options}
           className={s.options}
           role="radiogroup"
           aria-label="Listening period">
-          {allIntervals.map((inter, index) => (
+          {selectorIntervals.map((inter, index) => (
             <label key={inter.name} className={s.segment}>
               <input
                 type="radio"
@@ -97,16 +105,16 @@ export function IntervalSelector({
               <span>{inter.name}</span>
             </label>
           ))}
+          <IconButton
+            size="small"
+            aria-label="Custom date range"
+            aria-haspopup="dialog"
+            aria-pressed={existingInterval === -1}
+            className={s.custom}
+            onClick={() => setOpen(true)}>
+            <CalendarMonthOutlined fontSize="small" />
+          </IconButton>
         </div>
-        <IconButton
-          size="small"
-          aria-label="Custom date range"
-          aria-haspopup="dialog"
-          aria-pressed={existingInterval === -1}
-          className={s.custom}
-          onClick={() => setOpen(true)}>
-          <CalendarMonthOutlined fontSize="small" />
-        </IconButton>
       </div>
     );
   }

@@ -142,6 +142,18 @@ export const userBasedIntervals: UserBasedIntervalDetails[] = [
 
 export const allIntervals = [...presetIntervals, ...userBasedIntervals];
 
+// Rolling ranges first; stored indexes keep following presetIntervals.
+export const selectorIntervals: IntervalDetail[] = [
+  "Today",
+  "Last 7 days",
+  "Last 30 days",
+  "Last 365 days",
+  "All",
+  "This week",
+  "This month",
+  "This year",
+].flatMap((name) => allIntervals.find((inter) => inter.name === name) ?? []);
+
 export function getPresetIndexFromIntervalDetail(
   details: PresetIntervalDetail,
 ) {
@@ -152,12 +164,6 @@ export function getUserBasedIndexFromIntervalDetail(
   details: UserBasedIntervalDetails,
 ) {
   return userBasedIntervals.findIndex((v) => v.name === details.name);
-}
-
-export function getAllIndexFromIntervalDetail(details: IntervalDetail) {
-  return allIntervals.findIndex(
-    (v) => v.type === details.type && v.name === details.name,
-  );
 }
 
 export function optimisticGetIntervalDetailFromName(name: string) {
