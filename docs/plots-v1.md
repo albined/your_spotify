@@ -70,6 +70,9 @@ the existing ranking endpoint and selected page range. The winner remains above
 two compact runner-ups, with linked images/names and shortened song/play and
 minute counts. Both cards retain their 300px height and share the same layout.
 
+The home history table has no title or controls: it starts at the end of the
+selected range and scrolls back through everything before it.
+
 Competition now has a fixed overall listening-time race and a separate artist
 race below it. Its searchable dropdown contains up to 200 artists, ranked by
 the minimum recorded hours across all selected participants in the selected

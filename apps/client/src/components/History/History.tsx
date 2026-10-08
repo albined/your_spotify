@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useSelector } from "react-redux";
 
 import { api } from "../../services/apis/api";
@@ -8,7 +7,6 @@ import {
   selectRawAllInterval,
   selectRawIntervalDetail,
 } from "../../services/redux/modules/user/selector";
-import CheckboxWithText from "../CheckboxWithText";
 import { GridWrapper } from "../Grid";
 import InfiniteList from "../InfiniteList";
 import { RightClickable } from "../RightClickable/RightClickable";
@@ -24,31 +22,19 @@ import { TrackSelectionPopup } from "./Track/TrackSelectionPopup";
 export default function History() {
   const { interval } = useSelector(selectRawIntervalDetail);
   const { interval: allInterval } = useSelector(selectRawAllInterval);
-  const [followInterval, setFollowInterval] = useState(true);
+  // Newest first from the end of the selected interval, back through
+  // everything before it.
   const { items, hasMore, onNext, loading, error } = useInfiniteScroll(
-    followInterval ? interval : allInterval,
+    { ...allInterval, end: interval.end },
     api.getTracks,
   );
-
-  const handleSetFollowInterval = (value: boolean) => {
-    setFollowInterval(value);
-  };
 
   const { anchor, selectedTracks, setAnchor, setSelectedTracks, uniqSongIds } =
     useSelectTracks({ tracks: items });
 
   return (
     <>
-      <TitleCard
-        title="Your history"
-        info="You can select tracks by clicking them, ctrl-clicking them to add to the selection. You can also use shift-click to expand your selection"
-        right={
-          <CheckboxWithText
-            checked={followInterval}
-            onChecked={handleSetFollowInterval}
-            text="Follow interval"
-          />
-        }>
+      <TitleCard>
         <SelectableContextProvider
           selected={selectedTracks}
           setSelected={setSelectedTracks}>
