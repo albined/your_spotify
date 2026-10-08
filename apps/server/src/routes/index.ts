@@ -22,6 +22,7 @@ import {
   optionalLoggedOrGuest,
   validate,
 } from "../tools/middleware";
+import { endSession } from "../tools/session";
 import { LoggedRequest, OptionalLoggedRequest } from "../tools/types";
 import { deleteUser } from "../tools/user";
 import { Version } from "../tools/version";
@@ -34,7 +35,7 @@ router.get("/", (_, res) => {
 });
 
 router.post("/logout", async (_, res) => {
-  res.clearCookie("token");
+  endSession(res);
   res.status(200).end();
 });
 

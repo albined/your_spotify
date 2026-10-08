@@ -1,17 +1,16 @@
 import { hrtime } from "process";
 
 import { NextFunction, Request, Response } from "express";
-import { verify } from "jsonwebtoken";
 import { Types } from "mongoose";
 import { z } from "zod";
 
 import { getUserFromField, getGlobalPreferences } from "../database";
 import { getUserImporterState } from "../database/queries/importer";
-import { getPrivateData } from "../database/queries/privateData";
 import { SpotifyAPI } from "./apis/spotifyApi";
 import { YourSpotifyError } from "./errors/error";
 import { logger } from "./logger";
 import { Metrics } from "./metrics";
+import { readSession, renewSession } from "./session";
 import {
   GlobalPreferencesRequest,
   LoggedRequest,
@@ -59,7 +58,11 @@ export const validate = <
   }
 };
 
-const baselogged = async (req: Request, useQueryToken = false) => {
+const baselogged = async (
+  req: Request,
+  res: Response,
+  useQueryToken = false,
+) => {
   const { token: queryToken } = req.query;
 
   if (useQueryToken && queryToken && typeof queryToken === "string") {
@@ -69,33 +72,22 @@ const baselogged = async (req: Request, useQueryToken = false) => {
     }
   }
 
-  const auth = req.cookies.token;
-  if (!auth) {
-    return null;
-  }
-
   try {
-    const privateData = await getPrivateData();
-    if (!privateData?.jwtPrivateKey) {
-      throw new Error("No private data found, cannot sign JWT");
-    }
-    const jwtUser = verify(auth, privateData.jwtPrivateKey) as {
-      userId: string;
-    };
-
-    if (typeof jwtUser.userId !== "string") {
+    const session = await readSession(req);
+    if (!session) {
       return null;
     }
 
     const user = await getUserFromField(
       "_id",
-      new Types.ObjectId(jwtUser.userId),
+      new Types.ObjectId(session.userId),
       false,
     );
 
     if (!user) {
       return null;
     }
+    await renewSession(req, res, session);
     return user;
   } catch {
     return null;
@@ -107,7 +99,7 @@ export const logged = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const user = await baselogged(req, false);
+  const user = await baselogged(req, res, false);
   if (!user) {
     throw new NotLoggedError();
   }
@@ -120,7 +112,7 @@ export const isLoggedOrGuest = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const user = await baselogged(req, true);
+  const user = await baselogged(req, res, true);
   if (!user) {
     throw new NotLoggedError();
   }
@@ -133,7 +125,7 @@ export const optionalLoggedOrGuest = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const user = await baselogged(req, true);
+  const user = await baselogged(req, res, true);
   (req as OptionalLoggedRequest).user = user;
   next();
 };
@@ -143,7 +135,7 @@ export const optionalLogged = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const user = await baselogged(req, false);
+  const user = await baselogged(req, res, false);
   (req as OptionalLoggedRequest).user = user;
   next();
 };

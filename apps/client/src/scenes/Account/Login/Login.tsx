@@ -1,16 +1,27 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import { Checkbox } from "@mui/material";
 import clsx from "clsx";
 import Text from "../../../components/Text";
+import { alertMessage } from "../../../services/redux/modules/message/reducer";
 import { selectUser } from "../../../services/redux/modules/user/selector";
-import { getSpotifyLogUrl } from "../../../services/tools";
+import { useAppDispatch } from "../../../services/redux/tools";
+import { getReturnPath, getSpotifyLogUrl } from "../../../services/tools";
 import s from "../index.module.css";
 import { LocalStorage, REMEMBER_ME_KEY } from "../../../services/storage";
 import { useNavigate } from "../../../services/hooks/useNavigate";
 
+const LOGIN_ERRORS: Record<string, string> = {
+  "rate-limited": "Spotify is rate limiting this server, try again later",
+};
+
 export default function Login() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [query, setQuery] = useSearchParams();
+  const error = query.get("error");
+  const returnPath = getReturnPath(query);
   const user = useSelector(selectUser);
   const [rememberMe, setRememberMe] = useState(
     LocalStorage.get(REMEMBER_ME_KEY) === "true",
@@ -18,11 +29,23 @@ export default function Login() {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
-    } else if (LocalStorage.get(REMEMBER_ME_KEY) === "true") {
-      window.location.href = getSpotifyLogUrl();
+      navigate(returnPath ?? "/");
     }
-  }, [navigate, user]);
+  }, [navigate, returnPath, user]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+    dispatch(
+      alertMessage({
+        level: "error",
+        message: LOGIN_ERRORS[error] ?? "Could not log in with Spotify",
+      }),
+    );
+    query.delete("error");
+    setQuery(query, { replace: true });
+  }, [dispatch, error, query, setQuery]);
 
   const handleRememberMeClick = async () => {
     const newRememberMe = !rememberMe;
@@ -43,7 +66,7 @@ export default function Login() {
         To access your personal dashboard, please login with your account
       </Text>
       <div>
-        <a className={s.link} href={getSpotifyLogUrl()}>
+        <a className={s.link} href={getSpotifyLogUrl(returnPath)}>
           Login
         </a>
       </div>
