@@ -11,10 +11,12 @@ import { useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 
 import { detailIntervalToQuery } from "../intervals";
+import { alertMessage } from "../redux/modules/message/reducer";
 import {
   selectIntervalDetail,
   selectUser,
 } from "../redux/modules/user/selector";
+import { useAppDispatch } from "../redux/tools";
 import { UnboxPromise } from "../types";
 import { useNavigate } from "./useNavigate";
 
@@ -107,6 +109,33 @@ export function useShareLink() {
   }?${search.toString()}`;
 }
 
+export function useSharePage() {
+  const dispatch = useAppDispatch();
+  const user = useSelector(selectUser);
+  const toCopy = useShareLink();
+
+  const onCopy = () => {
+    if (!user?.publicToken) {
+      dispatch(
+        alertMessage({
+          level: "error",
+          message:
+            "No public token generated, go to the settings page to generate one",
+        }),
+      );
+      return;
+    }
+    dispatch(
+      alertMessage({
+        level: "info",
+        message: "Copied current page to clipboard with public token",
+      }),
+    );
+  };
+
+  return { toCopy, onCopy };
+}
+
 export function useNavigateAndSearch() {
   const navigate = useNavigate();
   const [query] = useSearchParams();
@@ -158,7 +187,7 @@ export function useResizeDebounce(
 
 export function useMobile(): [boolean, boolean, boolean] {
   return [
-    useMediaQuery("(max-width: 960px)"),
+    useMediaQuery("(max-width: 900px)"),
     useMediaQuery("(max-width: 1250px)"),
     useMediaQuery("(min-width: 1250px)"),
   ];

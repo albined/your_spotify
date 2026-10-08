@@ -1,15 +1,17 @@
-import { Menu } from "@mui/icons-material";
+import { IosShare } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import React, { useContext, ReactNode } from "react";
+import clsx from "clsx";
+import React, { ReactNode } from "react";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useSelector } from "react-redux";
 
+import { useIsGuest, useSharePage } from "../../services/hooks/hooks";
 import { IntervalDetail } from "../../services/intervals";
 import { setDataInterval } from "../../services/redux/modules/user/reducer";
 import { selectIntervalDetail } from "../../services/redux/modules/user/selector";
 import { intervalDetailToRedux } from "../../services/redux/modules/user/utils";
 import { useAppDispatch } from "../../services/redux/tools";
 import { IntervalSelector } from "../IntervalSelector";
-import { LayoutContext } from "../Layout/LayoutContext";
 import { useSider } from "../Layout/useSider";
 import Text from "../Text";
 
@@ -20,8 +22,11 @@ interface HeaderProps {
   right?: React.ReactNode;
   title: React.ReactNode;
   tinyTitle?: string;
+  // Shown in place of the title on phones, where the title stays for readers.
+  phoneTitle?: React.ReactNode;
   subtitle?: ReactNode;
   hideInterval?: boolean;
+  hideShare?: boolean;
 }
 
 export default function Header({
@@ -29,13 +34,17 @@ export default function Header({
   right,
   title,
   tinyTitle,
+  phoneTitle,
   subtitle,
   hideInterval,
+  hideShare,
 }: HeaderProps) {
   const dispatch = useAppDispatch();
   const intervalDetail = useSelector(selectIntervalDetail);
-  const layoutContext = useContext(LayoutContext);
   const { siderAllowed, siderIsDrawer } = useSider();
+  const isGuest = useIsGuest();
+  const { toCopy, onCopy } = useSharePage();
+  const replaced = siderIsDrawer && !!phoneTitle;
 
   const changeInterval = (newInterval: IntervalDetail) => {
     dispatch(setDataInterval(intervalDetailToRedux(newInterval)));
@@ -43,17 +52,10 @@ export default function Header({
 
   return (
     <div className={s.root}>
-      <div className={s.left}>
-        {siderAllowed && siderIsDrawer && (
-          <IconButton
-            aria-label="Open navigation"
-            onClick={layoutContext.openDrawer}
-            className={s.drawerbutton}>
-            <Menu />
-          </IconButton>
-        )}
+      <div className={clsx(s.left, { [s.replaced]: replaced })}>
         {left}
-        <div className={s.texts}>
+        {replaced && phoneTitle}
+        <div className={clsx(s.texts, { [s.hidden]: replaced })}>
           <Text element="h1" size="pagetitle">
             {siderIsDrawer && tinyTitle ? tinyTitle : title}
           </Text>
@@ -61,8 +63,15 @@ export default function Header({
         </div>
       </div>
       {right}
+      {siderAllowed && siderIsDrawer && !hideShare && !isGuest && toCopy && (
+        <CopyToClipboard onCopy={onCopy} text={toCopy}>
+          <IconButton aria-label="Share this page" className={s.share}>
+            <IosShare fontSize="small" />
+          </IconButton>
+        </CopyToClipboard>
+      )}
       {!hideInterval && (
-        <div>
+        <div className={s.interval}>
           <IntervalSelector value={intervalDetail} onChange={changeInterval} />
         </div>
       )}

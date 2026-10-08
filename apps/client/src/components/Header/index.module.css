@@ -28,15 +28,34 @@
   color: var(--text-tertiary);
   font-size: 14px !important;
 }
-.drawerbutton {
-  margin-right: 8px !important;
+.interval {
+  min-width: 0;
+}
+.replaced {
+  flex: 1;
+}
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.share {
+  color: var(--text-secondary) !important;
 }
 @media (max-width: 900px) {
   .root {
-    padding: 20px 12px;
+    padding: 20px 16px 16px;
     gap: 12px;
   }
   .texts > h1 {
     font-size: 26px !important;
+  }
+  /* The period chips run edge to edge beneath the title. */
+  .interval {
+    flex: 0 0 calc(100% + 32px);
+    margin: 0 -16px;
   }
 }
