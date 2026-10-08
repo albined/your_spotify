@@ -14,37 +14,64 @@ import { detailIntervalToQuery } from "../intervals";
 import { alertMessage } from "../redux/modules/message/reducer";
 import {
   selectIntervalDetail,
+  selectRawIntervalDetail,
   selectUser,
 } from "../redux/modules/user/selector";
 import { useAppDispatch } from "../redux/tools";
 import { UnboxPromise } from "../types";
 import { useNavigate } from "./useNavigate";
 
+// A value that is loading again because the period changed stays as it was
+// until the new one arrives, so the page does not blank between periods. Any
+// other reload, such as a different artist, still starts empty.
+export function useHeldOverPeriod<T>(value: T | undefined) {
+  const { interval } = useSelector(selectRawIntervalDetail);
+  const period = `${interval.start.getTime()}-${interval.end.getTime()}`;
+  const [last, setLast] = useState<{
+    period: string;
+    value: T;
+    held: boolean;
+  }>();
+  if (value !== null && value !== undefined) {
+    if (!last || last.held || last.period !== period || last.value !== value) {
+      setLast({ period, value, held: false });
+    }
+    return value;
+  }
+  if (!last) return value;
+  if (last.period !== period) setLast({ ...last, period, held: true });
+  return last.held || last.period !== period ? last.value : value;
+}
+
 export function useAPI<Fn extends (...ags: any[]) => Promise<{ data: D }>, D>(
   call: Fn,
   ...args: Parameters<Fn>
 ): null | UnboxPromise<ReturnType<Fn>>["data"] {
-  // Allows for instant nullify of request in case of deps change
-  const [value, setValue] = useState<
-    UnboxPromise<ReturnType<Fn>>["data"] | null
-  >(null);
+  const [state, setState] = useState<{
+    deps: unknown[];
+    data: UnboxPromise<ReturnType<Fn>>["data"];
+  }>();
+  const deps = [call, ...args];
   useEffect(() => {
     let active = true;
     async function fetch() {
       const result = await call(...args);
       // Dense chart updates should not take priority over input/date changes.
-      if (active) startTransition(() => setValue(result.data));
+      if (active) startTransition(() => setState({ deps, data: result.data }));
     }
 
-    setValue(null);
     fetch().catch(console.error);
     return () => {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...args, call]);
+  }, deps);
 
-  return value;
+  // An answer to an earlier request is never shown as this one's.
+  const current =
+    state?.deps.length === deps.length &&
+    state.deps.every((dep, index) => Object.is(dep, deps[index]));
+  return useHeldOverPeriod(current ? state.data : undefined) ?? null;
 }
 
 export function useConditionalAPI<

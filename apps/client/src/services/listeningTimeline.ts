@@ -1,5 +1,6 @@
 import { startTransition, useEffect, useState } from "react";
 
+import { useHeldOverPeriod } from "./hooks/hooks";
 import { Artist } from "./types";
 
 export interface ListeningSeries {
@@ -93,8 +94,11 @@ export function useListeningRequest<T>(request: () => Promise<{ data: T }>) {
       active = false;
     };
   }, [request, attempt]);
+  const data = useHeldOverPeriod(
+    state?.request === request ? state.data : undefined,
+  );
   return {
-    data: state?.request === request ? state.data : undefined,
+    data,
     error: state?.request === request && state.error,
     retry: () => setAttempt((value) => value + 1),
   };

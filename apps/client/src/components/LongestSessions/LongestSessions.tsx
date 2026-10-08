@@ -17,7 +17,11 @@ import s from "./index.module.css";
 const PAGE_SIZE = 5;
 
 function SessionList({ start, end }: { start: number; end: number }) {
-  const [page, setPage] = useState({ offset: 0, attempt: 0 });
+  const [page, setPage] = useState({ offset: 0, attempt: 0, start, end });
+  // A new period starts over; its first page replaces the sessions on screen.
+  if (page.start !== start || page.end !== end) {
+    setPage({ offset: 0, attempt: 0, start, end });
+  }
   const [state, setState] = useState<{
     data?: ListeningSession[];
     page?: typeof page;
@@ -32,8 +36,8 @@ function SessionList({ start, end }: { start: number; end: number }) {
     // One extra result tells us whether another page exists.
     api
       .getLongestSessions(
-        new Date(start),
-        new Date(end),
+        new Date(page.start),
+        new Date(page.end),
         page.offset,
         PAGE_SIZE + 1,
       )
@@ -59,10 +63,10 @@ function SessionList({ start, end }: { start: number; end: number }) {
     return () => {
       active = false;
     };
-  }, [start, end, page]);
+  }, [page]);
 
   const loadMore = () =>
-    setPage({ offset: data?.length ?? 0, attempt: page.attempt + 1 });
+    setPage({ ...page, offset: data?.length ?? 0, attempt: page.attempt + 1 });
   const sessions = (data ?? [])
     .map((session) => ({
       session,
@@ -114,11 +118,7 @@ export default function LongestSessions() {
   const end = interval.end.getTime();
   return (
     <TitleCard title="Longest sessions">
-      <SessionList
-        key={`${user?._id}:${start}:${end}`}
-        start={start}
-        end={end}
-      />
+      <SessionList key={user?._id} start={start} end={end} />
     </TitleCard>
   );
 }
