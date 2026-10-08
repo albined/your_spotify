@@ -6,7 +6,7 @@
     to bottom,
     color-mix(
       in srgb,
-      var(--hero-tint, var(--surface-card)) var(--hero-tint-weight),
+      var(--hero-tint, var(--surface-card)) calc(var(--hero-tint-weight) + 8%),
       var(--surface-card)
     ),
     var(--surface-card) 70%
