@@ -112,6 +112,8 @@ export const presetIntervals = [
   },
 ] as const satisfies PresetIntervalDetail[];
 
+export const defaultInterval = presetIntervals[5];
+
 export const userBasedIntervals: UserBasedIntervalDetails[] = [
   {
     type: "userbased",
@@ -232,7 +234,7 @@ export function queryToIntervalDetail(
   } catch {
     // Do nothing
   }
-  return toReturn ?? presetIntervals[0];
+  return toReturn ?? defaultInterval;
 }
 
 export function useQueryToRawIntervalDetail(prefix: string) {
@@ -268,7 +270,7 @@ export function useOldestListenedAtFromUsers(
   const accountInterval = getRawIntervalDetail(detail, account);
 
   if (!account && detail.type === "userbased") {
-    return getRawIntervalDetail(presetIntervals[0], undefined);
+    return getRawIntervalDetail(defaultInterval, undefined);
   }
   return accountInterval;
 }

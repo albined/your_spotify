@@ -1,4 +1,5 @@
 import {
+  defaultInterval,
   getPresetIndexFromIntervalDetail,
   getUserBasedIndexFromIntervalDetail,
   IntervalDetail,
@@ -27,7 +28,7 @@ export function intervalDetailToRedux(
       return { type: "custom", interval: intervalDetail.interval };
     }
     default: {
-      return { type: "custom", interval: presetIntervals[0].interval };
+      return { type: "custom", interval: defaultInterval.interval };
     }
   }
 }
@@ -50,7 +51,7 @@ export function fromReduxIntervalDetail(
       };
     }
     default: {
-      return presetIntervals[0];
+      return defaultInterval;
     }
   }
 }

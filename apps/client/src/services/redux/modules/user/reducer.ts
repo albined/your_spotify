@@ -1,7 +1,7 @@
 import { createAction, createReducer } from "@reduxjs/toolkit";
 
 import { api } from "../../../apis/api";
-import { presetIntervals } from "../../../intervals";
+import { defaultInterval } from "../../../intervals";
 import {
   changeUsername,
   checkLogged,
@@ -23,7 +23,7 @@ interface UserReducer {
 const initialState: UserReducer = {
   loaded: false,
   user: null,
-  intervalDetail: intervalDetailToRedux(presetIntervals[0]),
+  intervalDetail: intervalDetailToRedux(defaultInterval),
   publicToken: null,
 };
 
