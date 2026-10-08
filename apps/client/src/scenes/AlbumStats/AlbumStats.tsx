@@ -1,7 +1,8 @@
 import { TimelapseOutlined } from "@mui/icons-material";
 import { CircularProgress, Grid } from "@mui/material";
+import { Fragment } from "react";
 
-import Header from "../../components/Header";
+import DetailHero from "../../components/DetailHero";
 import IdealImage from "../../components/IdealImage";
 import ImageTwoLines from "../../components/ImageTwoLines";
 import InlineArtist from "../../components/InlineArtist";
@@ -11,6 +12,7 @@ import Text from "../../components/Text";
 import TitleCard from "../../components/TitleCard";
 import { AlbumStatsResponse } from "../../services/apis/api";
 import { msToDuration } from "../../services/stats";
+import { getImage } from "../../services/tools";
 import FirstAndLast from "../ArtistStats/FirstAndLast";
 import AlbumRank from "./AlbumRank";
 
@@ -27,28 +29,19 @@ export default function AlbumStats({ stats }: AlbumStatsProps) {
 
   return (
     <div>
-      <Header
-        left={
-          <IdealImage
-            className={s.headerimage}
-            images={stats.album.images}
-            size={60}
-            alt="Album"
-          />
-        }
+      <DetailHero
+        kind="Album"
+        image={getImage(stats.album)}
         title={stats.album.name}
         subtitle={stats.artists.map((artist, k) => (
-          <>
-            <InlineArtist size="normal" artist={artist} key={artist.id} />
+          <Fragment key={artist.id}>
+            <InlineArtist size="normal" artist={artist} />
             {k < stats.artists.length - 1 && ", "}
-          </>
-        ))}
-        hideInterval
-      />
+          </Fragment>
+        ))}>
+        <AlbumRank albumId={stats.album.id} />
+      </DetailHero>
       <div className={s.content}>
-        <div className={s.header}>
-          <AlbumRank albumId={stats.album.id} />
-        </div>
         <Grid
           container
           sx={{ justifyContent: "flex-start", alignItems: "flex-start" }}

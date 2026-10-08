@@ -1,6 +1,6 @@
 import { CircularProgress, Grid } from "@mui/material";
 
-import Header from "../../components/Header";
+import DetailHero from "../../components/DetailHero";
 import IdealImage from "../../components/IdealImage";
 import ImageTwoLines from "../../components/ImageTwoLines";
 import InlineAlbum from "../../components/InlineAlbum";
@@ -11,6 +11,7 @@ import TitleCard from "../../components/TitleCard";
 import { TrackStatsResponse } from "../../services/apis/api";
 import { DateFormatter } from "../../services/date";
 import { buildFromDateId } from "../../services/stats";
+import { getImage } from "../../services/tools";
 import FirstAndLast from "./FirstAndLast";
 import TrackRank from "./TrackRank/TrackRank";
 
@@ -30,23 +31,14 @@ export default function TrackStats({ trackId, stats }: TrackStatsProps) {
 
   return (
     <div>
-      <Header
-        left={
-          <IdealImage
-            className={s.headerimage}
-            images={stats.album.images}
-            size={60}
-            alt="Album"
-          />
-        }
+      <DetailHero
+        kind="Song"
+        image={getImage(stats.album)}
         title={stats.track.name}
-        subtitle={<InlineArtist artist={stats.artist} size="normal" />}
-        hideInterval
-      />
+        subtitle={<InlineArtist artist={stats.artist} size="normal" />}>
+        <TrackRank trackId={trackId} />
+      </DetailHero>
       <div className={s.content}>
-        <div className={s.header}>
-          <TrackRank trackId={trackId} />
-        </div>
         <Grid
           container
           spacing={2}
