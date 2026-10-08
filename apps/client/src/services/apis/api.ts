@@ -48,6 +48,7 @@ import { User } from "../redux/modules/user/types";
 import type { ReleaseDistribution } from "../releaseDistribution";
 import type { ListeningSession } from "../sessionBars";
 import type { TasteOverlap } from "../tasteOverlap";
+import { getLoginPath } from "../tools";
 import {
   Album,
   Artist,
@@ -74,8 +75,14 @@ const axios = Axios.create({
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      window.location.pathname = "/login";
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      window.location.pathname !== "/login"
+    ) {
+      // Other 401s are refusals, coming back to the same page would loop
+      const expired = error.response.data?.code === "NOT_LOGGED";
+      window.location.assign(expired ? getLoginPath() : "/login");
     }
     return Promise.reject(error);
   },

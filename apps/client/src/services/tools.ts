@@ -1,3 +1,4 @@
+import { LocalStorage, REMEMBER_ME_KEY } from "./storage";
 import { Album, Artist, SpotifyImage } from "./types";
 
 const NO_DATA_IMAGE = "/no_data_faded.png";
@@ -21,7 +22,32 @@ export function getAtLeastImage(images: SpotifyImage[], size: number) {
 export const getApiEndpoint = () =>
   (window as any as { API_ENDPOINT: string }).API_ENDPOINT;
 
-export const getSpotifyLogUrl = () => `${getApiEndpoint()}/oauth/spotify`;
+const NO_RETURN_PATHS = ["/", "/login", "/logout"];
+
+// Only paths of this app are accepted as a place to come back to after login
+export const getReturnPath = (query: URLSearchParams) => {
+  const next = query.get("next");
+  return next && /^\/(?![/\\])/.test(next) ? next : undefined;
+};
+
+// The login page remembers the current page in its "next" parameter
+export const getLoginPath = () => {
+  const { pathname, search } = window.location;
+  if (NO_RETURN_PATHS.includes(pathname)) {
+    return "/login";
+  }
+  return `/login?next=${encodeURIComponent(pathname + search)}`;
+};
+
+export const getSpotifyLogUrl = (returnTo?: string) => {
+  const query = new URLSearchParams({
+    remember: String(LocalStorage.get(REMEMBER_ME_KEY) === "true"),
+  });
+  if (returnTo) {
+    query.set("returnTo", returnTo);
+  }
+  return `${getApiEndpoint()}/oauth/spotify?${query}`;
+};
 
 export const compact = <T>(arr: (T | undefined)[]): T[] =>
   arr.filter((a) => a != null) as T[];

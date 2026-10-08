@@ -7,6 +7,7 @@ import {
 } from "../../services/redux/modules/user/selector";
 import { selectAccounts } from "../../services/redux/modules/admin/selector";
 import { useNavigate } from "../../services/hooks/useNavigate";
+import { getLoginPath } from "../../services/tools";
 
 interface PrivateRouteProps {
   children: ReactNode;
@@ -22,7 +23,7 @@ export default function PrivateRoute({
 
   useEffect(() => {
     if (loaded && !user) {
-      navigate("/login");
+      navigate(getLoginPath());
     }
   }, [loaded, navigate, user]);
 

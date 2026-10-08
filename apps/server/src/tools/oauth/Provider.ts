@@ -1,5 +1,5 @@
 import { spotifyHttpClientFactory } from "../apis/queuedHttpClient.providers";
-import { QueuedHttpClient } from "../apis/queueHttpClient";
+import { HttpError, QueuedHttpClient } from "../apis/queueHttpClient";
 import { generateRandomString } from "../crypto";
 import { credentials } from "./credentials";
 
@@ -7,17 +7,35 @@ export interface Provider {
   getRedirect(): Promise<{ url: string; state: string }>;
   exchangeCode(
     code: string,
-    state: string,
   ): Promise<{ accessToken: string; refreshToken?: string; expiresIn: number }>;
   refresh(
     refreshToken: string,
   ): Promise<{ accessToken: string; expiresIn: number }>;
+  getMe(accessToken: string): Promise<{ id: string; display_name: string }>;
   getHttpClient(accessToken: string): QueuedHttpClient;
 }
 
-export class Spotify implements Provider {
-  private readonly client = spotifyHttpClientFactory.createClient({});
+const AUTH_TIMEOUT_MS = 10 * 1000;
 
+// Logging in and refreshing tokens talk to Spotify directly rather than through
+// the queue shared with imports and polling, so they neither wait behind it nor
+// hang while it is paused by a rate limit.
+async function authFetch(url: string, init: RequestInit) {
+  const response = await fetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    throw new HttpError({
+      status: response.status,
+      statusText: response.statusText,
+      body: await response.text(),
+    });
+  }
+  return response.json();
+}
+
+export class Spotify implements Provider {
   constructor(
     private readonly clientId: string,
     private readonly clientSecret: string,
@@ -38,47 +56,49 @@ export class Spotify implements Provider {
     return { url: authorizeUrl.toString(), state };
   }
 
-  async exchangeCode(code: string, state: string) {
-    const { data } = await this.client.post(
-      "https://accounts.spotify.com/api/token",
-      {
-        params: {
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: this.redirectUri,
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          state,
-        },
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  private requestToken(params: Record<string, string>) {
+    return authFetch("https://accounts.spotify.com/api/token", {
+      method: "post",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${Buffer.from(
+          `${this.clientId}:${this.clientSecret}`,
+        ).toString("base64")}`,
       },
-    );
+      body: new URLSearchParams(params).toString(),
+    });
+  }
+
+  async exchangeCode(code: string) {
+    const data = await this.requestToken({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: this.redirectUri,
+    });
 
     return {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
+      accessToken: data.access_token as string,
+      refreshToken: data.refresh_token as string | undefined,
       expiresIn: Date.now() + data.expires_in * 1000,
     };
   }
 
   async refresh(refresh: string) {
-    const { data } = await this.client.post(
-      "https://accounts.spotify.com/api/token",
-      {
-        params: { grant_type: "refresh_token", refresh_token: refresh },
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${Buffer.from(
-            `${this.clientId}:${this.clientSecret}`,
-          ).toString("base64")}`,
-        },
-      },
-    );
+    const data = await this.requestToken({
+      grant_type: "refresh_token",
+      refresh_token: refresh,
+    });
 
     return {
       accessToken: data.access_token as string,
       expiresIn: Date.now() + data.expires_in * 1000,
     };
+  }
+
+  getMe(accessToken: string) {
+    return authFetch("https://api.spotify.com/v1/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }) as Promise<{ id: string; display_name: string }>;
   }
 
   getHttpClient(accessToken: string) {
