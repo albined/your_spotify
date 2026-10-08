@@ -1,16 +1,21 @@
 import { CircularProgress } from "@mui/material";
 import { useParams } from "react-router-dom";
-import { api } from "../../services/apis/api";
-import { useAPI } from "../../services/hooks/hooks";
+
 import FullscreenCentered from "../../components/FullscreenCentered";
 import Text from "../../components/Text";
+import { api } from "../../services/apis/api";
+import { useAPI, useLastLoaded } from "../../services/hooks/hooks";
 import SongStats from "./TrackStats";
 
 export default function TrackStatsWrapper() {
   const params = useParams();
-  const stats = useAPI(api.getTrackStats, params.id || "");
+  const shown = useLastLoaded(
+    params.id || "",
+    useAPI(api.getTrackStats, params.id || ""),
+  );
+  const stats = shown?.value;
 
-  if (stats === null) {
+  if (!shown || !stats) {
     return (
       <FullscreenCentered>
         <CircularProgress />
@@ -23,7 +28,7 @@ export default function TrackStatsWrapper() {
     );
   }
 
-  if ("code" in stats || !params.id) {
+  if ("code" in stats || !shown.id) {
     return (
       <FullscreenCentered>
         <Text element="h3" size="big">
@@ -33,5 +38,9 @@ export default function TrackStatsWrapper() {
     );
   }
 
-  return <SongStats trackId={params.id} stats={stats} />;
+  return (
+    <div className={shown.stale ? "loading-next" : undefined}>
+      <SongStats trackId={shown.id} stats={stats} />
+    </div>
+  );
 }

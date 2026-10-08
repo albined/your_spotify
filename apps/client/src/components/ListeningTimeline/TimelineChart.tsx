@@ -91,6 +91,8 @@ interface Props {
   showLegend?: boolean;
   legendPosition?: "bottom" | "right";
   hoverSeriesOnly?: boolean;
+  // False for lines that fill the plot's left side, where labels would clash.
+  insetScale?: boolean;
 }
 
 export default function TimelineChart({
@@ -105,6 +107,7 @@ export default function TimelineChart({
   showLegend = true,
   legendPosition = "bottom",
   hoverSeriesOnly = false,
+  insetScale = true,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -145,7 +148,8 @@ export default function TimelineChart({
   };
   // On a phone the scale sits inside the plot, which then spans the card and
   // shares its edges with the legend.
-  const inset = useMediaQuery("(max-width: 900px)") && !stacked;
+  const phone = useMediaQuery("(max-width: 900px)");
+  const inset = phone && !stacked && insetScale;
   const single = hoverSeriesOnly ? hovered : tapToPick ? highlighted : null;
   const Chart = stacked
     ? series.some((item) => item.lineOnly)
@@ -186,11 +190,11 @@ export default function TimelineChart({
               axisLine={false}
               tickLine={false}
               mirror={inset}
-              width={unit === "h/day" ? 80 : 65}
+              width={unit === "h/day" ? (phone ? 68 : 80) : 65}
               allowDecimals={percent || unit === "h" || unit === "h/day"}
               tick={{
                 fill: "var(--text-tertiary)",
-                ...(unit === "h/day" ? { fontSize: 12 } : {}),
+                ...(unit === "h/day" ? { fontSize: phone ? 11 : 12 } : {}),
                 ...(inset ? { fontSize: 11, dy: -8 } : {}),
               }}
               domain={percent ? [0, 100] : [0, "auto"]}

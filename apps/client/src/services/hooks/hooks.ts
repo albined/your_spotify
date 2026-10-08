@@ -109,6 +109,18 @@ export function useShareLink() {
   }?${search.toString()}`;
 }
 
+// Keeps the last loaded page on screen while the next one is requested, so
+// stepping between items does not blank the screen.
+export function useLastLoaded<T>(id: string, value: T | null | undefined) {
+  const [last, setLast] = useState<{ id: string; value: T }>();
+  const loaded = value !== null && value !== undefined;
+  if (loaded && (last?.id !== id || last.value !== value)) {
+    setLast({ id, value });
+  }
+  if (loaded) return { id, value, stale: false };
+  return last && { ...last, stale: true };
+}
+
 export function useSharePage() {
   const dispatch = useAppDispatch();
   const user = useSelector(selectUser);

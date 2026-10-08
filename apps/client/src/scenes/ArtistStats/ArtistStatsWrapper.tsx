@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import FullscreenCentered from "../../components/FullscreenCentered";
 import Text from "../../components/Text";
 import { api } from "../../services/apis/api";
+import { useLastLoaded } from "../../services/hooks/hooks";
 import { useListeningRequest } from "../../services/listeningTimeline";
 import ArtistStats from "./ArtistStats";
 
@@ -14,7 +15,9 @@ export default function ArtistStatsWrapper() {
     () => api.getArtistStats(params.id || ""),
     [params.id],
   );
-  const { data: stats, error, retry } = useListeningRequest(request);
+  const { data, error, retry } = useListeningRequest(request);
+  const shown = useLastLoaded(params.id || "", data);
+  const stats = shown?.value;
 
   if (error)
     return (
@@ -26,7 +29,7 @@ export default function ArtistStatsWrapper() {
       </FullscreenCentered>
     );
 
-  if (!stats) {
+  if (!shown || !stats) {
     return (
       <FullscreenCentered>
         <CircularProgress />
@@ -39,7 +42,7 @@ export default function ArtistStatsWrapper() {
     );
   }
 
-  if ("code" in stats || !params.id) {
+  if ("code" in stats || !shown.id) {
     return (
       <FullscreenCentered>
         <Text element="h3" size="normal">
@@ -49,5 +52,9 @@ export default function ArtistStatsWrapper() {
     );
   }
 
-  return <ArtistStats artistId={params.id} stats={stats} />;
+  return (
+    <div className={shown.stale ? "loading-next" : undefined}>
+      <ArtistStats artistId={shown.id} stats={stats} />
+    </div>
+  );
 }

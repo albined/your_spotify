@@ -121,6 +121,60 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The top three wear their medal: metal-coloured figures with a slow glint. */
+.position[data-medal] {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--medal);
+  background: linear-gradient(
+    105deg,
+    var(--medal) 0%,
+    var(--medal) 42%,
+    var(--medal-shine) 50%,
+    var(--medal) 58%,
+    var(--medal) 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glint 5s ease-in-out infinite;
+}
+
+.position[data-medal="gold"] {
+  --medal: var(--medal-gold);
+  --medal-shine: var(--medal-gold-shine);
+}
+
+.position[data-medal="silver"] {
+  --medal: var(--medal-silver);
+  --medal-shine: var(--medal-silver-shine);
+  animation-delay: 0.25s;
+}
+
+.position[data-medal="bronze"] {
+  --medal: var(--medal-bronze);
+  --medal-shine: var(--medal-bronze-shine);
+  animation-delay: 0.5s;
+}
+
+@keyframes glint {
+  0%,
+  60% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .position[data-medal] {
+    animation: none;
+  }
+}
+
 .rank img {
   width: 36px;
   height: 36px;
