@@ -5,6 +5,7 @@ import ArtistDistribution from "../../components/ArtistDistribution/ArtistDistri
 import Header from "../../components/Header";
 import History from "../../components/History";
 import ArtistsListened from "../../components/ImplementedCards/ArtistsListened";
+import BestAlbum from "../../components/ImplementedCards/BestAlbum";
 import BestArtist from "../../components/ImplementedCards/BestArtist";
 import BestSong from "../../components/ImplementedCards/BestSong";
 import SongsListened from "../../components/ImplementedCards/SongsListened";
@@ -50,8 +51,11 @@ export default function Home() {
             <Grid size={{ xs: 12, md: 6, lg: 4 }}>
               <BestSong />
             </Grid>
-            <Grid size={{ xs: 12, md: 12, lg: 12 }}>
-              <ArtistDistribution />
+            <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+              <ArtistDistribution className={s.timelisten} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <BestAlbum />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <History />

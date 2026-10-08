@@ -18,7 +18,7 @@ import s from "./bestListening.module.css";
 export default function BestListeningCard({
   kind,
   className,
-}: ImplementedCardProps & { kind: "artist" | "song" }) {
+}: ImplementedCardProps & { kind: "artist" | "album" | "song" }) {
   const { interval } = useSelector(selectRawIntervalDetail);
   const start = interval.start.getTime();
   const end = interval.end.getTime();
@@ -38,6 +38,24 @@ export default function BestListeningCard({
           count: item.count,
           minutes: msToMinutes(item.duration_ms),
           detail: `${item.differents.toLocaleString()} different songs`,
+        })),
+      };
+    }
+    if (kind === "album") {
+      const { data } = await api.getBestAlbums(
+        new Date(start),
+        new Date(end),
+        3,
+        0,
+      );
+      return {
+        data: data.map((item) => ({
+          id: item.album.id,
+          name: item.album.name,
+          image: getImage(item.album),
+          count: item.count,
+          minutes: msToMinutes(item.duration_ms),
+          detail: item.artist.name,
         })),
       };
     }
@@ -73,7 +91,13 @@ export default function BestListeningCard({
   return (
     <TitleCard
       style={tint ? ({ "--hero-tint": tint } as CSSProperties) : undefined}
-      title={kind === "artist" ? "Best artist" : "Best song"}
+      title={
+        kind === "artist"
+          ? "Best artist"
+          : kind === "album"
+            ? "Best album"
+            : "Best song"
+      }
       className={clsx(s.root, className)}
       contentClassName={s.content}>
       {error ? (
