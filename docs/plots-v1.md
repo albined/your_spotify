@@ -325,3 +325,30 @@ docker stop your-spotify-patterns-test-mongo
 
 Tests create and remove uniquely named databases only in that disposable instance.
 Do not point the test URI at either preview database.
+
+## Phone layout
+
+Below 900px the sidebar is replaced by a bottom bar: Home, All stats, Top,
+Competition (when affinity is enabled and the viewer is not a guest) and More.
+Top opens Top artists; the three Top pages show a Songs / Artists / Albums
+switch in place of their title. More holds search, Affinity, Settings and
+Logout. Sharing the current page is an icon in the header.
+
+The period selector is one row of chips at every width, ordered Today, Last 7 /
+30 / 365 days, All, This week, This month, This year, then the custom range. On
+a phone it sits under the title and scrolls sideways.
+
+Home's Plays, Time and Artists cards sit three across at every width and show
+only the figure and its change on a phone. Top rows drop the table header on a
+phone and stack plays over listening time. On a touch screen, tapping a line
+chart picks the nearest line and shows only that series; tapping it again, or
+away from any line, clears it.
+
+On a phone the page margin, the gap between cards and the padding inside a card
+are all 16px. Home runs in one column in the order numbers, Best artist, Best
+song, Best album, Time listened, Artist distribution, Listening distribution
+over day, History. The best cards are one row there: the winner with the two
+runners-up stacked beside it. Line charts draw their scale inside the plot so
+the plot and its two-column legend share the card's edges, and Artist
+distribution doubles its smoothing below 480px. Switching between the Top lists
+slides the lists past each other where the browser supports view transitions.
