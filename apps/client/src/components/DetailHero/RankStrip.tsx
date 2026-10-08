@@ -22,6 +22,8 @@ interface RankStripProps {
   item: (id: string) => RankItem | undefined;
 }
 
+const medals = ["gold", "silver", "bronze"];
+
 // The item's neighbours in the all-time ranking, itself marked.
 export default function RankStrip({ rank, item }: RankStripProps) {
   const items = rank?.results.map(({ id, count }, k, all) => ({
@@ -41,7 +43,9 @@ export default function RankStrip({ rank, item }: RankStripProps) {
             className={s.rank}
             aria-current={current ? "page" : undefined}
             title={detail!.name}>
-            <span className={s.position}>#{position}</span>
+            <span className={s.position} data-medal={medals[position - 1]}>
+              #{position}
+            </span>
             {detail!.image && <img src={detail!.image} alt="" loading="lazy" />}
             <span className={s.rankTexts}>
               <strong>{detail!.name}</strong>

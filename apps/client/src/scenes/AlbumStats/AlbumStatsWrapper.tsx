@@ -1,16 +1,21 @@
 import { CircularProgress } from "@mui/material";
 import { useParams } from "react-router-dom";
-import AlbumStats from "./AlbumStats";
-import { api } from "../../services/apis/api";
-import { useAPI } from "../../services/hooks/hooks";
+
 import FullscreenCentered from "../../components/FullscreenCentered";
 import Text from "../../components/Text";
+import { api } from "../../services/apis/api";
+import { useAPI, useLastLoaded } from "../../services/hooks/hooks";
+import AlbumStats from "./AlbumStats";
 
 export default function AlbumStatsWrapper() {
   const params = useParams();
-  const stats = useAPI(api.getAlbumStats, params.id || "");
+  const shown = useLastLoaded(
+    params.id || "",
+    useAPI(api.getAlbumStats, params.id || ""),
+  );
+  const stats = shown?.value;
 
-  if (stats === null) {
+  if (!shown || !stats) {
     return (
       <FullscreenCentered>
         <CircularProgress />
@@ -23,7 +28,7 @@ export default function AlbumStatsWrapper() {
     );
   }
 
-  if ("code" in stats || !params.id) {
+  if ("code" in stats || !shown.id) {
     return (
       <FullscreenCentered>
         <Text element="h3" size="big">
@@ -33,5 +38,9 @@ export default function AlbumStatsWrapper() {
     );
   }
 
-  return <AlbumStats stats={stats} />;
+  return (
+    <div className={shown.stale ? "loading-next" : undefined}>
+      <AlbumStats stats={stats} />
+    </div>
+  );
 }
