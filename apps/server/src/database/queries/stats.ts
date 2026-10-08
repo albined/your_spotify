@@ -666,20 +666,42 @@ export const getLongestListeningSession = async (
         },
         firstPlayedAt: { $min: "$played_at" },
         lastEndedAt: { $last: { $add: ["$played_at", "$durationMs"] } },
+        // The session's first row carries a gap above the threshold; every
+        // other positive gap is a pause inside the session.
+        pauseMs: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $gt: ["$subtract", 0] },
+                  { $lte: ["$subtract", sessionBreakThreshold] },
+                ],
+              },
+              "$subtract",
+              0,
+            ],
+          },
+        },
       },
     },
     {
       $addFields: {
-        sessionLength: { $subtract: ["$lastEndedAt", "$firstPlayedAt"] },
+        // Rank by time spent in music: elapsed time without the pauses.
+        listeningMs: {
+          $subtract: [
+            { $subtract: ["$lastEndedAt", "$firstPlayedAt"] },
+            "$pauseMs",
+          ],
+        },
       },
     },
-    { $sort: { sessionLength: -1, firstPlayedAt: 1 } },
+    { $sort: { listeningMs: -1, firstPlayedAt: 1 } },
     { $skip: offset },
     { $limit: limit },
     {
       $project: {
         _id: "$_id.owner",
-        sessionLength: 1,
+        listeningMs: 1,
         distanceToLast: { distance: "$distance" },
       },
     },

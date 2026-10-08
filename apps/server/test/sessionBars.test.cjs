@@ -35,6 +35,7 @@ test("session bars retain order, pauses, repeats, overlaps and a strict artwork 
   ];
   const timeline = sessionSections(input);
   assert.equal(timeline.duration, 15 * minute);
+  assert.equal(timeline.listened, 13 * minute);
   assert.deepEqual(timeline.sections, [
     { artist: "a", start: 0, end: 10 * minute, songs: 2 },
     { artist: "b", start: 12 * minute, end: 14 * minute, songs: 1 },
@@ -70,7 +71,7 @@ test("session bars retain order, pauses, repeats, overlaps and a strict artwork 
 });
 
 test(
-  "longest sessions include the final song when ranking and return local artist metadata",
+  "longest sessions rank by listening time without pauses, include the final song and return local artist metadata",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
@@ -102,6 +103,9 @@ test(
         play(0, 20),
         play(1440, 5),
         play(1450, 5),
+        // Longest elapsed (21 minutes) but only 12 minutes of music.
+        play(2000, 6),
+        play(2015, 6),
         play(2880, 999),
         play(30, 999, { blacklistedBy: ["artist"] }),
         play(60, 999, { owner: new mongoose.Types.ObjectId() }),
@@ -114,12 +118,12 @@ test(
         end,
       );
       assert.deepEqual(
-        sessions.map((session) => session.sessionLength),
-        [20 * minute, 15 * minute],
+        sessions.map((session) => session.listeningMs),
+        [20 * minute, 12 * minute, 10 * minute],
       );
       assert.deepEqual(
         sessions.map((session) => session.distanceToLast.distance.length),
-        [1, 2],
+        [1, 2, 2],
       );
       assert.equal(sessions[0].artists[0].name, "Artist");
       for (const session of sessions) {
@@ -128,7 +132,7 @@ test(
             session.distanceToLast.distance.map((row) => row.info),
           ),
         );
-        assert.equal(sessionSections(tracks).duration, session.sessionLength);
+        assert.equal(sessionSections(tracks).listened, session.listeningMs);
       }
     } finally {
       await mongoose.connection.dropDatabase();
@@ -199,7 +203,7 @@ test(
       await once(server, "listening");
       const base = `http://127.0.0.1:${server.address().port}/spotify/top/sessions`;
       const headers = {
-        Cookie: `token=${sign({ userId: String(owner) }, "sessions-test-only")}`,
+        Cookie: `token=${sign({ userId: String(owner) }, "sessions-test-only", { expiresIn: "1h" })}`,
       };
       const request = (pagination = {}) =>
         fetch(
@@ -220,7 +224,7 @@ test(
         const batch = await response.json();
         assert.deepEqual(
           batch.map((session) => ({
-            duration: session.sessionLength,
+            duration: session.listeningMs,
             start: session.distanceToLast.distance[0].info.played_at,
           })),
           expected

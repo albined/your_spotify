@@ -190,16 +190,20 @@ recorded library and excludes blacklisted plays as global statistics do.
 bin merging, hourly normalization, item/owner isolation, DST, album ordering,
 invalid durations and lifetime behavior despite an All-time start preference.
 
-Longest sessions starts with five horizontal bars on a shared elapsed-time scale.
+Longest sessions is a card at the end of All stats; `/sessions` redirects there.
+It starts with five horizontal bars on a shared listening-time scale: sessions
+are ranked by time spent in music, so pauses of up to ten minutes keep a session
+together without adding to its length.
 Load 5 more appends the next five, until the selected period is exhausted.
 Pagination happens after session ranking and before metadata lookups. Changing
 the date range or user resets the list; loading and retries retain existing bars.
 Each artist has one combined block, ordered by credited listening time, with
 consistent colors across sessions. Overlapping play tails are clipped at the
-next play; pauses are collected in a neutral remainder. Artwork appears only
+next play; pauses are not drawn. Artwork appears only
 in blocks at least 34px wide, capped at ten circles per session. Dates use the
-statistics timezone; headers show duration and song count and expand the song
-list. Session ranking now includes the final song's duration and includes plays
+statistics timezone; headers show the session's start and end, its listening
+time and song count, and expand the song
+list. Session ranking includes the final song's duration and includes plays
 at the selected start boundary. Artist names and artwork come from the session
 query, without additional Spotify requests.
 
