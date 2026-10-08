@@ -1,7 +1,7 @@
 import { Alert, CircularProgress, Grid } from "@mui/material";
 import { useSelector } from "react-redux";
 
-import Header from "../../components/Header";
+import DetailHero from "../../components/DetailHero";
 import IdealImage from "../../components/IdealImage";
 import ImageTwoLines from "../../components/ImageTwoLines";
 import InlineAlbum from "../../components/InlineAlbum";
@@ -19,6 +19,7 @@ import {
   selectUser,
 } from "../../services/redux/modules/user/selector";
 import { buildFromDateId } from "../../services/stats";
+import { getImage } from "../../services/tools";
 import ArtistContextMenu from "./ArtistContextMenu";
 import ArtistRank from "./ArtistRank/ArtistRank";
 import DayRepartition from "./DayRepartition";
@@ -55,27 +56,21 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
 
   return (
     <div>
-      <Header
-        left={
-          <IdealImage
-            className={s.headerimage}
-            images={stats.artist.images}
-            size={60}
-            alt="Artist"
-          />
-        }
-        right={
+      <DetailHero
+        kind="Artist"
+        image={getImage(stats.artist)}
+        title={stats.artist.name}
+        subtitle={stats.artist.genres.join(", ")}
+        actions={
           <ArtistContextMenu
             artistId={stats.artist.id}
             members={stats.artist.members}
             artistName={stats.artist.name}
             blacklisted={blacklisted}
           />
-        }
-        title={stats.artist.name}
-        subtitle={stats.artist.genres.join(", ")}
-        hideInterval
-      />
+        }>
+        {hidden.length < members.length && <ArtistRank artistId={artistId} />}
+      </DetailHero>
       <div className={s.content}>
         {hidden.length > 0 && (
           <Alert severity="info">
@@ -84,9 +79,6 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
               : "Some artists in this group are hidden from your statistics. This page shows the full saved history."}
           </Alert>
         )}
-        <div className={s.header}>
-          {hidden.length < members.length && <ArtistRank artistId={artistId} />}
-        </div>
         <Grid
           container
           sx={{ justifyContent: "flex-start", alignItems: "flex-start" }}
