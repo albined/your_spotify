@@ -1,7 +1,7 @@
 import type { Artist, Track, TrackInfo } from "./types";
 
 export interface ListeningSession {
-  sessionLength: number;
+  listeningMs: number;
   full_tracks: Record<string, Track>;
   artists: Pick<Artist, "id" | "name" | "images">[];
   distanceToLast: { distance: { subtract: number; info: TrackInfo }[] };
@@ -16,6 +16,7 @@ export interface SessionSection {
 
 // Preserve actual time: pauses remain gaps and a new play replaces any
 // overlapping tail. Adjacent plays by the same artist share one section.
+// `listened` is the elapsed time without those pauses.
 export function sessionSections(tracks: TrackInfo[]) {
   const ordered = tracks
     .filter(
@@ -53,7 +54,11 @@ export function sessionSections(tracks: TrackInfo[]) {
       });
     }
   });
-  return { start, end, duration: end - start, sections };
+  const listened = sections.reduce(
+    (total, section) => total + section.end - section.start,
+    0,
+  );
+  return { start, end, duration: end - start, listened, sections };
 }
 
 export function artistColor(id: string) {

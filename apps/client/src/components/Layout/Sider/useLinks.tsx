@@ -14,8 +14,6 @@ import {
   ExitToApp,
   Share,
   ShareOutlined,
-  Speed,
-  SpeedOutlined,
 } from "@mui/icons-material";
 import { useSelector } from "react-redux";
 import { selectAffinityEnabled } from "../../../services/redux/modules/settings/selector";
@@ -30,12 +28,6 @@ export function useLinks() {
       label: "General",
       items: [
         { label: "Home", link: "/", icon: <HomeOutlined />, iconOn: <Home /> },
-        {
-          label: "Longest sessions",
-          link: "/sessions",
-          icon: <SpeedOutlined />,
-          iconOn: <Speed />,
-        },
         {
           label: "All stats",
           link: "/all",

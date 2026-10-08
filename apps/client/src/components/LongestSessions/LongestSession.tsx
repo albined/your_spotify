@@ -3,18 +3,18 @@ import { Tooltip } from "@mui/material";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 
-import InlineArtist from "../../../components/InlineArtist";
-import InlineTrack from "../../../components/InlineTrack";
-import { usePlotWidth } from "../../../components/ListeningPatterns/shared";
-import { selectUser } from "../../../services/redux/modules/user/selector";
+import { selectUser } from "../../services/redux/modules/user/selector";
 import {
   artistColor,
   ListeningSession,
   sessionArtwork,
   sessionArtistBlocks,
   sessionSections,
-} from "../../../services/sessionBars";
-import { msToDuration } from "../../../services/stats";
+} from "../../services/sessionBars";
+import { msToDuration } from "../../services/stats";
+import InlineArtist from "../InlineArtist";
+import InlineTrack from "../InlineTrack";
+import { usePlotWidth } from "../ListeningPatterns/shared";
 
 import s from "./index.module.css";
 
@@ -48,8 +48,7 @@ export default function LongestSession({
   });
   const artists = new Map(session.artists.map((artist) => [artist.id, artist]));
   const blocks = sessionArtistBlocks(timeline);
-  const artwork = sessionArtwork(blocks, timeline.duration, width);
-  const listeningDuration = blocks.at(-1)?.end ?? 0;
+  const artwork = sessionArtwork(blocks, timeline.listened, width);
   const tracks = session.distanceToLast.distance
     .map((row) => row.info)
     .sort((a, b) => Date.parse(a.played_at) - Date.parse(b.played_at));
@@ -64,10 +63,10 @@ export default function LongestSession({
         aria-controls={detailsId}>
         <span className={s.date}>
           <span className={s.rank}>#{rank}</span>
-          {date.format(timeline.start)}
+          {date.formatRange(timeline.start, timeline.end)}
         </span>
         <span className={s.stats}>
-          <strong>{msToDuration(timeline.duration)}</strong>
+          <strong>{msToDuration(timeline.listened)}</strong>
           <span>{tracks.length} songs</span>
           <ExpandMore
             fontSize="small"
@@ -80,7 +79,7 @@ export default function LongestSession({
         ref={ref}
         role="group"
         aria-label={`Session ${rank} artist mix`}
-        style={{ width: `${(100 * timeline.duration) / maximum}%` }}>
+        style={{ width: `${(100 * timeline.listened) / maximum}%` }}>
         {blocks.map((section, index) => {
           const artist = artists.get(section.artist);
           const label = `${artist?.name ?? "Unknown artist"} · ${msToDuration(section.end - section.start)} · ${section.songs} songs`;
@@ -108,8 +107,8 @@ export default function LongestSession({
                     [next]?.focus();
                 }}
                 style={{
-                  left: `${(100 * section.start) / timeline.duration}%`,
-                  width: `${(100 * (section.end - section.start)) / timeline.duration}%`,
+                  left: `${(100 * section.start) / timeline.listened}%`,
+                  width: `${(100 * (section.end - section.start)) / timeline.listened}%`,
                   background: artistColor(section.artist),
                 }}>
                 {image && artwork.has(index) && (
@@ -119,21 +118,6 @@ export default function LongestSession({
             </Tooltip>
           );
         })}
-        {listeningDuration < timeline.duration && (
-          <Tooltip
-            title={`Pauses · ${msToDuration(timeline.duration - listeningDuration)}`}
-            arrow
-            enterTouchDelay={0}>
-            <span
-              className={s.pause}
-              role="img"
-              aria-label={`Pauses · ${msToDuration(timeline.duration - listeningDuration)}`}
-              style={{
-                left: `${(100 * listeningDuration) / timeline.duration}%`,
-              }}
-            />
-          </Tooltip>
-        )}
       </div>
       {expanded && (
         <ol id={detailsId} className={s.tracks}>

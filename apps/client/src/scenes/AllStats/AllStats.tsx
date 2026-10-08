@@ -10,6 +10,7 @@ import { ListeningOverviewProvider } from "../../components/ListeningOverview/co
 import ListeningVolume from "../../components/ListeningOverview/ListeningVolume";
 import ArtistActivity from "../../components/ListeningPatterns/ArtistActivity";
 import ListeningHeatmaps from "../../components/ListeningPatterns/ListeningHeatmaps";
+import LongestSessions from "../../components/LongestSessions/LongestSessions";
 import ReleaseDates from "../../components/ReleaseDates/ReleaseDates";
 import { selectUser } from "../../services/redux/modules/user/selector";
 
@@ -51,6 +52,9 @@ export default function AllStats() {
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 6 }}>
               <ArtistDiversity className={s.chart} />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <LongestSessions />
             </Grid>
           </Grid>
         </ListeningOverviewProvider>

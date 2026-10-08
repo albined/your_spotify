@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
-import Header from "../../components/Header";
-import { RequestState } from "../../components/ListeningPatterns/shared";
-import LoadingButton from "../../components/LoadingButton";
-import TitleCard from "../../components/TitleCard";
 import { api } from "../../services/apis/api";
 import {
   selectRawIntervalDetail,
   selectUser,
 } from "../../services/redux/modules/user/selector";
 import { ListeningSession, sessionSections } from "../../services/sessionBars";
-import LongestSession from "./LongestSession/LongestSession";
+import { RequestState } from "../ListeningPatterns/shared";
+import LoadingButton from "../LoadingButton";
+import TitleCard from "../TitleCard";
+import LongestSession from "./LongestSession";
 
 import s from "./index.module.css";
 
@@ -71,13 +70,13 @@ function SessionList({ start, end }: { start: number; end: number }) {
         session.distanceToLast.distance.map((row) => row.info),
       ),
     }))
-    .filter((row) => row.timeline.duration > 0)
+    .filter((row) => row.timeline.listened > 0)
     .sort(
       (a, b) =>
-        b.timeline.duration - a.timeline.duration ||
+        b.timeline.listened - a.timeline.listened ||
         a.timeline.start - b.timeline.start,
     );
-  const maximum = Math.max(1, ...sessions.map((row) => row.timeline.duration));
+  const maximum = Math.max(1, ...sessions.map((row) => row.timeline.listened));
 
   if (!data) return <RequestState error={error && !loading} retry={loadMore} />;
   if (!sessions.length) return <p>No sessions in this period.</p>;
@@ -114,17 +113,12 @@ export default function LongestSessions() {
   const start = interval.start.getTime();
   const end = interval.end.getTime();
   return (
-    <div>
-      <Header title="Longest sessions" subtitle="" />
-      <div className={s.content}>
-        <TitleCard title="Longest sessions">
-          <SessionList
-            key={`${user?._id}:${start}:${end}`}
-            start={start}
-            end={end}
-          />
-        </TitleCard>
-      </div>
-    </div>
+    <TitleCard title="Longest sessions">
+      <SessionList
+        key={`${user?._id}:${start}:${end}`}
+        start={start}
+        end={end}
+      />
+    </TitleCard>
   );
 }

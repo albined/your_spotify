@@ -1,7 +1,7 @@
 import { GlobalStyles } from "@mui/material";
 import { ThemeProvider } from "@mui/system";
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 
 import Layout from "./components/Layout";
 import Message from "./components/Message";
@@ -22,7 +22,6 @@ import ApiEndpointSetToFronted from "./scenes/Error/ApiEndpointSetToFronted";
 import RegistrationsDisabled from "./scenes/Error/RegistrationsDisabled";
 import Home from "./scenes/Home";
 import Logout from "./scenes/Logout";
-import LongestSessions from "./scenes/LongestSessions";
 import Settings from "./scenes/Settings";
 import Albums from "./scenes/Tops/Albums";
 import Artists from "./scenes/Tops/Artists";
@@ -70,11 +69,7 @@ function App() {
                 />
                 <Route
                   path="/sessions"
-                  element={
-                    <PrivateRoute>
-                      <LongestSessions />
-                    </PrivateRoute>
-                  }
+                  element={<Navigate to="/all" replace />}
                 />
                 <Route
                   path="/all"

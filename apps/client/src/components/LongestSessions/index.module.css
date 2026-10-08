@@ -1,3 +1,15 @@
+.sessions {
+  display: grid;
+  gap: 24px;
+}
+.more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
 .session {
   min-width: 0;
 }
@@ -66,12 +78,6 @@
   pointer-events: none;
 }
 
-.pause {
-  position: absolute;
-  right: 0;
-  top: 0;
-  height: 100%;
-}
 .tracks {
   max-height: 400px;
   overflow-y: auto;
