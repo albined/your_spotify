@@ -142,7 +142,10 @@ h6 {
   pointer-events: none;
 }
 
-/* Switching between the Top lists slides the old list out and the new one in. */
+/* Phones animate page changes; pageTransition.ts picks the motion. */
+.nav-pressed {
+  opacity: 0.6;
+}
 @keyframes tops-out-left {
   to {
     transform: translateX(-100%);
@@ -167,25 +170,46 @@ h6 {
     opacity: 0;
   }
 }
-html[data-tops="forward"]::view-transition-old(tops-content) {
+@keyframes nav-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes nav-push-in {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+html[data-nav="tops-forward"]::view-transition-old(tops-content) {
   animation: 260ms cubic-bezier(0.3, 0, 0.2, 1) both tops-out-left;
 }
-html[data-tops="forward"]::view-transition-new(tops-content) {
+html[data-nav="tops-forward"]::view-transition-new(tops-content) {
   animation: 260ms cubic-bezier(0.3, 0, 0.2, 1) both tops-in-right;
 }
-html[data-tops="back"]::view-transition-old(tops-content) {
+html[data-nav="tops-back"]::view-transition-old(tops-content) {
   animation: 260ms cubic-bezier(0.3, 0, 0.2, 1) both tops-out-right;
 }
-html[data-tops="back"]::view-transition-new(tops-content) {
+html[data-nav="tops-back"]::view-transition-new(tops-content) {
   animation: 260ms cubic-bezier(0.3, 0, 0.2, 1) both tops-in-left;
 }
 ::view-transition-group(tops-pill) {
   animation-duration: 260ms;
   animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
 }
-html[data-tops]::view-transition-old(root),
-html[data-tops]::view-transition-new(root) {
+html[data-nav^="tops"]::view-transition-old(root),
+html[data-nav^="tops"]::view-transition-new(root) {
   animation: none;
+}
+html[data-nav="fade"]::view-transition-old(root),
+html[data-nav="fade"]::view-transition-new(root) {
+  animation-duration: 120ms;
+}
+html[data-nav="push"]::view-transition-old(root) {
+  animation: 90ms ease-out both nav-out;
+}
+html[data-nav="push"]::view-transition-new(root) {
+  animation: 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both nav-push-in;
 }
 
 @keyframes fadein {
