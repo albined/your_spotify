@@ -16,7 +16,7 @@ export default function ListeningChange({
       <span className={s.screenReaderOnly}>{description}</span>
       <span className={s.deltaVisual} aria-hidden="true">
         <span>{percent < 0 ? "↓" : percent > 0 ? "↑" : "→"}</span>
-        {Math.abs(percent)}% vs last {unit}
+        {Math.abs(percent)}%<span className={s.wide}> vs last {unit}</span>
       </span>
     </span>
   );

@@ -165,6 +165,71 @@
   font-size: 14px;
 }
 
+/* One row on a phone: the winner, with the runners-up stacked beside it. */
+@media (max-width: 900px) {
+  .root {
+    height: auto;
+  }
+
+  .layout {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .winner {
+    gap: 12px;
+  }
+
+  .cover {
+    width: 88px;
+    max-width: none;
+    height: 88px;
+    max-height: none;
+  }
+
+  .winnerDetails {
+    gap: 6px;
+  }
+
+  .winnerName {
+    font-size: 18px;
+  }
+
+  .winnerStats {
+    font-size: 13px;
+  }
+
+  .winnerStats span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .detail {
+    display: none;
+  }
+
+  .runners {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    width: 38%;
+    max-width: 220px;
+    gap: 10px;
+    padding: 0 0 0 12px;
+    border-top: 0;
+    border-left: 1px solid var(--border-subtle);
+  }
+
+  .thumbnail {
+    width: 32px;
+    height: 40px;
+  }
+
+  .runnerDetails {
+    gap: 1px;
+  }
+}
+
 @media (width <= 360px) {
   .winner {
     gap: 12px;
@@ -184,5 +249,16 @@
   color: var(--text-secondary);
 }
 .runnerDetails strong {
+  color: var(--text-primary);
+}
+
+.viewall {
+  color: var(--text-tertiary);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.viewall:hover,
+.viewall:focus-visible {
   color: var(--text-primary);
 }

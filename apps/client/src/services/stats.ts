@@ -1,6 +1,6 @@
 import { TitleFormatter, ValueFormatter } from "../components/Tooltip/Tooltip";
-import { DateId, Precision } from "./types";
 import { DateFormatter } from "./date";
+import { DateId, Precision } from "./types";
 
 export const fresh = (d: Date, eraseHour = false) => {
   const date = new Date(d.getTime());
@@ -287,6 +287,14 @@ export const formatXAxisDateTooltip: TitleFormatter<
 > = (_, payload) => formatDateWithPrecisionToString(payload.dateWithPrecision);
 
 export const msToMinutes = (ms: number) => Math.floor(ms / 1000 / 60);
+
+// A figure short enough for a third of a phone's width.
+export const msToCompactDuration = (ms: number) => {
+  const minutes = msToMinutes(ms);
+  if (minutes < 100) return `${minutes} min`;
+  const hours = minutes / 60;
+  return `${hours < 10 ? Math.round(hours * 10) / 10 : Math.round(hours)} h`;
+};
 
 export const msToDuration = (ms: number) => {
   if (ms === 0) {

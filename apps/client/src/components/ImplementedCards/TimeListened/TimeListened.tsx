@@ -7,6 +7,7 @@ import { selectRawIntervalDetail } from "../../../services/redux/modules/user/se
 import {
   getLastPeriod,
   getPercentMore,
+  msToCompactDuration,
   msToMinutes,
 } from "../../../services/stats";
 import { Timesplit } from "../../../services/types";
@@ -37,13 +38,13 @@ export default function TimeListened({ className }: TimeListenedProps) {
 
   if (!result || !resultOld) {
     return (
-      <TitleCard title="Time listened" className={className}>
+      <TitleCard title="Time" className={className}>
         <div className={s.root}>
           <Text size="normal">
             <Skeleton width={50} />
           </Text>
           <Text size="normal">
-            <Skeleton width={200} />
+            <Skeleton style={{ width: 200, maxWidth: "100%" }} />
           </Text>
         </div>
       </TitleCard>
@@ -56,10 +57,11 @@ export default function TimeListened({ className }: TimeListenedProps) {
   const percentMore = getPercentMore(oldCount, count);
 
   return (
-    <TitleCard title="Time listened" className={className} fade>
+    <TitleCard title="Time" className={className} fade>
       <div className={s.root}>
         <Text element="span" size="huge" className={s.value}>
-          {msToMinutes(count)} minutes
+          <span className={s.wide}>{msToMinutes(count)} minutes</span>
+          <span className={s.narrow}>{msToCompactDuration(count)}</span>
         </Text>
         <ListeningChange percent={percentMore} unit={unit} />
       </div>
