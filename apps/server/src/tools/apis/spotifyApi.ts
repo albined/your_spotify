@@ -62,7 +62,10 @@ export class SpotifyAPI {
 
   public async playTrack(trackUri: string) {
     const client = await this.checkToken();
-    return client.put("/me/player/play", { data: { uris: [trackUri] } });
+    return client.put("/me/player/play", {
+      data: { uris: [trackUri] },
+      priority: "high",
+    });
   }
 
   public async me() {
@@ -79,7 +82,7 @@ export class SpotifyAPI {
       const thisUrl = nextUrl;
 
       const client = await this.checkToken();
-      const res = await client.get(thisUrl);
+      const res = await client.get(thisUrl, { priority: "high" });
       nextUrl = res.data.next;
       items.push(...res.data.items);
     }
@@ -94,6 +97,7 @@ export class SpotifyAPI {
       const client = await this.checkToken();
       await client.post(`/playlists/${id}/tracks`, {
         data: { uris: chk.map((trackId) => `spotify:track:${trackId}`) },
+        priority: "high",
       });
     }
   }
@@ -107,6 +111,7 @@ export class SpotifyAPI {
     const client = await this.checkToken();
     const { data } = await client.post(`/me/playlists`, {
       data: { name, public: true, collaborative: false, description: "" },
+      priority: "high",
     });
     return this.handleAddIdsToPlaylist(data.id, ids);
   }

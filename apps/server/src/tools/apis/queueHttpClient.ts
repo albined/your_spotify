@@ -29,6 +29,8 @@ interface QueueState {
   highPriorityQueue: QueueItem<any>[];
   normalPriorityQueue: QueueItem<any>[];
   isProcessingQueue: boolean;
+  blockedUntil: number;
+  wakeTimer: NodeJS.Timeout | undefined;
 }
 
 export class HttpError extends Error {
@@ -46,14 +48,29 @@ export class HttpError extends Error {
   }
 }
 
+export class RateLimitError extends HttpError {
+  public readonly retryAfterMs: number;
+
+  constructor(options: { body: string; retryAfterMs: number }) {
+    super({ status: 429, statusText: "Too Many Requests", body: options.body });
+    this.retryAfterMs = options.retryAfterMs;
+  }
+}
+
 const DEFAULT_RETRY_429_MAX_ATTEMPTS = 5;
 const DEFAULT_RETRY_AFTER_MS = 1000;
+// High priority requests come from someone waiting on a page. Past this delay
+// they fail instead of holding the browser until the rate limit is lifted.
+const HIGH_PRIORITY_MAX_WAIT_MS = 10 * 1000;
+const MAX_TIMER_MS = 2 ** 31 - 1;
 
 function createQueueState(): QueueState {
   return {
     highPriorityQueue: [],
     normalPriorityQueue: [],
     isProcessingQueue: false,
+    blockedUntil: 0,
+    wakeTimer: undefined,
   };
 }
 
@@ -140,6 +157,12 @@ export class QueuedHttpClient {
       return;
     }
 
+    const blockedMs = this.queueState.blockedUntil - Date.now();
+    if (blockedMs > 0) {
+      this.waitForRateLimit(blockedMs);
+      return;
+    }
+
     const next = this.dequeueNext();
     if (!next) {
       return;
@@ -188,24 +211,28 @@ export class QueuedHttpClient {
         });
       }
 
+      // The rate limit applies to every request of the queue, so the queue is
+      // paused as a whole and this request goes back to the front of it.
+      const retryAfterMs = this.parseRetryAfterHeader(response);
+      this.queueState.blockedUntil = Date.now() + retryAfterMs;
+      logger.info(
+        `[API Rate Limit] Pausing requests for ${Math.round(retryAfterMs / 1000)}s`,
+      );
+
       const maxAttempts =
         queueItem.config.retry429MaxAttempts ?? DEFAULT_RETRY_429_MAX_ATTEMPTS;
 
-      if (queueItem.retry429AttemptCount >= maxAttempts) {
-        throw new HttpError({
-          status: response.status,
-          statusText: response.statusText,
-          body: text,
-        });
+      if (
+        queueItem.retry429AttemptCount >= maxAttempts ||
+        (queueItem.config.priority === "high" &&
+          retryAfterMs > HIGH_PRIORITY_MAX_WAIT_MS)
+      ) {
+        throw new RateLimitError({ body: text, retryAfterMs });
       }
 
       queueItem.retry429AttemptCount += 1;
       this.requeue(queueItem);
-
-      const retryAfterMs = this.parseRetryAfterHeader(response);
-      logger.info(`[API Rate Limit] Sleeping for ${Math.round(retryAfterMs / 1000)}s due to Retry-After...`);
-      await this.sleep(retryAfterMs);
-      logger.info(`[API Rate Limit] Waking up and resuming requests.`);
+      return;
     }
 
     const data = await response.json();
@@ -214,6 +241,29 @@ export class QueuedHttpClient {
       status: response.status,
       statusText: response.statusText,
     });
+  }
+
+  private waitForRateLimit(blockedMs: number) {
+    if (blockedMs > HIGH_PRIORITY_MAX_WAIT_MS) {
+      const waiting = this.queueState.highPriorityQueue.splice(0);
+      waiting.forEach((queueItem) => {
+        queueItem.reject(
+          new RateLimitError({ body: "", retryAfterMs: blockedMs }),
+        );
+      });
+    }
+
+    if (this.queueState.wakeTimer) {
+      return;
+    }
+    this.queueState.wakeTimer = setTimeout(
+      () => {
+        this.queueState.wakeTimer = undefined;
+        logger.info("[API Rate Limit] Resuming requests");
+        this.processQueue();
+      },
+      Math.min(blockedMs, MAX_TIMER_MS),
+    );
   }
 
   private requeue(queueItem: QueueItem<any>) {
@@ -261,11 +311,5 @@ export class QueuedHttpClient {
     }
 
     return Math.max(0, retryAtTimestamp - Date.now());
-  }
-
-  private sleep(ms: number) {
-    return new Promise<void>((resolve) => {
-      setTimeout(resolve, ms);
-    });
   }
 }
