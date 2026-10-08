@@ -14,7 +14,7 @@
   margin-top: 8px;
 }
 
-@media screen and (max-width: 960px) {
+@media screen and (max-width: 900px) {
   .root {
     width: 95%;
   }

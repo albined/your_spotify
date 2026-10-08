@@ -22,6 +22,7 @@ import ApiEndpointSetToFronted from "./scenes/Error/ApiEndpointSetToFronted";
 import RegistrationsDisabled from "./scenes/Error/RegistrationsDisabled";
 import Home from "./scenes/Home";
 import Logout from "./scenes/Logout";
+import More from "./scenes/More";
 import Settings from "./scenes/Settings";
 import Albums from "./scenes/Tops/Albums";
 import Artists from "./scenes/Tops/Artists";
@@ -76,6 +77,14 @@ function App() {
                   element={
                     <PrivateRoute>
                       <AllStats />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/more"
+                  element={
+                    <PrivateRoute>
+                      <More />
                     </PrivateRoute>
                   }
                 />

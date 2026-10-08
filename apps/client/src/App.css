@@ -22,7 +22,7 @@
   display: none;
 }
 
-@media screen and (min-width: 960px) {
+@media screen and (min-width: 900px) {
   .play-button-holder .play-image {
     opacity: inherit;
   }

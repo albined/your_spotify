@@ -1,75 +1,47 @@
-import { useContext } from "react";
-import clsx from "clsx";
-import { useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { SystemUpdateAlt as UpdateIcon } from "@mui/icons-material";
-
 import { Tooltip } from "@mui/material";
-import { useShareLink } from "../../../services/hooks/hooks";
-import { alertMessage } from "../../../services/redux/modules/message/reducer";
-import { selectUser } from "../../../services/redux/modules/user/selector";
-import { useAppDispatch } from "../../../services/redux/tools";
-import { LayoutContext } from "../LayoutContext";
-import SiderSearch from "../../SiderSearch";
-import { Album, Artist, Track } from "../../../services/types";
+import clsx from "clsx";
+import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
+
+import { useSharePage } from "../../../services/hooks/hooks";
+import { useNavigate } from "../../../services/hooks/useNavigate";
 import {
   selectUpdateAvailable,
   selectVersion,
 } from "../../../services/redux/modules/settings/selector";
+import { selectUser } from "../../../services/redux/modules/user/selector";
+import { Album, Artist, Track } from "../../../services/types";
+import SiderSearch from "../../SiderSearch";
 import Text from "../../Text";
-import { useNavigate } from "../../../services/hooks/useNavigate";
 import SiderCategory from "./SiderCategory/SiderCategory";
 import SiderTitle from "./SiderTitle";
-import s from "./index.module.css";
 import { useLinks } from "./useLinks";
+
+import s from "./index.module.css";
 
 interface SiderProps {
   className?: string;
-  isDrawer?: boolean;
 }
 
-export default function Sider({ className, isDrawer }: SiderProps) {
-  const dispatch = useAppDispatch();
-  const layoutContext = useContext(LayoutContext);
+export default function Sider({ className }: SiderProps) {
   const user = useSelector(selectUser);
   const navigate = useNavigate();
   const location = useLocation();
 
   function goToArtist(artist: Artist) {
     navigate(`/artist/${artist.id}`);
-    layoutContext.closeDrawer();
   }
 
   function goToTrack(track: Track) {
     navigate(`/song/${track.id}`);
-    layoutContext.closeDrawer();
   }
 
   function goToAlbum(album: Album) {
     navigate(`/album/${album.id}`);
-    layoutContext.closeDrawer();
   }
 
-  function copyCurrentPage() {
-    if (!user?.publicToken) {
-      dispatch(
-        alertMessage({
-          level: "error",
-          message:
-            "No public token generated, go to the settings page to generate one",
-        }),
-      );
-      return;
-    }
-    dispatch(
-      alertMessage({
-        level: "info",
-        message: "Copied current page to clipboard with public token",
-      }),
-    );
-  }
-
-  const toCopy = useShareLink();
+  const { toCopy, onCopy } = useSharePage();
 
   const version = useSelector(selectVersion);
   const updateAvailable = useSelector(selectUpdateAvailable);
@@ -81,7 +53,7 @@ export default function Sider({ className, isDrawer }: SiderProps) {
   }
 
   return (
-    <div className={clsx(s.root, className, { [s.drawer]: isDrawer })}>
+    <div className={clsx(s.root, className)}>
       <div className={s.title}>
         <SiderTitle />
       </div>
@@ -97,7 +69,7 @@ export default function Sider({ className, isDrawer }: SiderProps) {
             key={category.label}
             user={user}
             pathname={location.pathname}
-            onCopy={copyCurrentPage}
+            onCopy={onCopy}
             toCopy={toCopy ?? ""}
             category={category}
           />

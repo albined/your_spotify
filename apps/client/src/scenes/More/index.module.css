@@ -1,0 +1,51 @@
+.content {
+  padding: var(--page-padding);
+}
+
+.search {
+  margin-bottom: 16px !important;
+  padding: 14px 16px !important;
+  background-color: var(--surface-card) !important;
+  color: var(--text-secondary) !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+}
+
+.rows {
+  background: var(--surface-card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  color: var(--text-primary);
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.row > svg {
+  color: var(--text-secondary);
+}
+
+.row > span {
+  flex: 1;
+}
+
+.row > .chevron {
+  color: var(--text-tertiary);
+}
+
+.version {
+  margin-top: 16px;
+  padding-left: 4px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}

@@ -23,3 +23,7 @@
 .contentdrawer {
   padding-left: 228px;
 }
+
+.contentbottomnav {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+}
