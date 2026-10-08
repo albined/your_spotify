@@ -38,9 +38,7 @@ export default function SongsListened({ className }: SongsListenedProps) {
           <Text size="big">
             <Skeleton width={50} />
           </Text>
-          <Text size="normal">
-            <Skeleton style={{ width: 200, maxWidth: "100%" }} />
-          </Text>
+          <Skeleton className={s.loadingDelta} />
         </div>
       </TitleCard>
     );
