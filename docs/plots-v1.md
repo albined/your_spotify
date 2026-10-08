@@ -73,6 +73,9 @@ minute counts. Both cards retain their 300px height and share the same layout.
 The home history table has no title or controls: it starts at the end of the
 selected range and scrolls back through everything before it.
 
+Artist eras and Artists by hour are separate cards on All stats only; Home shows
+Artist distribution without them.
+
 Competition now has a fixed overall listening-time race and a separate artist
 race below it. Its searchable dropdown contains up to 200 artists, ranked by
 the minimum recorded hours across all selected participants in the selected
