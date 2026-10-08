@@ -17,8 +17,6 @@ import {
 import { calendarAxis } from "../../services/calendarAxis";
 import { useListeningRequest } from "../../services/listeningTimeline";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
-import ArtistEras from "../ListeningPatterns/ArtistEras";
-import ArtistHours from "../ListeningPatterns/ArtistHours";
 import TitleCard from "../TitleCard";
 
 import s from "./index.module.css";
@@ -254,26 +252,22 @@ export default function ArtistDistribution() {
   );
   const { data, error, retry } = useListeningRequest(request);
   return (
-    <div className={s.cards}>
-      <TitleCard title="Artist distribution">
-        {error ? (
-          <div className={s.loading}>
-            Could not load artist distribution.{" "}
-            <Button onClick={retry}>Retry</Button>
-          </div>
-        ) : data ? (
-          <Stream key={`${start}:${end}`} data={data} />
-        ) : (
-          <div className={s.loading}>
-            <CircularProgress
-              size={24}
-              aria-label="Loading artist distribution"
-            />
-          </div>
-        )}
-      </TitleCard>
-      <ArtistEras />
-      <ArtistHours />
-    </div>
+    <TitleCard title="Artist distribution">
+      {error ? (
+        <div className={s.loading}>
+          Could not load artist distribution.{" "}
+          <Button onClick={retry}>Retry</Button>
+        </div>
+      ) : data ? (
+        <Stream key={`${start}:${end}`} data={data} />
+      ) : (
+        <div className={s.loading}>
+          <CircularProgress
+            size={24}
+            aria-label="Loading artist distribution"
+          />
+        </div>
+      )}
+    </TitleCard>
   );
 }

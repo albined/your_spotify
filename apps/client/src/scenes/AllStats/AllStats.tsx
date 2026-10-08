@@ -9,6 +9,8 @@ import ArtistDiversity from "../../components/ListeningOverview/ArtistDiversity"
 import { ListeningOverviewProvider } from "../../components/ListeningOverview/context";
 import ListeningVolume from "../../components/ListeningOverview/ListeningVolume";
 import ArtistActivity from "../../components/ListeningPatterns/ArtistActivity";
+import ArtistEras from "../../components/ListeningPatterns/ArtistEras";
+import ArtistHours from "../../components/ListeningPatterns/ArtistHours";
 import ListeningHeatmaps from "../../components/ListeningPatterns/ListeningHeatmaps";
 import LongestSessions from "../../components/LongestSessions/LongestSessions";
 import ReleaseDates from "../../components/ReleaseDates/ReleaseDates";
@@ -37,6 +39,12 @@ export default function AllStats() {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <ArtistDistribution />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <ArtistEras />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <ArtistHours />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <ReleaseDates />
