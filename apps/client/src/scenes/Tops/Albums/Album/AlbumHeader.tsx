@@ -20,5 +20,6 @@ export default function AlbumHeader() {
     },
   ];
 
+  if (isMobile) return null;
   return <GridHeaderWrapper columns={columns} />;
 }

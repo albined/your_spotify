@@ -1,14 +1,16 @@
-import { msToDuration } from "../../../../services/stats";
-import { Artist as ArtistType } from "../../../../services/types";
+import { ColumnDescription, GridRowWrapper } from "../../../../components/Grid";
+import { RowStat } from "../../../../components/Grid/RowStat";
+import IdealImage from "../../../../components/IdealImage";
 import InlineArtist from "../../../../components/InlineArtist";
+import Rank from "../../../../components/Rank";
 import Text from "../../../../components/Text";
 import { useMobile } from "../../../../services/hooks/hooks";
-import { ColumnDescription, GridRowWrapper } from "../../../../components/Grid";
-import IdealImage from "../../../../components/IdealImage";
-import Rank from "../../../../components/Rank";
+import { msToDuration } from "../../../../services/stats";
 import { RankChange } from "../../../../services/topMovement";
-import s from "./index.module.css";
+import { Artist as ArtistType } from "../../../../services/types";
 import { useArtistGrid } from "./ArtistGrid";
+
+import s from "./index.module.css";
 
 interface ArtistProps {
   artist: ArtistType;
@@ -63,11 +65,10 @@ export default function Artist({
     },
     {
       ...artistGrid.count,
-      node: (
-        <Text
-          size="normal"
-          secondary
-          className={isMobile ? "right" : undefined}>
+      node: isMobile ? (
+        <RowStat count={count} duration={duration} />
+      ) : (
+        <Text size="normal" secondary>
           {count}
         </Text>
       ),

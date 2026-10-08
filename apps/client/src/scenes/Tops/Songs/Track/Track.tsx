@@ -1,20 +1,23 @@
-import { Fragment } from "react";
 import clsx from "clsx";
-import { msToDuration } from "../../../../services/stats";
-import { Artist, Album, Track as TrackType } from "../../../../services/types";
+import { Fragment } from "react";
+
+import { GridRowWrapper } from "../../../../components/Grid";
+import { RowStat } from "../../../../components/Grid/RowStat";
+import InlineAlbum from "../../../../components/InlineAlbum";
 import InlineArtist from "../../../../components/InlineArtist";
 import InlineTrack from "../../../../components/InlineTrack";
-import Text from "../../../../components/Text";
+import LongClickableTrack from "../../../../components/LongClickableTrack";
 import PlayButton from "../../../../components/PlayButton";
 import Rank from "../../../../components/Rank";
+import Text from "../../../../components/Text";
 import TrackOptions from "../../../../components/TrackOptions";
 import { useMobile } from "../../../../services/hooks/hooks";
+import { msToDuration } from "../../../../services/stats";
 import { RankChange } from "../../../../services/topMovement";
-import { GridRowWrapper } from "../../../../components/Grid";
-import InlineAlbum from "../../../../components/InlineAlbum";
-import LongClickableTrack from "../../../../components/LongClickableTrack";
-import s from "./index.module.css";
+import { Artist, Album, Track as TrackType } from "../../../../services/types";
 import { useTrackGrid } from "./TrackGrid";
+
+import s from "./index.module.css";
 
 interface TrackProps {
   track: TrackType;
@@ -31,16 +34,8 @@ export default function Track(props: TrackProps) {
   const [isMobile, isTablet] = useMobile();
   const trackGrid = useTrackGrid();
 
-  const {
-    track,
-    album,
-    artists,
-    playable,
-    duration,
-    count,
-    rank,
-    movement,
-  } = props;
+  const { track, album, artists, playable, duration, count, rank, movement } =
+    props;
 
   const columns = [
     { ...trackGrid.rank, node: <Rank rank={rank} movement={movement} /> },
@@ -88,12 +83,10 @@ export default function Track(props: TrackProps) {
     },
     {
       ...trackGrid.count,
-      node: (
-        <Text
-          element="div"
-          size="normal"
-          secondary
-          className={isMobile ? "right" : undefined}>
+      node: isMobile ? (
+        <RowStat count={count} duration={duration} />
+      ) : (
+        <Text element="div" size="normal" secondary>
           {count}
         </Text>
       ),

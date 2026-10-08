@@ -1,0 +1,47 @@
+.root {
+  position: relative;
+  flex: 1;
+  padding: 4px;
+  background: var(--surface-card);
+  border-radius: 999px;
+}
+
+.pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  background: var(--surface-selected);
+  border-radius: 999px;
+  transform: translateX(calc(var(--tops-index) * 100%));
+  view-transition-name: tops-pill;
+}
+
+/* Named so the labels stay drawn above the pill while it slides. */
+.items {
+  position: relative;
+  display: flex;
+  view-transition-name: tops-labels;
+}
+
+.item {
+  flex: 1 1 0;
+  padding: 9px 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 999px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.item[aria-current="page"] {
+  color: var(--text-strong);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

@@ -7,4 +7,5 @@ export const commonUnits = {
   mainTitle: "3fr",
   secondaryTitle: "2fr",
   stat: (isMobile: boolean) => (isMobile ? "50px" : "140px"),
+  rowStat: (isMobile: boolean) => (isMobile ? "max-content" : "140px"),
 } as const;

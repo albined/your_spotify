@@ -19,6 +19,24 @@
   font-size: 14px;
 }
 
+.stat {
+  display: grid;
+  gap: 3px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.stat strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stat span {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
 .header svg {
   display: block;
   font-size: 18px;

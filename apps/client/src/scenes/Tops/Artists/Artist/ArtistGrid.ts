@@ -9,7 +9,7 @@ export function useArtistGrid() {
     cover: { unit: commonUnits.cover, key: "cover" },
     title: { unit: commonUnits.mainTitle, key: "title" },
     genres: { unit: "2fr", key: "genres" },
-    count: { unit: commonUnits.stat(isMobile), key: "count" },
+    count: { unit: commonUnits.rowStat(isMobile), key: "count" },
     total: { unit: commonUnits.stat(isMobile), key: "total" },
   } as const;
 }
