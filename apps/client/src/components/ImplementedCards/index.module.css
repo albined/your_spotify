@@ -25,6 +25,11 @@
   display: inline-flex;
   gap: 5px;
 }
+/* Sized as a flex item so it cannot be wider than its card. */
+.loadingDelta {
+  width: 200px;
+  max-width: 100%;
+}
 .narrow {
   display: none;
 }
