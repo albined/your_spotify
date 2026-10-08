@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMediaQuery } from "@mui/material";
+import { MouseEvent, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   Area,
@@ -58,6 +59,19 @@ export function useTimelineDate(bounds: TimelineBounds) {
   };
 }
 
+// Height of a line where it crosses x, found by bisecting along its length.
+function lineHeightAt(path: SVGPathElement, x: number) {
+  let low = 0;
+  let high = path.getTotalLength();
+  for (let i = 0; i < 24; i += 1) {
+    const middle = (low + high) / 2;
+    if (path.getPointAtLength(middle).x < x) low = middle;
+    else high = middle;
+  }
+  const point = path.getPointAtLength(high);
+  return Math.abs(point.x - x) > 8 ? null : point.y;
+}
+
 export interface ChartSeries extends Pick<ListeningSeries, "id" | "name"> {
   images?: ListeningSeries["images"];
   subtitle?: string;
@@ -99,6 +113,40 @@ export default function TimelineChart({
     ? candidate
     : null;
   const date = useTimelineDate(bounds);
+  const chart = useRef<HTMLDivElement>(null);
+  // A finger cannot hover: a tap picks the nearest line and shows only that
+  // one, instead of a list of every series covering the chart.
+  const tapToPick =
+    useMediaQuery("(pointer: coarse)") && !stacked && !hoverSeriesOnly;
+  const pickNearest = (event: MouseEvent) => {
+    const surface = chart.current?.querySelector("svg.recharts-surface");
+    if (!surface) return;
+    const box = surface.getBoundingClientRect();
+    const x = event.clientX - box.left;
+    const y = event.clientY - box.top;
+    let nearest: { id: string; distance: number } | null = null;
+    series.forEach((item, index) => {
+      const path = surface.querySelector<SVGPathElement>(
+        `.timeline-series-${index} path.recharts-line-curve`,
+      );
+      const lineY = path && lineHeightAt(path, x);
+      if (lineY === null || lineY === undefined) return;
+      const distance = Math.abs(lineY - y);
+      if (!nearest || distance < nearest.distance) {
+        nearest = { id: item.id, distance };
+      }
+    });
+    const picked = nearest as { id: string; distance: number } | null;
+    setPinned(
+      !picked || picked.distance > 48 || picked.id === pinned
+        ? null
+        : picked.id,
+    );
+  };
+  // On a phone the scale sits inside the plot, which then spans the card and
+  // shares its edges with the legend.
+  const inset = useMediaQuery("(max-width: 900px)") && !stacked;
+  const single = hoverSeriesOnly ? hovered : tapToPick ? highlighted : null;
   const Chart = stacked
     ? series.some((item) => item.lineOnly)
       ? ComposedChart
@@ -107,14 +155,16 @@ export default function TimelineChart({
   return (
     <div className={legendPosition === "right" ? s.withSideLegend : s.timeline}>
       <div
+        ref={chart}
         className={s.chart}
         style={{ height }}
+        onClick={tapToPick ? pickNearest : undefined}
         role="img"
         aria-label={`Listening timeline: ${series.map((item) => item.name).join(", ")}. Values in ${percent ? "percent" : unit}.`}>
         <ResponsiveContainer width="100%" height="100%">
           <Chart
             data={data}
-            margin={{ top: 12, right: 16, bottom: 0, left: 0 }}
+            margin={{ top: 12, right: inset ? 2 : 16, bottom: 0, left: 0 }}
             accessibilityLayer>
             <CartesianGrid
               strokeDasharray="3 3"
@@ -135,24 +185,28 @@ export default function TimelineChart({
             <YAxis
               axisLine={false}
               tickLine={false}
+              mirror={inset}
               width={unit === "h/day" ? 80 : 65}
               allowDecimals={percent || unit === "h" || unit === "h/day"}
               tick={{
                 fill: "var(--text-tertiary)",
                 ...(unit === "h/day" ? { fontSize: 12 } : {}),
+                ...(inset ? { fontSize: 11, dy: -8 } : {}),
               }}
               domain={percent ? [0, 100] : [0, "auto"]}
               tickFormatter={(value: number) =>
-                `${Number(value.toFixed(2))}${percent ? "%" : unit === "h" || unit === "h/day" ? ` ${unit}` : ""}`
+                inset && value === 0
+                  ? ""
+                  : `${Number(value.toFixed(2))}${percent ? "%" : unit === "h" || unit === "h/day" ? ` ${unit}` : ""}`
               }
             />
             <Tooltip
               itemSorter={stacked ? undefined : (item) => -Number(item.value)}
               content={
-                hoverSeriesOnly
+                hoverSeriesOnly || tapToPick
                   ? ({ active, payload, label }) => {
                       const index = series.findIndex(
-                        (item) => item.id === hovered,
+                        (item) => item.id === single,
                       );
                       const item = series[index];
                       const point = payload?.find(
@@ -228,6 +282,7 @@ export default function TimelineChart({
                       : item.name
                   }
                   dataKey={`series${index}`}
+                  className={`timeline-series-${index}`}
                   type="linear"
                   stroke={seriesColor(index)}
                   strokeWidth={highlighted === item.id ? 3 : 2}
@@ -242,7 +297,11 @@ export default function TimelineChart({
                     highlighted && highlighted !== item.id ? 0.2 : 1
                   }
                   dot={false}
-                  activeDot={hoverSeriesOnly ? false : { r: 4 }}
+                  activeDot={
+                    hoverSeriesOnly || (tapToPick && highlighted !== item.id)
+                      ? false
+                      : { r: 4 }
+                  }
                   connectNulls={false}
                   isAnimationActive={false}
                 />
