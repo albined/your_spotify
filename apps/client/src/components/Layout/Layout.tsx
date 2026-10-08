@@ -2,6 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { useSelector } from "react-redux";
 
+import { usePageTransitions } from "../../services/pageTransition";
 import {
   selectPublicToken,
   selectUser,
@@ -19,6 +20,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { siderAllowed, siderIsDrawer } = useSider();
+  usePageTransitions();
 
   const publicToken = useSelector(selectPublicToken);
   const user = useSelector(selectUser);

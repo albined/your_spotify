@@ -41,6 +41,17 @@
   color: var(--text-strong);
 }
 
+/* The pressed list lights up at once; the pill follows. */
+.item:global(.nav-pressed) {
+  opacity: 1;
+  color: var(--text-strong);
+}
+
+.items:has(:global(.nav-pressed))
+  .item[aria-current="page"]:not(:global(.nav-pressed)) {
+  color: var(--text-secondary);
+}
+
 .item:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;

@@ -50,6 +50,19 @@
   font-weight: 700;
 }
 
+/* A pressed tab takes the highlight at once, ahead of its page. */
+.tab:global(.nav-pressed) {
+  opacity: 1;
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+.root:has(:global(.nav-pressed))
+  .tab[aria-current="page"]:not(:global(.nav-pressed)) {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
 .tab:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -4px;
