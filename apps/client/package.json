@@ -6,8 +6,6 @@
     "start": "rsbuild dev --host",
     "build": "rsbuild build",
     "preview": "rsbuild preview",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
     "lint": "oxlint -c ../dev/.oxlintrc.json . && oxfmt -c ../dev/.oxfmtrc.json --check .",
     "lint:fix": "oxlint -c ../dev/.oxlintrc.json --fix . && oxfmt -c ../dev/.oxfmtrc.json .",
     "typecheck": "tsc --noEmit"
