@@ -1,16 +1,6 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 
 test(
   "reversible global artist groups agree across rankings, detail pages, eras, affinity and competitions",
@@ -24,7 +14,6 @@ test(
       AlbumModel,
       InfosModel,
       UserModel,
-      PrivateDataModel,
       GlobalPreferencesModel,
     } = require("../src/database/Models");
     const { StatisticsInfosModel } = require("../src/database/StatisticsInfos");
@@ -66,9 +55,7 @@ test(
       CollaborativeMode,
     } = require("../src/database/queries/collaborative");
     const { getSongs } = require("../src/database/queries/user");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `artist_groups_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("artist_groups");
     invalidateArtistGroups();
     let server;
     try {
@@ -272,28 +259,16 @@ test(
         }),
       );
 
-      const express = require("express"),
-        cookieParser = require("cookie-parser"),
-        { sign } = require("jsonwebtoken");
       const { router } = require("../src/routes/artistGroups");
       const { router: artistRouter } = require("../src/routes/artist");
-      const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-      await PrivateDataModel.create({ jwtPrivateKey: "groups-test" });
       await GlobalPreferencesModel.create({ allowAffinity: true });
-      const app = express();
-      app.use(express.json(), cookieParser());
-      app.use("/artist-groups", router);
-      app.use("/artist", artistRouter);
-      app.use((error, req, res, _next) =>
-        res
-          .status(ErrorTypeToHTTPCode[error.type] ?? 500)
-          .json({ message: error.message }),
-      );
-      server = app.listen(0, "127.0.0.1");
-      await once(server, "listening");
-      const base = `http://127.0.0.1:${server.address().port}`;
+      server = await serveRoutes((app) => {
+        app.use("/artist-groups", router);
+        app.use("/artist", artistRouter);
+      });
+      const { base } = server;
       const headers = (owner) => ({
-        Cookie: `token=${sign({ userId: String(owner) }, "groups-test")}`,
+        Cookie: server.cookie(owner),
         "Content-Type": "application/json",
       });
       assert.equal((await fetch(`${base}/artist-groups`)).status, 401);
@@ -468,9 +443,8 @@ test(
         "CONFLICT",
       );
     } finally {
-      if (server) await new Promise((resolve) => server.close(resolve));
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      if (server) await server.close();
+      await dropTestDb();
       invalidateArtistGroups();
     }
   },

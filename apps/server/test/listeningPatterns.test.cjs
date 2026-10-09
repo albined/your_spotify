@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   summarizeArtistDays,
 } = require("../src/database/queries/listeningPatterns");
@@ -102,9 +93,7 @@ test(
       getListeningHeatmaps,
       getArtistActivity,
     } = require("../src/database/queries/listeningPatterns");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `listening_patterns_test_${Date.now()}`,
-    });
+    await connectTestDb("listening_patterns_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const user = { _id: owner, settings: { timezone: "Europe/Stockholm" } };
@@ -176,8 +165,7 @@ test(
       assert.equal(capped.artists[0].id, "a");
       assert.ok(!capped.artists.some((artist) => artist.id === "extra-0"));
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

@@ -3,21 +3,8 @@ const { test } = require("node:test");
 const { mkdtemp, writeFile, rm, access } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-process.env.CLIENT_ENDPOINT = "http://127.0.0.1:3000";
-process.env.API_ENDPOINT = "http://127.0.0.1:8080";
-process.env.SPOTIFY_PUBLIC = "test";
-process.env.SPOTIFY_SECRET = "test";
 process.env.BACKUPS_ENABLED = "false";
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 const {
   parseExportDate,
   readImportRecords,
@@ -186,9 +173,7 @@ test(
       listeningAccuracy,
     } = require("../src/database/queries/listeningAccuracy");
     const { longWriteDbLock } = require("../src/tools/lock");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `listening_imports_test_${Date.now()}`,
-    });
+    await connectTestDb("listening_imports_test");
     const dir = await mkdtemp(join(tmpdir(), "listening-imports-"));
     try {
       await InfosModel.init();
@@ -654,26 +639,15 @@ test(
       await t.test(
         "import routes protect ownership and the duration preference persists",
         async () => {
-          const express = require("express");
-          const cookieParser = require("cookie-parser");
-          const { sign } = require("jsonwebtoken");
-          const { once } = require("node:events");
-          const { PrivateDataModel } = require("../src/database/Models");
           const { router: importRouter } = require("../src/routes/importer");
           const { router: settingsRouter } = require("../src/routes/index");
-          const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-          await PrivateDataModel.create({ jwtPrivateKey: "import-test-only" });
-          const app = express();
-          app.use(express.json(), cookieParser(), importRouter, settingsRouter);
-          app.use((err, req, res, _next) =>
-            res.status(ErrorTypeToHTTPCode[err.type] ?? 500).end(),
+          const server = await serveRoutes((app) =>
+            app.use(importRouter, settingsRouter),
           );
-          const server = app.listen(0, "127.0.0.1");
-          await once(server, "listening");
-          const base = `http://127.0.0.1:${server.address().port}`;
-          const token = sign({ userId: String(user._id) }, "import-test-only");
+          const { base } = server;
+          const cookie = server.cookie(user._id);
           const headers = {
-            Cookie: `token=${token}`,
+            Cookie: cookie,
             "Content-Type": "application/json",
           };
           try {
@@ -755,7 +729,7 @@ test(
             );
             const result = await fetch(`${base}/import/privacy`, {
               method: "POST",
-              headers: { Cookie: `token=${token}` },
+              headers: { Cookie: cookie },
               body: data,
             });
             assert.equal(result.status, 200);
@@ -779,7 +753,7 @@ test(
               204,
             );
           } finally {
-            await new Promise((resolve) => server.close(resolve));
+            await server.close();
           }
         },
       );
@@ -2271,8 +2245,7 @@ test(
           },
         );
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
       await rm(dir, { recursive: true, force: true });
     }
   },
@@ -2282,7 +2255,6 @@ test(
   "fresh cross-release imports agree across metadata caches and file orders",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async (t) => {
-    const mongoose = require("mongoose");
     const {
       InfosModel,
       UserModel,
@@ -2326,9 +2298,7 @@ test(
           await t.test(
             `${cached}, ${reverse ? "B first" : "A first"}`,
             async () => {
-              await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-                dbName: `alias_order_${Date.now()}_${cached}_${reverse}`,
-              });
+              await connectTestDb(`alias_order_${cached}_${reverse}`);
               try {
                 await InfosModel.createIndexes();
                 await ImportReviewModel.createIndexes();
@@ -2454,8 +2424,7 @@ test(
                 if (expected) assert.deepEqual(assignments, expected);
                 else expected = assignments;
               } finally {
-                await mongoose.connection.dropDatabase();
-                await mongoose.disconnect();
+                await dropTestDb();
               }
             },
           );

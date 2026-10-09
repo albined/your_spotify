@@ -6,6 +6,11 @@ const { mkdtemp, readdir, writeFile, rm } = require("node:fs/promises");
 const { join } = require("node:path");
 const { tmpdir } = require("node:os");
 const { MongoClient } = require("mongodb");
+const {
+  testDbName,
+  refuseSharedServer,
+  indexesBuilt,
+} = require("./helpers.cjs");
 const exec = promisify(execFile);
 
 test(
@@ -13,31 +18,19 @@ test(
   { skip: !process.env.BACKUP_TEST_MONGO_URI },
   async () => {
     const dir = await mkdtemp(join(tmpdir(), "listening-backup-test-"));
-    const name = `backup_source_${Date.now()}`;
+    const name = testDbName("backup_source");
     const restoredName = `${name}_restored`;
     const uri = process.env.BACKUP_TEST_MONGO_URI;
-    process.env.CLIENT_ENDPOINT = "http://127.0.0.1:3000";
-    process.env.API_ENDPOINT = "http://127.0.0.1:8080";
-    process.env.SPOTIFY_PUBLIC = "test";
-    process.env.SPOTIFY_SECRET = "test";
     process.env.MONGO_ENDPOINT = `${uri}/${name}`;
     process.env.BACKUPS_ENABLED = "true";
     process.env.BACKUP_DIR = dir;
-    require("ts-node").register({
-      transpileOnly: true,
-      skipProject: true,
-      compilerOptions: {
-        module: "Node16",
-        moduleResolution: "Node16",
-        target: "ES2022",
-        esModuleInterop: true,
-      },
-    });
     const { runBackup, backupStatus } = require("../src/tools/backups");
     const client = new MongoClient(uri);
     await client.connect();
     const originalPath = process.env.PATH;
     try {
+      // The backup takes a write lock on the whole server.
+      await refuseSharedServer(client.db("admin").admin());
       const db = client.db(name);
       await db.collection("infos").insertMany([
         { song: "a", listenedMs: 45000 },
@@ -108,6 +101,7 @@ test(
         assert.match(failed.error, /backup failed/);
         assert.equal(await db.collection("infos").countDocuments(), count);
       } finally {
+        await indexesBuilt();
         await mongoose.disconnect();
       }
 

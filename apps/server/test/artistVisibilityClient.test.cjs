@@ -2,16 +2,7 @@ const assert = require("node:assert/strict");
 const { test } = require("node:test");
 
 global.window = { API_ENDPOINT: "http://127.0.0.1" };
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+require("./helpers.cjs");
 
 test("visibility saves update preferences without rechecking authentication", async (t) => {
   const { api } = require("../../client/src/services/apis/api");

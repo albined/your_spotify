@@ -1,16 +1,6 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 
 test(
   "artist visibility filters main credits per owner and never changes saved plays",
@@ -24,7 +14,6 @@ test(
       TrackModel,
       AlbumModel,
       ArtistGroupModel,
-      PrivateDataModel,
     } = require("../src/database/Models");
     const { statisticsFor } = require("../src/database/listeningDuration");
     const {
@@ -64,10 +53,7 @@ test(
       up: migrate,
     } = require("../src/migrations/1790899200000-add_artist_visibility");
     const { router } = require("../src/routes/artistVisibility");
-    const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `artist_visibility_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("artist_visibility");
     invalidateArtistGroups();
     let server;
     try {
@@ -266,23 +252,12 @@ test(
         [],
       );
 
-      const express = require("express"),
-        cookieParser = require("cookie-parser"),
-        { sign } = require("jsonwebtoken");
-      await PrivateDataModel.create({ jwtPrivateKey: "visibility-test" });
-      const app = express();
-      app.use(express.json(), cookieParser());
-      app.use("/artist-visibility", router);
-      app.use((error, _req, res, _next) =>
-        res
-          .status(ErrorTypeToHTTPCode[error.type] ?? 500)
-          .json({ message: error.message }),
+      server = await serveRoutes((app) =>
+        app.use("/artist-visibility", router),
       );
-      server = app.listen(0, "127.0.0.1");
-      await once(server, "listening");
-      const base = `http://127.0.0.1:${server.address().port}/artist-visibility`;
+      const base = `${server.base}/artist-visibility`;
       const headers = {
-        Cookie: `token=${sign({ userId: String(a) }, "visibility-test")}`,
+        Cookie: server.cookie(a),
         "Content-Type": "application/json",
       };
       assert.equal((await fetch(base)).status, 401);
@@ -353,9 +328,8 @@ test(
         withNewPlay,
       );
     } finally {
-      if (server) await new Promise((resolve) => server.close(resolve));
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      if (server) await server.close();
+      await dropTestDb();
       invalidateArtistGroups();
     }
   },

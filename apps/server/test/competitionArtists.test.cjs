@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 
 test(
   "competition artists rank by the least-listening participant, including missing listeners",
@@ -25,9 +16,7 @@ test(
       getCompetitionArtists,
       getCompetitionTimeline,
     } = require("../src/database/queries/raceTimeline");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `competition_artists_test_${Date.now()}`,
-    });
+    await connectTestDb("competition_artists_test");
     try {
       const ids = Array.from(
         { length: 4 },
@@ -144,8 +133,7 @@ test(
       );
       assert.equal(capped[4].id, "extra-000");
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

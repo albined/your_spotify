@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   tasteOverlap,
   getTasteOverlap,
@@ -96,9 +87,7 @@ test(
       ArtistModel,
       UserModel,
     } = require("../src/database/Models");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `taste_overlap_test_${Date.now()}`,
-    });
+    await connectTestDb("taste_overlap_test");
     try {
       const ids = Array.from(
         { length: 5 },
@@ -183,8 +172,7 @@ test(
         /unavailable for competitions/,
       );
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

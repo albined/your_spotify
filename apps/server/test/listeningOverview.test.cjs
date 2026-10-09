@@ -1,16 +1,6 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 const {
   overviewPlan,
 } = require("../src/database/queries/listeningOverviewBuckets");
@@ -131,15 +121,11 @@ test(
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
-    const express = require("express");
-    const cookieParser = require("cookie-parser");
-    const { sign } = require("jsonwebtoken");
     const {
       InfosModel,
       UserModel,
       ArtistModel,
       ArtistGroupModel,
-      PrivateDataModel,
     } = require("../src/database/Models");
     const {
       getListeningOverview,
@@ -154,10 +140,7 @@ test(
       getCompetitionInsights,
     } = require("../src/database/queries/competitionInsights");
     const { router } = require("../src/routes/spotify");
-    const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `listening_overview_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("listening_overview");
     let server;
     try {
       const owner = new mongoose.Types.ObjectId();
@@ -297,19 +280,9 @@ test(
         result,
       );
 
-      await PrivateDataModel.create({ jwtPrivateKey: "overview-test-only" });
-      const app = express();
-      app.use(cookieParser());
-      app.use("/spotify", router);
-      app.use((error, req, res, _next) =>
-        res.status(ErrorTypeToHTTPCode[error.type] ?? 500).end(),
-      );
-      server = app.listen(0, "127.0.0.1");
-      await once(server, "listening");
-      const base = `http://127.0.0.1:${server.address().port}/spotify`;
-      const headers = {
-        Cookie: `token=${sign({ userId: String(owner) }, "overview-test-only")}`,
-      };
+      server = await serveRoutes((app) => app.use("/spotify", router));
+      const base = `${server.base}/spotify`;
+      const headers = { Cookie: server.cookie(owner) };
       for (const endpoint of ["listening-overview", "artist-diversity"]) {
         const query = new URLSearchParams({
           start: start.toISOString(),
@@ -334,9 +307,8 @@ test(
         );
       }
     } finally {
-      if (server) await new Promise((resolve) => server.close(resolve));
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      if (server) await server.close();
+      await dropTestDb();
     }
   },
 );

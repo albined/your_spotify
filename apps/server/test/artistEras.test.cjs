@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   selectEraArtists,
 } = require("../src/database/queries/artistErasSelection");
@@ -98,9 +89,7 @@ test(
     const mongoose = require("mongoose");
     const { ArtistModel, InfosModel } = require("../src/database/Models");
     const { getArtistEras } = require("../src/database/queries/artistEras");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `artist_eras_test_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("artist_eras_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const other = new mongoose.Types.ObjectId();
@@ -205,8 +194,7 @@ test(
         2,
       );
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 
 test(
   "hourly artists preserve totals, rank globally, and use local DST hours; adaptive diversity has exact warm-up windows",
@@ -23,9 +14,7 @@ test(
     } = require("../src/database/queries/artistDiversity");
     const DAY = 86400000;
     const HOUR = 3600000;
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `refinements_test_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("refinements_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const user = { _id: owner, settings: { timezone: "Europe/Stockholm" } };
@@ -111,8 +100,7 @@ test(
       assert.equal(automatic.windowDays, 7);
       assert.equal(automatic.values[0], null);
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

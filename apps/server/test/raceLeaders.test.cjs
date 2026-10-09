@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+require("./helpers.cjs");
 const { RaceLeaders } = require("../src/database/queries/raceLeaders");
 
 test("keeps five totals, recovers an old leader outside the top ten, and fills from totals", () => {

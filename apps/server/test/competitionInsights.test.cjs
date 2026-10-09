@@ -1,16 +1,6 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 const {
   artistDiversity,
 } = require("../src/database/queries/competitionInsights");
@@ -71,13 +61,9 @@ test(
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
-    const express = require("express");
-    const cookieParser = require("cookie-parser");
-    const { sign } = require("jsonwebtoken");
     const {
       UserModel,
       InfosModel,
-      PrivateDataModel,
       GlobalPreferencesModel,
     } = require("../src/database/Models");
     const {
@@ -98,10 +84,7 @@ test(
     } = require("../src/migrations/1790035200001-add_competition_preference");
     const { router } = require("../src/routes/index");
     const { router: spotify } = require("../src/routes/spotify");
-    const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `competition_insights_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("competition_insights");
     let server;
     try {
       const [a, b, c] = Array.from(
@@ -219,21 +202,14 @@ test(
           ),
       ])
         await assert.rejects(run, (error) => error.type === "FORBIDDEN");
-      await PrivateDataModel.create({ jwtPrivateKey: "competition-test-only" });
       await GlobalPreferencesModel.create({ allowAffinity: true });
-      const token = sign({ userId: String(b) }, "competition-test-only");
-      const app = express();
-      app.use(express.json(), cookieParser());
-      app.use(router);
-      app.use("/spotify", spotify);
-      app.use((error, req, res, _next) =>
-        res.status(ErrorTypeToHTTPCode[error.type] ?? 500).end(),
-      );
-      server = app.listen(0, "127.0.0.1");
-      await once(server, "listening");
-      const base = `http://127.0.0.1:${server.address().port}`;
+      server = await serveRoutes((app) => {
+        app.use(router);
+        app.use("/spotify", spotify);
+      });
+      const { base } = server;
       const headers = {
-        Cookie: `token=${token}`,
+        Cookie: server.cookie(b),
         "Content-Type": "application/json",
       };
       const save = (value, auth = true) =>
@@ -327,9 +303,8 @@ test(
         401,
       );
     } finally {
-      if (server) await new Promise((resolve) => server.close(resolve));
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      if (server) await server.close();
+      await dropTestDb();
     }
   },
 );

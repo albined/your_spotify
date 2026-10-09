@@ -1,18 +1,7 @@
-// Run with: node --test test/listeningTimeline.test.cjs
-// Integration cases require TIMELINE_TEST_MONGO_URI pointing to a disposable
-// MongoDB 6+ server. Each run creates and drops its own uniquely named database.
+// Run with: sh scripts/test-local.sh test/listeningTimeline.test.cjs
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   timelineBounds,
   denseHours,
@@ -60,8 +49,7 @@ test(
     const {
       getArtistTimeline,
     } = require("../src/database/queries/listeningTimeline");
-    const dbName = `timeline_test_${Date.now()}_${process.pid}`;
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, { dbName });
+    await connectTestDb("timeline_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const otherOwner = new mongoose.Types.ObjectId();
@@ -160,8 +148,7 @@ test(
       assert.equal(ranked.total.at(-1), 21);
       assert.equal(ranked.songs[0].name, "Unknown song");
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

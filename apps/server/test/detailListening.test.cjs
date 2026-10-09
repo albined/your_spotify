@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   activityBandwidth,
   listeningRate,
@@ -134,9 +125,7 @@ test(
     const {
       getArtistTimeline,
     } = require("../src/database/queries/listeningTimeline");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `detail_listening_test_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("detail_listening_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const other = new mongoose.Types.ObjectId();
@@ -282,8 +271,7 @@ test(
         null,
       );
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

@@ -329,21 +329,26 @@ comparison must be refreshed before choosing; no existing events are deleted.
 
 ## Validation
 
-Run the regression suite against a disposable MongoDB endpoint, never the live
-database. Integration tests create and drop uniquely named test databases.
+Run the regression suite with the local runner. It starts a MongoDB container
+that exists only for the run, so the tests never reach the live database:
+
+```sh
+pnpm --filter @your_spotify/server test:local
+```
+
+Integration tests create and drop uniquely named `ystest_` databases, and refuse
+to run against a server that holds any other database. To use a disposable
+endpoint of your own instead:
 
 ```sh
 TIMELINE_TEST_MONGO_URI=mongodb://127.0.0.1:27039 \
-  node --test --test-concurrency=1 apps/server/test/*.test.cjs
+  pnpm --filter @your_spotify/server test
 ```
 
-To also verify archive restoration, lock release after a failed dump, and import
-refusal when a required backup fails, install MongoDB Database Tools and run:
-
-```sh
-BACKUP_TEST_MONGO_URI=mongodb://127.0.0.1:27039 \
-  node --test apps/server/test/backups.test.cjs
-```
+Archive restoration, lock release after a failed dump, and import refusal when a
+required backup fails are verified by `backups.test.cjs`, which needs MongoDB
+Database Tools. The local runner includes it when `mongodump` and `mongorestore`
+are installed; with your own endpoint, also set `BACKUP_TEST_MONGO_URI` to it.
 
 Synthetic cases cover API/export overlap, standard-to-extended upgrades, precise
 repeated listens, Deezer duplicate policies, preserved review decisions, reported
