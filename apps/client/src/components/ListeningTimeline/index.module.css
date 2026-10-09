@@ -68,6 +68,26 @@
   border-color: currentColor;
 }
 
+.legendToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 0 0;
+  border: 0;
+  background: none;
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.legendToggle svg {
+  font-size: 18px;
+}
+
 .swatch {
   width: 10px;
   height: 10px;
