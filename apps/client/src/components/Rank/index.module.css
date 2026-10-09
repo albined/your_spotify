@@ -10,6 +10,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.root [data-medal] {
+  font-size: 17px;
+  font-weight: 800;
+}
+
 .marker {
   width: 0;
   height: 0;
