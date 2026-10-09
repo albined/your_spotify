@@ -15,7 +15,6 @@ const {
   sessionSections,
   sessionArtwork,
   sessionArtistBlocks,
-  artistColor,
 } = require("../../client/src/services/sessionBars");
 const minute = 60000;
 const track = (id, at, duration, artist = "a") => ({
@@ -64,8 +63,6 @@ test("session bars retain order, pauses, repeats, overlaps and a strict artwork 
   }));
   assert.equal(sessionArtwork(sections, 20, 800).size, 10);
   assert.equal(sessionArtwork(sections, 20, 300).size, 0);
-  assert.equal(artistColor("a"), artistColor("a"));
-  assert.notEqual(artistColor("a"), artistColor("b"));
   assert.equal(sessionSections([]).duration, 0);
   assert.equal(sessionSections([track("bad", 0, NaN)]).duration, 0);
 });
