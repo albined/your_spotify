@@ -10,6 +10,8 @@ interface RankProps {
   movement?: RankChange;
 }
 
+const medals = ["gold", "silver", "bronze"];
+
 function describe({ change, since }: RankChange) {
   const date = DateFormatter.toDayMonthYear(since);
   if (change === null) return `New since ${date}`;
@@ -21,7 +23,7 @@ export default function Rank({ rank, movement }: RankProps) {
   const label = moved && describe(moved);
   return (
     <div className={s.root} title={label}>
-      <span>{rank}</span>
+      <span data-medal={medals[rank - 1]}>{rank}</span>
       {moved && (
         <>
           <span

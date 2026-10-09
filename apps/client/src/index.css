@@ -212,6 +212,53 @@ html[data-nav="push"]::view-transition-new(root) {
   animation: 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both nav-push-in;
 }
 
+/* The top three of a ranking: metal-coloured figures with a slow glint. */
+[data-medal] {
+  color: var(--medal);
+  background: linear-gradient(
+    105deg,
+    var(--medal) 0%,
+    var(--medal) 42%,
+    var(--medal-shine) 50%,
+    var(--medal) 58%,
+    var(--medal) 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glint 5s ease-in-out infinite;
+}
+[data-medal="gold"] {
+  --medal: var(--medal-gold);
+  --medal-shine: var(--medal-gold-shine);
+}
+[data-medal="silver"] {
+  --medal: var(--medal-silver);
+  --medal-shine: var(--medal-silver-shine);
+  animation-delay: 0.25s;
+}
+[data-medal="bronze"] {
+  --medal: var(--medal-bronze);
+  --medal-shine: var(--medal-bronze-shine);
+  animation-delay: 0.5s;
+}
+@keyframes glint {
+  0%,
+  60% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-medal] {
+    animation: none;
+  }
+}
+
 @keyframes fadein {
   0% {
     opacity: 0%;
