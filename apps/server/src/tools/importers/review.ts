@@ -16,11 +16,12 @@ import { Track } from "../../database/schemas/track";
 import { User } from "../../database/schemas/user";
 import { backupBeforeReview } from "../backups";
 import { longWriteDbLock } from "../lock";
-import { selectedTrack, trackDescriptions } from "./reviewCatalog";
+import { selectedTrack } from "./reviewCatalog";
 import { reviewHash } from "./reviewIdentity";
 import { canUserImport, claimImportWork, releaseImportWork } from "./work";
 
-async function planReview(user: User, group: string, track: Track) {
+// The pending rows of one recording, with the checks every choice must pass.
+async function pendingChoice(user: User, group: string, track: Track) {
   const rows = await pendingRecording(user, group);
   if (!rows.length)
     throw new Error(
@@ -43,19 +44,6 @@ async function planReview(user: User, group: string, track: Track) {
     throw new Error(
       "A different recording choice is already saved for this group",
     );
-  const identity = new ImportContext();
-  identity.reviewMapping = {
-    id: mapping?._id.toString() ?? "preview",
-    trackId: track.id,
-  };
-  const summary = {
-    added: 0,
-    updated: 0,
-    unchanged: 0,
-    ambiguous: 0,
-    deltaMs: 0,
-  };
-  const signatures = [];
   const timestamps = new Map<string, number>();
   for (const item of rows) {
     const key = reviewHash([item.record.source, item.record.at]);
@@ -69,29 +57,7 @@ async function planReview(user: User, group: string, track: Track) {
       )
       .map((item) => item._id.toString()),
   );
-  for (const item of rows) {
-    const result = blocked.has(item._id.toString())
-      ? { outcome: "ambiguous" as const, deltaMs: 0 }
-      : await reconcileImport(
-          user,
-          item.record,
-          track,
-          `review:${identity.reviewMapping.id}`,
-          item._id.toString(),
-          identity,
-          true,
-        );
-    summary[result.outcome]++;
-    summary.deltaMs += result.deltaMs;
-    signatures.push([item.key, item.category, result]);
-  }
-  return {
-    rows,
-    blocked,
-    mapping,
-    summary,
-    token: reviewHash([group, track.id, signatures]),
-  };
+  return { rows, blocked, mapping };
 }
 
 export async function chooseNoMatch(user: User, group: string, reopen = false) {
@@ -112,31 +78,7 @@ export async function chooseNoMatch(user: User, group: string, reopen = false) {
   }
 }
 
-export async function previewReview(user: User, group: string, id: string) {
-  if (!canUserImport(user._id.toString()))
-    throw new Error("Wait for the current import or review to finish");
-  const track = await selectedTrack(user._id.toString(), id);
-  await longWriteDbLock.lock();
-  try {
-    const plan = await planReview(user, group, track);
-    const [description] = await trackDescriptions([track]);
-    return {
-      token: plan.token,
-      summary: plan.summary,
-      track: description,
-      count: plan.rows.length,
-    };
-  } finally {
-    longWriteDbLock.unlock();
-  }
-}
-
-export async function applyReview(
-  user: User,
-  group: string,
-  id: string,
-  token?: string,
-) {
+export async function applyReview(user: User, group: string, id: string) {
   const userId = user._id.toString();
   claimImportWork(userId);
   try {
@@ -145,13 +87,8 @@ export async function applyReview(
     await backupBeforeReview();
     await longWriteDbLock.lock();
     try {
-      const plan = await planReview(user, group, track);
-      // Direct selections are planned against current history under the lock.
-      // Older clients can still submit a token to validate their preview.
-      if (token !== undefined && plan.token !== token)
-        throw new Error(
-          "History changed since the preview. Preview this choice again.",
-        );
+      // A choice is applied to history as it is now, under the write lock.
+      const plan = await pendingChoice(user, group, track);
       const mapping =
         plan.mapping ??
         (await ImportMappingModel.create({
