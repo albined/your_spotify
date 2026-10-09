@@ -10,10 +10,13 @@ import { logger } from "./logger";
 export const deleteUser = async (userId: string) => {
   logger.info(`Deleting user ${userId}`);
   await longWriteDbLock.lock();
-  await deleteAllInfosFromUserId(userId);
-  await ImportMappingModel.deleteMany({ owner: userId });
-  await ImportReviewModel.deleteMany({ owner: userId });
-  await dbDeleteUser(userId);
-  await deleteAllOrphanTracks();
-  longWriteDbLock.unlock();
+  try {
+    await deleteAllInfosFromUserId(userId);
+    await ImportMappingModel.deleteMany({ owner: userId });
+    await ImportReviewModel.deleteMany({ owner: userId });
+    await dbDeleteUser(userId);
+    await deleteAllOrphanTracks();
+  } finally {
+    longWriteDbLock.unlock();
+  }
 };
