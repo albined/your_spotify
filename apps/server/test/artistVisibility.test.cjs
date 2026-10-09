@@ -35,12 +35,7 @@ test(
       getRankOf,
       ItemType,
     } = require("../src/database/queries/stats");
-    const {
-      getCollaborativeBestSongs,
-      getCollaborativeBestAlbums,
-      getCollaborativeBestArtists,
-      CollaborativeMode,
-    } = require("../src/database/queries/collaborative");
+    const { getTasteOverlap } = require("../src/database/queries/tasteOverlap");
     const {
       saveArtistGroup,
       invalidateArtistGroups,
@@ -218,24 +213,29 @@ test(
         await getBest(ItemType.artist, user, start, end, 10, 0),
         [],
       );
-      // A participant with no visible listens contributes zero to affinity.
-      for (const getSharedBest of [
-        getCollaborativeBestSongs,
-        getCollaborativeBestAlbums,
-        getCollaborativeBestArtists,
-      ]) {
-        const shared = await getSharedBest(
-          [String(a), String(b)],
-          start,
-          end,
-          CollaborativeMode.AVERAGE,
-          10,
-        );
-        assert.equal(shared.length, 1);
-        assert.equal(shared[0][`percent_${a}`], 0);
-        assert.equal(shared[0][`percent_${b}`], 1);
-        assert.equal(shared[0].average_percents, 0.5);
-      }
+      // A participant with no visible listens has nothing in a competition.
+      const hidden = await getCompetitionTimeline(
+        user,
+        [String(a), String(b)],
+        start,
+        end,
+        "count",
+      );
+      assert.deepEqual(
+        hidden.series.map((row) => [row.id, row.values.at(-1)]),
+        [
+          [String(a), 0],
+          [String(b), 1],
+        ],
+      );
+      const overlap = await getTasteOverlap(
+        user,
+        [String(a), String(b)],
+        start,
+        end,
+      );
+      assert.equal(overlap.regions, null);
+      assert.equal(overlap.items.length, 1);
       await Promise.all([
         removeArtistVisibility(a, "a"),
         removeArtistVisibility(a, "b"),

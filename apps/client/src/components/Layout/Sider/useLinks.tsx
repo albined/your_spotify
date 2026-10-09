@@ -65,13 +65,6 @@ export function useLinks() {
           label: "With people",
           items: [
             {
-              label: "Affinity",
-              link: "/collaborative/affinity",
-              icon: <MusicNoteOutlined />,
-              iconOn: <MusicNote />,
-              restrict: "guest",
-            },
-            {
               label: "Competition",
               link: "/collaborative/compete",
               icon: <BarChartOutlined />,

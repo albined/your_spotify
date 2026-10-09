@@ -56,26 +56,6 @@ export const conditionalEntry = <T>(value: T, state: boolean) => {
   return state ? value : undefined;
 };
 
-export function getMinOfArray<T>(
-  array: T[],
-  fn: (item: T) => number,
-): { minIndex: number; minValue: number } | null {
-  if (array.length === 0) {
-    return null;
-  }
-  let minIndex = 0;
-  let min = fn(array[0]!);
-
-  for (let i = 1; i < array.length; i += 1) {
-    const value = fn(array[i]!);
-    if (value < min) {
-      minIndex = i;
-      min = value;
-    }
-  }
-  return { minValue: min, minIndex };
-}
-
 export function uniq<T>(array: T[]) {
   const uniqd: T[] = [];
   const seen = new Set<T>();

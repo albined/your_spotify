@@ -70,10 +70,7 @@ export default function BottomNav() {
       link: "/more",
       icon: <MoreHoriz />,
       iconOn: <MoreHoriz />,
-      active: (path) =>
-        path === "/more" ||
-        path.startsWith("/settings") ||
-        (path.startsWith("/collaborative") && path !== competition),
+      active: (path) => path === "/more" || path.startsWith("/settings"),
     },
   ]);
 

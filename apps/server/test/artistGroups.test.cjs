@@ -3,7 +3,7 @@ const { test } = require("node:test");
 const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 
 test(
-  "reversible global artist groups agree across rankings, detail pages, eras, affinity and competitions",
+  "reversible global artist groups agree across rankings, detail pages, eras and competitions",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
@@ -50,10 +50,6 @@ test(
     const {
       getCompetitionInsights,
     } = require("../src/database/queries/competitionInsights");
-    const {
-      getCollaborativeBestArtists,
-      CollaborativeMode,
-    } = require("../src/database/queries/collaborative");
     const { getSongs } = require("../src/database/queries/user");
     await connectTestDb("artist_groups");
     invalidateArtistGroups();
@@ -205,13 +201,6 @@ test(
       assert.equal(insights.series[1].values[afterListens], 1);
       assert.equal(insights.series[0].values.at(-1), 0);
       assert.equal(insights.series[1].values.at(-1), 0);
-      const affinity = await getCollaborativeBestArtists(
-        people,
-        start,
-        end,
-        CollaborativeMode.MINIMA,
-      );
-      assert.equal(affinity[0].artist.id, id);
       const sessions = await getLongestListeningSession(String(a), start, end);
       assert.equal(
         sessions[0].artists.filter((artist) => artist.id === id).length,

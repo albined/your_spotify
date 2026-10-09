@@ -19,21 +19,6 @@ export const basicMatch = (
   },
 ];
 
-export const basicMatchUsers = (
-  userIds: string[] | Types.ObjectId[],
-  start: Date,
-  end: Date,
-) => ({
-  owner: {
-    $in:
-      userIds[0] instanceof Types.ObjectId
-        ? userIds
-        : userIds.map((id) => new Types.ObjectId(id)),
-  },
-  blacklistedBy: { $exists: 0 },
-  played_at: { $gt: start, $lt: end },
-});
-
 export const getGroupingByTimeSplit = (timeSplit: Timesplit, prefix = "") => {
   if (prefix !== "") prefix = `${prefix}.`;
   if (timeSplit === Timesplit.all) return null;

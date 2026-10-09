@@ -74,7 +74,7 @@ export const enableAffinity = myAsyncThunk<GlobalPreferences | null, boolean>(
       tapi.dispatch(
         alertMessage({
           level: "success",
-          message: `${newStatus ? "Enabled" : "Disabled"} affinity feature`,
+          message: `${newStatus ? "Enabled" : "Disabled"} competition`,
         }),
       );
       return result.data;
@@ -83,7 +83,7 @@ export const enableAffinity = myAsyncThunk<GlobalPreferences | null, boolean>(
       tapi.dispatch(
         alertMessage({
           level: "error",
-          message: `Could not ${newStatus ? "enabled" : "disable"} affinity`,
+          message: `Could not ${newStatus ? "enable" : "disable"} competition`,
         }),
       );
       throw e;

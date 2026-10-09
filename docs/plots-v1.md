@@ -74,7 +74,7 @@ in the selected period. Someone who never plays it counts as zero; ties use the
 combined shares, then the ID. Changing people or dates selects the new
 highest-ranked entry. Changing the entry only refreshes its race, and changing
 the kind keeps the card as it is until the new list arrives. All routes require
-login and the existing affinity permission.
+login and the global competition permission.
 
 Top songs, artists and albums races keep the five highest listening-time totals
 in the selected range, then fill up to ten lines with entries that spent longest
@@ -226,9 +226,11 @@ Settings → Account → Competition has an Include me in competitions switch,
 enabled by default. Opted-out users are omitted from the competition picker, and
 every competition data query rejects unavailable participants with HTTP 403,
 including the older `time_per` endpoint. The picker refreshes on window focus;
-direct requests and stale selections cannot bypass the setting. The existing
-global affinity permission remains required. Migration `1790035200001` initializes
-missing `settings.allowCompetitions` fields to true without overwriting opt-outs;
+direct requests and stale selections cannot bypass the setting. The global
+permission remains required: the admin switch named Competition, stored as
+`allowAffinity` from when it also covered the Affinity page that Competition
+replaced. Migration `1790035200001` initializes missing
+`settings.allowCompetitions` fields to true without overwriting opt-outs;
 missing values also work before migration. Tests in `competitionInsights.test.cjs`
 and `sessionBars.test.cjs` cover the metric, timezone/DST behavior, grouped bars,
 artwork cap, session ranking, authenticated settings, migration and API enforcement.
@@ -337,10 +339,10 @@ Do not point the test URI at either preview database.
 ## Phone layout
 
 Below 900px the sidebar is replaced by a bottom bar: Home, All stats, Top,
-Competition (when affinity is enabled and the viewer is not a guest) and More.
+Competition (when it is enabled and the viewer is not a guest) and More.
 Top opens Top artists; the three Top pages show a Songs / Artists / Albums
-switch in place of their title. More holds search, Affinity, Settings and
-Logout. Sharing the current page is an icon in the header.
+switch in place of their title. More holds search, Settings and Logout.
+Sharing the current page is an icon in the header.
 
 The period selector is one row of chips at every width, ordered Today, Last 7 /
 30 / 365 days, All, This week, This month, This year, then the custom range. On

@@ -33,8 +33,6 @@ import CountChooser from "./CountChooser";
 
 import s from "./index.module.css";
 
-export const DEFAULT_PLAYLIST_NB = 50;
-
 export default function PlaylistDialog() {
   const dispatch = useAppDispatch();
   const playlists = useSelector(selectPlaylists);
@@ -46,12 +44,7 @@ export default function PlaylistDialog() {
   const [requested, setRequested] = useState(false);
 
   const changeNumber = (newNb: number) => {
-    if (
-      !context ||
-      (context.type !== "top" &&
-        context.type !== "affinity" &&
-        context.type !== "top-artist")
-    ) {
+    if (!context || (context.type !== "top" && context.type !== "top-artist")) {
       return;
     }
     dispatch(setPlaylistContext({ ...context, nb: newNb }));
@@ -135,9 +128,7 @@ export default function PlaylistDialog() {
           </Select>
         </FormControl>
       </TabPanel>
-      {(context?.type === "top" ||
-        context?.type === "affinity" ||
-        context?.type === "top-artist") && (
+      {(context?.type === "top" || context?.type === "top-artist") && (
         <CountChooser value={context.nb} setValue={changeNumber} />
       )}
       <div className={s.button}>

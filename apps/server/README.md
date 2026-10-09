@@ -14,7 +14,6 @@
     - [Playlist Management](#playlist-management)
   - [History & Statistics](#history--statistics)
     - [Top Items](#top-items)
-    - [Collaborative Features](#collaborative-features)
   - [Search](#search)
   - [Artist](#artist)
   - [Album](#album)
@@ -218,7 +217,7 @@ Create a new Spotify playlist or add tracks to existing playlist.
   "playlistId": string?, // Existing playlist ID (optional)
   "name": string?, // New playlist name (optional)
   "sortKey": string?, // Sort key for tracks (default "count")
-  "type": "top" | "affinity" | "single", // Playlist type
+  "type": "top" | "single", // Playlist type
 
   // For type "top"
   "interval": {
@@ -226,15 +225,6 @@ Create a new Spotify playlist or add tracks to existing playlist.
     "end": date
   },
   "nb": number, // Number of tracks to include
-
-  // For type "affinity"
-  "interval": {
-    "start": date,
-    "end": date
-  },
-  "nb": number, // Number of tracks to include
-  "userIds": string[], // User IDs for collaboration
-  "mode": "intersection" | "union", // Collaboration mode
 
   // For type "single"
   "songId": string // Single track ID to add
@@ -503,56 +493,6 @@ Get longest listening sessions.
 **Response:**
 
 - `200`: Array of listening session data
-
-### Collaborative Features
-
-#### `GET /spotify/collaborative/top/songs`
-
-Get shared top songs between multiple users.
-
-**Query Parameters:**
-
-- `start`: date - Start date
-- `end`: date - End date (defaults to current time)
-- `timeSplit`: string - Time unit for grouping (day, week, month, year)
-- `otherIds`: string[] - Array of other user IDs to compare with
-- `mode`: string - Collaboration mode (intersection, union)
-
-**Response:**
-
-- `200`: Array of shared top songs
-
-#### `GET /spotify/collaborative/top/albums`
-
-Get shared top albums between multiple users.
-
-**Query Parameters:**
-
-- `start`: date - Start date
-- `end`: date - End date (defaults to current time)
-- `timeSplit`: string - Time unit for grouping (day, week, month, year)
-- `otherIds`: string[] - Array of other user IDs to compare with
-- `mode`: string - Collaboration mode (intersection, union)
-
-**Response:**
-
-- `200`: Array of shared top albums
-
-#### `GET /spotify/collaborative/top/artists`
-
-Get shared top artists between multiple users.
-
-**Query Parameters:**
-
-- `start`: date - Start date
-- `end`: date - End date (defaults to current time)
-- `timeSplit`: string - Time unit for grouping (day, week, month, year)
-- `otherIds`: string[] - Array of other user IDs to compare with
-- `mode`: string - Collaboration mode (intersection, union)
-
-**Response:**
-
-- `200`: Array of shared top artists
 
 ## Search
 

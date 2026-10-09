@@ -13,10 +13,6 @@ import AlbumStats from "./scenes/AlbumStats";
 import AllStats from "./scenes/AllStats";
 import ArtistStats from "./scenes/ArtistStats";
 import Benchmarks from "./scenes/Benchmarks";
-import Affinity from "./scenes/Collaborative/Affinity";
-import CollaborativeAlbums from "./scenes/Collaborative/Affinity/Albums";
-import CollaborativeArtists from "./scenes/Collaborative/Affinity/Artists";
-import CollaborativeSongs from "./scenes/Collaborative/Affinity/Songs";
 import Compete from "./scenes/Collaborative/Compete/Compete";
 import ApiEndpointSetToFronted from "./scenes/Error/ApiEndpointSetToFronted";
 import RegistrationsDisabled from "./scenes/Error/RegistrationsDisabled";
@@ -123,42 +119,10 @@ function App() {
                   }
                 />
                 <Route
-                  path="/collaborative/affinity"
-                  element={
-                    <PrivateRoute>
-                      <Affinity />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
                   path="/collaborative/compete"
                   element={
                     <PrivateRoute>
                       <Compete />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/collaborative/top/songs/:mode"
-                  element={
-                    <PrivateRoute>
-                      <CollaborativeSongs />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/collaborative/top/albums/:mode"
-                  element={
-                    <PrivateRoute>
-                      <CollaborativeAlbums />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/collaborative/top/artists/:mode"
-                  element={
-                    <PrivateRoute>
-                      <CollaborativeArtists />
                     </PrivateRoute>
                   }
                 />
