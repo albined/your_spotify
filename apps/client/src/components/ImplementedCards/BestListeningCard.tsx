@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 import { api } from "../../services/apis/api";
 import { useArtworkTint } from "../../services/artworkTint";
-import { useListeningRequest } from "../../services/listeningTimeline";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import { msToMinutes } from "../../services/stats";
 import { getImage } from "../../services/tools";

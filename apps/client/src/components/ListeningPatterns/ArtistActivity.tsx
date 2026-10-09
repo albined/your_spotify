@@ -4,11 +4,11 @@ import { useSelector } from "react-redux";
 
 import { api } from "../../services/apis/api";
 import { artistColor } from "../../services/artistDistribution";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import {
   ArtistActivityData,
   formatHours,
 } from "../../services/listeningPatterns";
-import { useListeningRequest } from "../../services/listeningTimeline";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import TitleCard from "../TitleCard";
 import { RequestState, usePlotWidth } from "./shared";

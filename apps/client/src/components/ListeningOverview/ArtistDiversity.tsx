@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 import { api } from "../../services/apis/api";
-import { useListeningRequest } from "../../services/listeningTimeline";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import { RequestState } from "../ListeningPatterns/shared";
 import { useTimelineDate } from "../ListeningTimeline/TimelineChart";
 import TitleCard from "../TitleCard";

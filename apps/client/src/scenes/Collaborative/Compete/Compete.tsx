@@ -15,10 +15,8 @@ import { RequestState } from "../../../components/ListeningPatterns/shared";
 import TimelineChart from "../../../components/ListeningTimeline/TimelineChart";
 import TitleCard from "../../../components/TitleCard";
 import { api } from "../../../services/apis/api";
-import {
-  cumulativeTimelinePoints,
-  useListeningRequest,
-} from "../../../services/listeningTimeline";
+import { useListeningRequest } from "../../../services/hooks/hooks";
+import { cumulativeTimelinePoints } from "../../../services/listeningTimeline";
 import {
   selectRawIntervalDetail,
   selectUser,

@@ -5,8 +5,8 @@ import {
   listeningRate,
   ListeningItemKind,
 } from "../../services/detailListening";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import { calendarGrid } from "../../services/listeningPatterns";
-import { useListeningRequest } from "../../services/listeningTimeline";
 import TimelineChart from "../ListeningTimeline/TimelineChart";
 import TitleCard from "../TitleCard";
 import AlbumTracksHeatmap from "./AlbumTracksHeatmap";

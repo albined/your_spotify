@@ -2,7 +2,8 @@ import { useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 
 import { api } from "./apis/api";
-import { TopTimelineKind, useListeningRequest } from "./listeningTimeline";
+import { useListeningRequest } from "./hooks/hooks";
+import { TopTimelineKind } from "./listeningTimeline";
 import { selectRawIntervalDetail } from "./redux/modules/user/selector";
 
 export interface RankChange {
