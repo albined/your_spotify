@@ -1,15 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   buildArtistStream,
   distributionBandwidth,
@@ -110,10 +101,6 @@ test(
   "database bins keep the top artists and isolate account, blacklist and range",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
-    process.env.CLIENT_ENDPOINT = "http://127.0.0.1:3002";
-    process.env.API_ENDPOINT = "http://127.0.0.1:8082";
-    process.env.SPOTIFY_PUBLIC = "test";
-    process.env.SPOTIFY_SECRET = "test";
     const {
       ARTIST_DISTRIBUTION_MAX_ARTISTS,
     } = require("../src/database/queries/artistDistribution");
@@ -122,9 +109,7 @@ test(
     const {
       getArtistDistribution,
     } = require("../src/database/queries/artistDistribution");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `artist_distribution_test_${Date.now()}`,
-    });
+    await connectTestDb("artist_distribution_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const other = new mongoose.Types.ObjectId();
@@ -168,8 +153,7 @@ test(
         ),
       );
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

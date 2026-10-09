@@ -1,16 +1,6 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 const {
   sessionSections,
   sessionArtwork,
@@ -76,9 +66,7 @@ test(
     const {
       getLongestListeningSession,
     } = require("../src/database/queries/stats");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `session_bars_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("session_bars");
     try {
       const owner = new mongoose.Types.ObjectId();
       const start = new Date("2025-01-01");
@@ -132,8 +120,7 @@ test(
         assert.equal(sessionSections(tracks).listened, session.listeningMs);
       }
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );
@@ -143,21 +130,14 @@ test(
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
-    const express = require("express");
-    const cookieParser = require("cookie-parser");
-    const { sign } = require("jsonwebtoken");
     const {
       InfosModel,
       TrackModel,
       ArtistModel,
       UserModel,
-      PrivateDataModel,
     } = require("../src/database/Models");
     const { router } = require("../src/routes/spotify");
-    const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `session_pages_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("session_pages");
     let server;
     try {
       const owner = new mongoose.Types.ObjectId();
@@ -189,19 +169,9 @@ test(
         (a, b) => b.durationMs - a.durationMs || a.played_at - b.played_at,
       );
 
-      await PrivateDataModel.create({ jwtPrivateKey: "sessions-test-only" });
-      const app = express();
-      app.use(cookieParser());
-      app.use("/spotify", router);
-      app.use((error, req, res, _next) =>
-        res.status(ErrorTypeToHTTPCode[error.type] ?? 500).end(),
-      );
-      server = app.listen(0, "127.0.0.1");
-      await once(server, "listening");
-      const base = `http://127.0.0.1:${server.address().port}/spotify/top/sessions`;
-      const headers = {
-        Cookie: `token=${sign({ userId: String(owner) }, "sessions-test-only", { expiresIn: "1h" })}`,
-      };
+      server = await serveRoutes((app) => app.use("/spotify", router));
+      const base = `${server.base}/spotify/top/sessions`;
+      const headers = { Cookie: server.cookie(owner) };
       const request = (pagination = {}) =>
         fetch(
           `${base}?${new URLSearchParams({
@@ -266,9 +236,8 @@ test(
         assert.equal((await request(pagination)).status, 400);
       }
     } finally {
-      if (server) await new Promise((resolve) => server.close(resolve));
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      if (server) await server.close();
+      await dropTestDb();
     }
   },
 );

@@ -1,17 +1,7 @@
-// From apps/server: TIMELINE_TEST_MONGO_URI=mongodb://127.0.0.1:27028
-// node --test test/raceTimeline.test.cjs (use a disposable MongoDB 6+ server).
+// Run with: sh scripts/test-local.sh test/raceTimeline.test.cjs
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const {
   cumulativeTimelinePoints,
 } = require("../../client/src/services/listeningTimeline");
@@ -57,9 +47,7 @@ test(
       getTopTimeline,
       getCompetitionTimeline,
     } = require("../src/database/queries/raceTimeline");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `race_test_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("race_test");
     try {
       const owner = new mongoose.Types.ObjectId();
       const friend = new mongoose.Types.ObjectId();
@@ -251,8 +239,7 @@ test(
         assert.ok(!late.series.some((row) => row.id === `${prefix}-0`));
       }
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
     }
   },
 );

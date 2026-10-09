@@ -3,26 +3,12 @@ const { test } = require("node:test");
 const { mkdtemp, rm } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-process.env.CLIENT_ENDPOINT = "http://127.0.0.1:3000";
-process.env.API_ENDPOINT = "http://127.0.0.1:8080";
-process.env.SPOTIFY_PUBLIC = "test";
-process.env.SPOTIFY_SECRET = "test";
 process.env.BACKUPS_ENABLED = "false";
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 test(
   "Deezer longest-duration and estimated-time policy",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async (t) => {
-    const mongoose = require("mongoose");
     const XLSX = require("xlsx");
     const {
       InfosModel,
@@ -52,9 +38,7 @@ test(
     const { statisticsFor } = require("../src/database/listeningDuration");
     const { SpotifyAPI } = require("../src/tools/apis/spotifyApi");
     const dir = await mkdtemp(join(tmpdir(), "deezer-rules-"));
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: "deezer_rules_test_" + Date.now(),
-    });
+    await connectTestDb("deezer_rules_test");
     let sequence = 0;
     const at = "2024-01-01T12:00:00Z";
     const source = (name, seconds, extra = {}) => ({
@@ -802,8 +786,7 @@ test(
     } finally {
       SpotifyAPI.prototype.raw = oldRaw;
       SpotifyAPI.prototype.getTracks = oldGet;
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
       await rm(dir, { recursive: true, force: true });
     }
   },

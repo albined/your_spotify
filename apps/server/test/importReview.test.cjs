@@ -3,21 +3,8 @@ const { test } = require("node:test");
 const { mkdtemp, writeFile, access, rm } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-process.env.CLIENT_ENDPOINT = "http://127.0.0.1:3000";
-process.env.API_ENDPOINT = "http://127.0.0.1:8080";
-process.env.SPOTIFY_PUBLIC = "test";
-process.env.SPOTIFY_SECRET = "test";
 process.env.BACKUPS_ENABLED = "false";
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 const { spotifyTrackId } = require("../src/tools/importers/reviewCatalog");
 const { importFingerprint } = require("../src/tools/importers/records");
 const {
@@ -88,7 +75,6 @@ test(
   "saved review, choices, overlap protection and recovery",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async (t) => {
-    const mongoose = require("mongoose");
     const {
       InfosModel,
       UserModel,
@@ -118,9 +104,7 @@ test(
       claimImportWork,
       releaseImportWork,
     } = require("../src/tools/importers/work");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `import_review_test_${Date.now()}`,
-    });
+    await connectTestDb("import_review_test");
     const dir = await mkdtemp(join(tmpdir(), "import-review-"));
     try {
       await Promise.all([
@@ -1936,8 +1920,7 @@ test(
           },
         );
     } finally {
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      await dropTestDb();
       await rm(dir, { recursive: true, force: true });
     }
   },

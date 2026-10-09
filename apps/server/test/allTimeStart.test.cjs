@@ -1,17 +1,7 @@
 const assert = require("node:assert/strict");
-const { once } = require("node:events");
 const { test } = require("node:test");
 global.window = { devicePixelRatio: 1, API_ENDPOINT: "http://127.0.0.1" };
-require("ts-node").register({
-  transpileOnly: true,
-  skipProject: true,
-  compilerOptions: {
-    module: "Node16",
-    moduleResolution: "Node16",
-    target: "ES2022",
-    esModuleInterop: true,
-  },
-});
+const { connectTestDb, dropTestDb, serveRoutes } = require("./helpers.cjs");
 const {
   startOfCalendarDate,
   allTimeStartAt,
@@ -81,14 +71,7 @@ test(
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
-    const express = require("express");
-    const cookieParser = require("cookie-parser");
-    const { sign } = require("jsonwebtoken");
-    const {
-      UserModel,
-      PrivateDataModel,
-      InfosModel,
-    } = require("../src/database/Models");
+    const { UserModel, InfosModel } = require("../src/database/Models");
     const {
       storeFirstListenedAtIfLess,
     } = require("../src/database/queries/user");
@@ -96,10 +79,7 @@ test(
       up,
     } = require("../src/migrations/1790035200000-add_all_time_start_date");
     const { router } = require("../src/routes/index");
-    const { ErrorTypeToHTTPCode } = require("../src/tools/errors/error");
-    await mongoose.connect(process.env.TIMELINE_TEST_MONGO_URI, {
-      dbName: `all_start_test_${Date.now()}_${process.pid}`,
-    });
+    await connectTestDb("all_start_test");
     let server;
     try {
       const owner = new mongoose.Types.ObjectId();
@@ -118,29 +98,22 @@ test(
         played_at: new Date("2016-01-01"),
         id: "old-song",
       });
-      await PrivateDataModel.create({ jwtPrivateKey: "start-date-test-only" });
-      const token = sign({ userId: String(owner) }, "start-date-test-only");
-      const app = express();
-      app.use(express.json(), cookieParser(), router);
-      app.use((err, req, res, _next) =>
-        res.status(ErrorTypeToHTTPCode[err.type] ?? 500).end(),
-      );
-      server = app.listen(0, "127.0.0.1");
-      await once(server, "listening");
-      const base = `http://127.0.0.1:${server.address().port}`;
+      server = await serveRoutes((app) => app.use(router));
+      const { base } = server;
+      const cookie = server.cookie(owner);
       const save = (payload, auth = true) =>
         fetch(`${base}/settings`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(auth ? { Cookie: `token=${token}` } : {}),
+            ...(auth ? { Cookie: cookie } : {}),
           },
           body: JSON.stringify(payload),
         });
       const me = async () =>
         (
           await (
-            await fetch(`${base}/me`, { headers: { Cookie: `token=${token}` } })
+            await fetch(`${base}/me`, { headers: { Cookie: cookie } })
           ).json()
         ).user;
       assert.equal(
@@ -188,9 +161,8 @@ test(
       assert.equal(saved.firstListenedAt, "2015-01-01T00:00:00.000Z");
       assert.equal(await InfosModel.countDocuments({ owner }), 1);
     } finally {
-      if (server) await new Promise((resolve) => server.close(resolve));
-      await mongoose.connection.dropDatabase();
-      await mongoose.disconnect();
+      if (server) await server.close();
+      await dropTestDb();
     }
   },
 );
