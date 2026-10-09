@@ -14,10 +14,7 @@ import Text from "../../components/Text";
 import TitleCard from "../../components/TitleCard";
 import { ArtistStatsResponse } from "../../services/apis/api";
 import { DateFormatter } from "../../services/date";
-import {
-  selectBlacklistedArtists,
-  selectUser,
-} from "../../services/redux/modules/user/selector";
+import { selectUser } from "../../services/redux/modules/user/selector";
 import { buildFromDateId } from "../../services/stats";
 import { getImage } from "../../services/tools";
 import ArtistContextMenu from "./ArtistContextMenu";
@@ -35,16 +32,12 @@ interface ArtistStatsProps {
 }
 
 export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
-  const blocked = useSelector(selectBlacklistedArtists);
   const user = useSelector(selectUser);
   const members = stats?.artist.memberIds ?? [artistId];
   const hidden = members.filter((id) =>
     user?.settings.artistVisibility?.some(
       (entry) => entry.artistId === id && entry.hidden,
     ),
-  );
-  const blacklisted = (stats?.artist.memberIds ?? [artistId]).every((id) =>
-    blocked.includes(id),
   );
   const listening = useDetailListening("artist", artistId);
 
@@ -62,12 +55,12 @@ export default function ArtistStats({ artistId, stats }: ArtistStatsProps) {
         title={stats.artist.name}
         subtitle={stats.artist.genres.join(", ")}
         actions={
-          <ArtistContextMenu
-            artistId={stats.artist.id}
-            members={stats.artist.members}
-            artistName={stats.artist.name}
-            blacklisted={blacklisted}
-          />
+          !!stats.artist.members?.length && (
+            <ArtistContextMenu
+              members={stats.artist.members}
+              artistName={stats.artist.name}
+            />
+          )
         }>
         {hidden.length < members.length && <ArtistRank artistId={artistId} />}
       </DetailHero>
