@@ -1,0 +1,3 @@
+# scripts/run/variables.sh rewrites the share-image tags with a one-line sed,
+# so each tag has to stay on a single line.
+public/index.html
