@@ -115,102 +115,6 @@ export const addTrackIdsToUser = async (
   });
 };
 
-export const getCloseTrackId = async (
-  userId: string,
-  trackId: string,
-  date: Date,
-  secondsPlusMinus: number,
-) => {
-  const startDate = new Date(date.getTime());
-  const endDate = new Date(date.getTime());
-  startDate.setSeconds(startDate.getSeconds() - secondsPlusMinus);
-  endDate.setSeconds(endDate.getSeconds() + secondsPlusMinus);
-  return InfosModel.find({
-    owner: userId,
-    id: trackId,
-    played_at: { $gt: startDate, $lt: endDate },
-  });
-};
-
-export const getUserInfoCount = async (userId: string) => {
-  return InfosModel.countDocuments({ owner: new Types.ObjectId(userId) });
-};
-
-export const getPossibleDuplicates = async (
-  userId: string,
-  secondsPlusMinus: number,
-  count: number,
-  offset: number,
-) => {
-  return InfosModel.aggregate([
-    { $match: { owner: new Types.ObjectId(userId) } },
-    { $sort: { played_at: 1 } },
-    { $skip: offset },
-    { $limit: count },
-    { $group: { _id: "$id", infos: { $push: "$$ROOT" } } },
-    {
-      $addFields: {
-        a: {
-          $reduce: {
-            input: "$infos",
-            initialValue: { duplicates: [] },
-            in: {
-              last: "$$this",
-              duplicates: {
-                $concatArrays: [
-                  "$$value.duplicates",
-                  {
-                    $cond: {
-                      if: {
-                        $and: [
-                          { $gt: ["$$value.last.played_at", null] },
-                          {
-                            $lt: [
-                              {
-                                $subtract: [
-                                  "$$this.played_at",
-                                  "$$value.last.played_at",
-                                ],
-                              },
-                              secondsPlusMinus * 1000,
-                            ],
-                          },
-                        ],
-                      },
-                      then: [
-                        [
-                          "$$value.last",
-                          "$$this",
-                          {
-                            $subtract: [
-                              "$$this.played_at",
-                              "$$value.last.played_at",
-                            ],
-                          },
-                        ],
-                      ],
-                      else: [],
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        duplicates: "$a.duplicates",
-        hasDuplicates: {
-          $cond: [{ $gt: [{ $size: "$a.duplicates" }, 0] }, true, false],
-        },
-      },
-    },
-    { $match: { hasDuplicates: true } },
-  ]);
-};
-
 export const getSongs = async (
   userId: string,
   offset: number,
@@ -358,9 +262,4 @@ export const blacklistArtist = (userId: string, artistId: string) =>
 export const unblacklistArtist = (userId: string, artistId: string) =>
   UserModel.findByIdAndUpdate(userId, {
     $pull: { "settings.blacklistedArtists": artistId },
-  });
-
-export const deleteInfos = (infoIds: string[]) =>
-  InfosModel.deleteMany({
-    _id: { $in: infoIds.map((id) => new Types.ObjectId(id)) },
   });

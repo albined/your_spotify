@@ -5,7 +5,6 @@ import { Types } from "mongoose";
 import { z } from "zod";
 
 import { getUserFromField, getGlobalPreferences } from "../database";
-import { getUserImporterState } from "../database/queries/importer";
 import { SpotifyAPI } from "./apis/spotifyApi";
 import { YourSpotifyError } from "./errors/error";
 import { logger } from "./logger";
@@ -130,16 +129,6 @@ export const optionalLoggedOrGuest = async (
   next();
 };
 
-export const optionalLogged = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const user = await baselogged(req, res, false);
-  (req as OptionalLoggedRequest).user = user;
-  next();
-};
-
 export const admin = (req: Request, res: Response, next: NextFunction) => {
   const { user } = req as LoggedRequest;
 
@@ -183,24 +172,6 @@ export const withGlobalPreferences = async (
   } catch {
     res.status(500).end();
   }
-};
-
-class AlreadyImportingError extends YourSpotifyError {
-  type = "CONFLICT" as const;
-  code = "ALREADY_IMPORTING";
-}
-
-export const notAlreadyImporting = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const { user } = req as LoggedRequest;
-  const imports = await getUserImporterState(user._id.toString());
-  if (imports.some((imp) => imp.status === "progress")) {
-    throw new AlreadyImportingError();
-  }
-  next();
 };
 
 const MEASURE_METHODS = ["GET", "POST", "PATCH", "PUT", "DELETE"];
