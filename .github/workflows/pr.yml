@@ -3,6 +3,8 @@ name: PR checks
 on:
   pull_request:
     branches: [master]
+  push:
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +12,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       mongo:
@@ -24,12 +26,9 @@ jobs:
           --health-retries 12
     env:
       NODE_ENV: development
-      API_ENDPOINT: http://127.0.0.1:8082
-      CLIENT_ENDPOINT: http://127.0.0.1:3002
-      MONGO_ENDPOINT: mongodb://127.0.0.1:27017/pr_tests
       TIMELINE_TEST_MONGO_URI: mongodb://127.0.0.1:27017
-      SPOTIFY_PUBLIC: test
-      SPOTIFY_SECRET: test
+      BACKUP_TEST_MONGO_URI: mongodb://127.0.0.1:27017
+      MONGODB_TOOLS_VERSION: 100.13.0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,13 +42,18 @@ jobs:
         run: |
           pnpm --filter @your_spotify/client typecheck
           pnpm --filter @your_spotify/server typecheck
-      - name: Source lint
+      - name: Lint and format
         run: |
-          pnpm --filter @your_spotify/client exec oxlint -c ../dev/.oxlintrc.json src
-          pnpm --filter @your_spotify/server exec oxlint -c ../dev/.oxlintrc.json src
+          pnpm --filter @your_spotify/client lint
+          pnpm --filter @your_spotify/server lint
+      # The backup test dumps and restores a real archive.
+      - name: Install MongoDB Database Tools
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/mongodb-tools.deb" \
+            "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-$MONGODB_TOOLS_VERSION.deb"
+          sudo apt-get install -y "$RUNNER_TEMP/mongodb-tools.deb"
       - name: Regression tests
-        working-directory: apps/server
-        run: pnpm exec node --test --test-concurrency=1 test/*.test.cjs
+        run: pnpm --filter @your_spotify/server test
       - name: Production builds
         env:
           NODE_ENV: production
