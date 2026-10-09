@@ -57,6 +57,16 @@ export default function CompetitionInsights({
     ) ? null : (
       <p>No listening history in this period.</p>
     ));
+  // A pair is drawn in the blend of its two people, as their circles overlap.
+  const pairs = (data?.overlap?.pairs ?? []).map((pair) => {
+    const [first, second] = pair.members;
+    return {
+      ...pair,
+      id: `${data?.series[first]?.id}:${data?.series[second]?.id}`,
+      name: `${data?.series[first]?.name} & ${data?.series[second]?.name}`,
+      color: `color-mix(in srgb, ${seriesColor(first)}, ${seriesColor(second)})`,
+    };
+  });
   const hourly = Array.from({ length: 24 }, (_, hour) => ({
     hour: String(hour).padStart(2, "0"),
     ...Object.fromEntries(
@@ -68,6 +78,28 @@ export default function CompetitionInsights({
   }));
   return (
     <div className={s.insights}>
+      {data && pairs.some((pair) => pair.values.some((value) => value)) && (
+        <TitleCard
+          title={`Taste overlap · ${data.overlap?.windowDays} days`}
+          contentClassName={s.chartContent}>
+          <TimelineChart
+            bounds={data}
+            data={Array.from({ length: data.count + 1 }, (_, index) => ({
+              timestamp: Math.min(data.end, data.start + index * data.width),
+              ...Object.fromEntries(
+                pairs.map((pair, i) => {
+                  const value = pair.values[index];
+                  return [`series${i}`, value == null ? null : 100 * value];
+                }),
+              ),
+            }))}
+            series={pairs}
+            unit="%"
+            height={280}
+            phoneHeight={200}
+          />
+        </TitleCard>
+      )}
       <TitleCard
         title={`Artist diversity${data ? ` · ${data.windowDays} days` : ""}`}
         contentClassName={s.chartContent}>

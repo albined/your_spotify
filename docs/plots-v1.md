@@ -254,6 +254,16 @@ unless two or three people all have listening in the range.
 `test/tasteOverlap.test.cjs` and `test/competitionArtists.test.cjs` cover the
 split, the region totals, the ranking and those rules.
 
+For the same two or three people, a Taste overlap card among the insights draws
+what each pair has in common over time: the shared part of their artists, as in
+the diagram, over a trailing window. A single shared artist swings that share
+while a window holds little listening, so the window is longer than the
+diversity one at the same range boundaries: 30, 60, 90, 180 or 365 days. A pair
+is drawn in the blend of its two people's colors and has a gap while either has
+no listening in the window. The series comes with
+`/spotify/collaborative/competition-insights`; `test/rollingOverlap.test.cjs`
+compares every sample with an independent calculation.
+
 Home and All stats share zero-based listening-volume lines with gentle
 interpolation through the actual totals and a faint fill. There are no
 gridlines. One `/spotify/listening-overview` request supplies both hours and

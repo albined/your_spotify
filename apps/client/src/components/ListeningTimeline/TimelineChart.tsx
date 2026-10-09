@@ -74,6 +74,8 @@ function lineHeightAt(path: SVGPathElement, x: number) {
 }
 
 export interface ChartSeries extends Pick<ListeningSeries, "id" | "name"> {
+  // Replaces the color the series would get from its position.
+  color?: string;
   images?: ListeningSeries["images"];
   subtitle?: string;
   value?: string;
@@ -116,6 +118,13 @@ export default function TimelineChart({
   hoverSeriesOnly = false,
   insetScale = true,
 }: Props) {
+  // Shares with a scale that fits them use the unit; percent fixes it at 100.
+  const suffix =
+    percent || unit === "%"
+      ? "%"
+      : unit === "h" || unit === "h/day"
+        ? ` ${unit}`
+        : "";
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const [legendOpen, setLegendOpen] = useState(false);
@@ -203,7 +212,7 @@ export default function TimelineChart({
               tickLine={false}
               mirror={inset}
               width={unit === "h/day" ? (phone ? 68 : 80) : 65}
-              allowDecimals={percent || unit === "h" || unit === "h/day"}
+              allowDecimals={suffix !== ""}
               tick={{
                 fill: "var(--text-tertiary)",
                 ...(unit === "h/day" ? { fontSize: phone ? 11 : 12 } : {}),
@@ -213,7 +222,7 @@ export default function TimelineChart({
               tickFormatter={(value: number) =>
                 inset && value === 0
                   ? ""
-                  : `${Number(value.toFixed(2))}${percent ? "%" : unit === "h" || unit === "h/day" ? ` ${unit}` : ""}`
+                  : `${Number(value.toFixed(2))}${suffix}`
               }
             />
             <Tooltip
@@ -232,14 +241,15 @@ export default function TimelineChart({
                       return (
                         <div className={s.hovercard}>
                           <div>{date.full(Number(label))}</div>
-                          <strong style={{ color: seriesColor(index) }}>
+                          <strong
+                            style={{ color: item.color ?? seriesColor(index) }}>
                             {item.name}
                           </strong>
                           <div>
                             {Number(point.value).toLocaleString(undefined, {
                               maximumFractionDigits: 2,
                             })}
-                            {percent ? "%" : ` ${unit}`}
+                            {suffix || ` ${unit}`}
                           </div>
                         </div>
                       );
@@ -252,7 +262,7 @@ export default function TimelineChart({
                   : date.full(Number(value))
               }
               formatter={(value, name) => [
-                `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}${percent ? "%" : ` ${unit}`}`,
+                `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}${suffix || ` ${unit}`}`,
                 name,
               ]}
               contentStyle={{
@@ -276,8 +286,8 @@ export default function TimelineChart({
                   stackId="listening"
                   activeDot={hoverSeriesOnly ? false : undefined}
                   type="linear"
-                  stroke={seriesColor(index)}
-                  fill={seriesColor(index)}
+                  stroke={item.color ?? seriesColor(index)}
+                  fill={item.color ?? seriesColor(index)}
                   fillOpacity={
                     highlighted && highlighted !== item.id ? 0.15 : 0.75
                   }
@@ -300,7 +310,7 @@ export default function TimelineChart({
                   dataKey={`series${index}`}
                   className={`timeline-series-${index}`}
                   type="linear"
-                  stroke={seriesColor(index)}
+                  stroke={item.color ?? seriesColor(index)}
                   strokeWidth={highlighted === item.id ? 3 : 2}
                   strokeDasharray={item.lineOnly ? "6 4" : undefined}
                   onMouseEnter={
@@ -347,7 +357,7 @@ export default function TimelineChart({
               aria-pressed={pinned === item.id}>
               <span
                 className={s.swatch}
-                style={{ background: seriesColor(index) }}
+                style={{ background: item.color ?? seriesColor(index) }}
               />
               {!!item.images?.length && (
                 <IdealImage

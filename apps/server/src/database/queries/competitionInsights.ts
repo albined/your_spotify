@@ -3,9 +3,14 @@ import { Types } from "mongoose";
 import { statisticsTimezone } from "../../tools/allTimeStart";
 import { statisticsFor } from "../listeningDuration";
 import { User } from "../schemas/user";
-import { artistDiversity, artistDiversityStages } from "./artistDiversity";
+import {
+  artistDiversity,
+  artistDiversityStages,
+  DiversityChange,
+  rollingOverlap,
+} from "./artistDiversity";
 import { requireCompetitionParticipants } from "./competitionParticipants";
-import { diversityWindowDays } from "./diversityWindow";
+import { diversityWindowDays, overlapWindowDays } from "./diversityWindow";
 import { DAY_MS, timelineBounds } from "./listeningTimelineTools";
 
 export { artistDiversity } from "./artistDiversity";
@@ -20,24 +25,34 @@ export async function getCompetitionInsights(
   const accounts = await requireCompetitionParticipants(userIds);
   const windowDays = diversityWindowDays(start, end);
   const windowMs = windowDays * DAY_MS;
+  // Only two or three people are compared pair by pair, as in the Venn diagram.
+  const overlapDays =
+    accounts.length === 2 || accounts.length === 3
+      ? overlapWindowDays(start, end)
+      : 0;
+  const overlapMs = overlapDays * DAY_MS;
   const cutoff = new Date(Math.min(end.getTime(), Date.now()));
   // Do not extrapolate rolling diversity into a future part of a date range.
   const bounds = timelineBounds(start, cutoff > start ? cutoff : end, 200);
+  const changes = (rows: DiversityChange[] = []) =>
+    rows.map((row) => ({
+      artist: row._id.artist,
+      bucket: row._id.bucket,
+      durationMs: row.durationMs,
+    }));
   const load = async (account: (typeof accounts)[number]) => {
     // Hour-of-day uses each participant's local clock, for comparing habits.
     const timezone = statisticsTimezone(account);
     const [result] = await Statistics.aggregate<{
-      artists: {
-        _id: { artist: string; bucket: number };
-        durationMs: number;
-      }[];
+      artists: DiversityChange[];
+      overlap?: DiversityChange[];
       hours: { _id: number; hours: number }[];
     }>([
       {
         $match: {
           owner: new Types.ObjectId(account._id),
           played_at: {
-            $gte: new Date(start.getTime() - windowMs),
+            $gte: new Date(start.getTime() - Math.max(windowMs, overlapMs)),
             $lt: cutoff,
           },
           blacklistedBy: { $exists: false },
@@ -50,7 +65,18 @@ export async function getCompetitionInsights(
       },
       {
         $facet: {
-          artists: artistDiversityStages(bounds, start, windowMs),
+          artists: [
+            // Each chart warms up over its own window only.
+            {
+              $match: {
+                played_at: { $gte: new Date(start.getTime() - windowMs) },
+              },
+            },
+            ...artistDiversityStages(bounds, start, windowMs),
+          ],
+          ...(overlapMs
+            ? { overlap: artistDiversityStages(bounds, start, overlapMs) }
+            : {}),
           hours: [
             // The warm-up history belongs only to diversity, not this histogram.
             { $match: { played_at: { $gte: start } } },
@@ -72,15 +98,9 @@ export async function getCompetitionInsights(
       name: account.username,
       values:
         cutoff > start
-          ? artistDiversity(
-              bounds.count,
-              (result?.artists ?? []).map((row) => ({
-                artist: row._id.artist,
-                bucket: row._id.bucket,
-                durationMs: row.durationMs,
-              })),
-            )
+          ? artistDiversity(bounds.count, changes(result?.artists))
           : Array<number>(bounds.count + 1).fill(0),
+      overlap: changes(result?.overlap),
       hours,
       percentages: hours.map((value) => (total ? (100 * value) / total : 0)),
     };
@@ -95,6 +115,16 @@ export async function getCompetitionInsights(
     ...bounds,
     windowDays,
     timezone: statisticsTimezone(user),
-    series: rows,
+    series: rows.map(({ overlap: _, ...person }) => person),
+    overlap:
+      overlapMs && cutoff > start
+        ? {
+            windowDays: overlapDays,
+            pairs: rollingOverlap(
+              bounds.count,
+              rows.map((person) => person.overlap),
+            ),
+          }
+        : null,
   };
 }
