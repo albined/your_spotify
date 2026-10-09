@@ -5,6 +5,8 @@ import {
   CircularProgress,
   FormControlLabel,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -16,11 +18,19 @@ import TimelineChart from "../../../components/ListeningTimeline/TimelineChart";
 import TitleCard from "../../../components/TitleCard";
 import { api } from "../../../services/apis/api";
 import { useListeningRequest } from "../../../services/hooks/hooks";
-import { cumulativeTimelinePoints } from "../../../services/listeningTimeline";
+import {
+  cumulativeTimelinePoints,
+  TopTimelineKind,
+} from "../../../services/listeningTimeline";
 import {
   selectRawIntervalDetail,
   selectUser,
 } from "../../../services/redux/modules/user/selector";
+import {
+  overlapKinds,
+  TasteOverlap as TasteOverlapData,
+  widestRegion,
+} from "../../../services/tasteOverlap";
 import CompetitionInsights from "./CompetitionInsights";
 import TasteOverlap from "./TasteOverlap";
 
@@ -36,8 +46,9 @@ function CompetitionRace({
   userIds,
   start,
   end,
-  artistId,
-}: ComparisonProps & { artistId?: string }) {
+  kind,
+  itemId,
+}: ComparisonProps & { kind?: TopTimelineKind; itemId?: string }) {
   const request = useCallback(
     () =>
       userIds.length
@@ -46,10 +57,10 @@ function CompetitionRace({
             new Date(start),
             new Date(end),
             "hours",
-            artistId,
+            kind && itemId ? { kind, id: itemId } : undefined,
           )
         : Promise.resolve({ data: null }),
-    [userIds, start, end, artistId],
+    [userIds, start, end, kind, itemId],
   );
   const { data, error, retry } = useListeningRequest(request);
   if (!userIds.length)
@@ -84,8 +95,8 @@ function CompetitionRace({
       <ol
         className={s.leaderboard}
         aria-label={
-          artistId
-            ? "Artist competition standings"
+          itemId
+            ? `${overlapKinds.find((item) => item.kind === kind)?.one} competition standings`
             : "Overall competition standings"
         }>
         {leaderboard.map((item) => (
@@ -104,65 +115,129 @@ function CompetitionRace({
   );
 }
 
-function ArtistCompetition({ userIds, start, end }: ComparisonProps) {
-  const [selectedId, setSelectedId] = useState<string>();
+// What the selected people share, and a race for the one thing picked from it.
+function ItemCompetition({
+  userIds,
+  start,
+  end,
+  kind,
+  setKind,
+}: ComparisonProps & {
+  kind: TopTimelineKind;
+  setKind: (kind: TopTimelineKind) => void;
+}) {
+  const [picked, setPicked] = useState<{ kind: TopTimelineKind; id: string }>();
   const request = useCallback(
     () =>
       userIds.length
-        ? api.getCompetitionArtists(userIds, new Date(start), new Date(end))
-        : Promise.resolve({ data: [] }),
-    [userIds, start, end],
+        ? api.getTasteOverlap(userIds, new Date(start), new Date(end), kind)
+        : Promise.resolve({ data: null }),
+    [userIds, start, end, kind],
   );
-  const { data: artists, error, retry } = useListeningRequest(request);
+  const { data, error, retry } = useListeningRequest(request);
+  // Another kind is asked for while the one on screen stays, so the card
+  // keeps its height.
+  const [shown, setShown] = useState<{
+    kind: TopTimelineKind;
+    data: TasteOverlapData;
+  }>();
+  if (data && shown?.data !== data) setShown({ kind, data });
+  const regions = shown?.data.regions;
+  // A region can list something that did not make the most shared ones.
+  const picks = [
+    ...(shown?.data.items ?? []),
+    ...(regions?.flatMap((region) => region.items) ?? []),
+  ];
   const selected =
-    artists?.find((artist) => artist.id === selectedId) ?? artists?.[0];
+    (picked?.kind === shown?.kind &&
+      picks.find((item) => item.id === picked?.id)) ||
+    // The race starts with the top of the list the diagram opens on.
+    (regions && regions[widestRegion(regions)]?.items[0]) ||
+    picks[0];
+  const options = shown?.data.items ?? [];
+  const label = overlapKinds.find((item) => item.kind === shown?.kind)?.one;
   return (
-    <TitleCard title="Artist competition" contentClassName={s.chartContent}>
+    <TitleCard
+      title={
+        regions
+          ? "Taste overlap"
+          : `${overlapKinds.find((item) => item.kind === kind)?.one} competition`
+      }
+      right={
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={kind}
+          aria-label="Compare by"
+          onChange={(_, value: TopTimelineKind | null) => {
+            if (value !== null) setKind(value);
+          }}>
+          {overlapKinds.map((item) => (
+            <ToggleButton key={item.kind} value={item.kind}>
+              {item.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      }
+      contentClassName={s.chartContent}>
       {!userIds.length ? (
         <p>Select at least one person to start comparing.</p>
-      ) : error ? (
-        <p>
-          Could not load artists. <Button onClick={retry}>Retry</Button>
-        </p>
-      ) : !artists ? (
-        <CircularProgress size={24} aria-label="Loading competition artists" />
+      ) : error || !shown ? (
+        <RequestState error={error} retry={retry} />
       ) : !selected ? (
-        <p>No artist listening history in this period.</p>
+        <p>No listening history in this period.</p>
       ) : (
         <>
+          {regions && (
+            <TasteOverlap
+              people={shown.data.people}
+              regions={regions}
+              round={shown.kind === "artists"}
+              pickedId={selected.id}
+              pick={(id) => setPicked({ kind: shown.kind, id })}
+            />
+          )}
           <Autocomplete
-            className={s.artistSelector}
-            options={artists}
+            className={s.itemSelector}
+            options={
+              options.some((item) => item.id === selected.id)
+                ? options
+                : [selected, ...options]
+            }
             value={selected}
             disableClearable
             getOptionLabel={(option) => option.name}
             getOptionKey={(option) => option.id}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            onChange={(_, value) => setSelectedId(value.id)}
-            renderOption={(props, artist) => {
+            onChange={(_, value) =>
+              setPicked({ kind: shown.kind, id: value.id })
+            }
+            renderOption={(props, item) => {
               const { key, ...rest } = props;
               return (
                 <li
                   key={key}
                   {...rest}
-                  className={clsx(rest.className, s.artistOption)}>
-                  {artist.image && (
-                    <img src={artist.image} alt="" loading="lazy" />
-                  )}
-                  <span>{artist.name}</span>
+                  className={clsx(rest.className, s.itemOption)}>
+                  {item.image && <img src={item.image} alt="" loading="lazy" />}
+                  <span>
+                    {item.name}
+                    {item.subtitle && <small>{item.subtitle}</small>}
+                  </span>
                 </li>
               );
             }}
             renderInput={(params) => (
-              <TextField {...params} label="Artist" size="small" />
+              <TextField {...params} label={label} size="small" />
             )}
-            noOptionsText="No matching artists"
+            noOptionsText="No matches"
           />
           <CompetitionRace
             userIds={userIds}
             start={start}
             end={end}
-            artistId={selected.id}
+            kind={shown.kind}
+            itemId={selected.id}
           />
         </>
       )}
@@ -183,6 +258,7 @@ export default function Compete() {
   } = useListeningRequest(participantsRequest);
   const { interval } = useSelector(selectRawIntervalDetail);
   const [selection, setSelection] = useState<string[]>();
+  const [kind, setKind] = useState<TopTimelineKind>("artists");
   const currentUserId = user?._id;
   const selectedIds = (selection ?? (currentUserId ? [currentUserId] : []))
     .filter((id) => participants?.some((person) => person.id === id))
@@ -198,8 +274,8 @@ export default function Compete() {
   }, [refreshParticipants]);
   const start = interval.start.getTime();
   const end = interval.end.getTime();
-  // New people or dates get a fresh ranking and the strongest shared artist.
-  const artistScope = JSON.stringify([start, end, [...userIds].sort()]);
+  // New people or dates get a fresh ranking and the most shared pick.
+  const scope = JSON.stringify([start, end, [...userIds].sort()]);
 
   return (
     <div>
@@ -244,20 +320,14 @@ export default function Compete() {
           <TitleCard title="Listening time" contentClassName={s.chartContent}>
             <CompetitionRace userIds={userIds} start={start} end={end} />
           </TitleCard>
-          <ArtistCompetition
-            key={artistScope}
+          <ItemCompetition
+            key={scope}
             userIds={userIds}
             start={start}
             end={end}
+            kind={kind}
+            setKind={setKind}
           />
-          {(userIds.length === 2 || userIds.length === 3) && (
-            <TasteOverlap
-              key={`overlap:${artistScope}`}
-              userIds={userIds}
-              start={start}
-              end={end}
-            />
-          )}
           <CompetitionInsights userIds={userIds} start={start} end={end} />
         </div>
       </div>

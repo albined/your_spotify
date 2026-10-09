@@ -2,10 +2,9 @@ import { PipelineStage, Types } from "mongoose";
 
 import { getWithDefault } from "../../tools/env";
 import { statisticsFor } from "../listeningDuration";
-import { AlbumModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
-import { getStatisticsArtists, normalizeArtistCredits } from "./artistGroups";
 import { requireCompetitionParticipants } from "./competitionParticipants";
+import { getItemDetails, itemField, ItemKind } from "./listeningItems";
 import {
   bucketExpression,
   cumulativeHours,
@@ -15,7 +14,6 @@ import {
 } from "./listeningTimelineTools";
 import { RaceLeaders } from "./raceLeaders";
 
-export type TopTimelineKind = "songs" | "albums" | "artists";
 export type CompetitionMetric =
   | "hours"
   | "count"
@@ -28,78 +26,15 @@ const validDuration = {
   $lte: Number.MAX_SAFE_INTEGER,
 };
 
-export async function getCompetitionArtists(
-  userIds: string[],
-  start: Date,
-  end: Date,
-  user?: User,
-) {
-  const Statistics = statisticsFor(user);
-  const accounts = await requireCompetitionParticipants(userIds);
-  const ids = accounts.map((account) => account._id.toHexString());
-  if (!ids.length) return [];
-  const ranked = await Statistics.aggregate<{
-    _id: string;
-    minimumDuration: number;
-    totalDuration: number;
-  }>([
-    {
-      $match: {
-        owner: { $in: ids.map((id) => new Types.ObjectId(id)) },
-        played_at: { $gte: start, $lt: end },
-        blacklistedBy: { $exists: false },
-        primaryArtistId: { $type: "string", $ne: "" },
-        durationMs: validDuration,
-      },
-    },
-    {
-      $group: {
-        _id: { artist: "$primaryArtistId", owner: "$owner" },
-        duration: { $sum: "$durationMs" },
-      },
-    },
-    {
-      $group: {
-        _id: "$_id.artist",
-        minimumDuration: { $min: "$duration" },
-        totalDuration: { $sum: "$duration" },
-        listeners: { $sum: 1 },
-      },
-    },
-    // Missing participants have zero hours; taking only the minimum of
-    // existing rows would incorrectly promote one person's favorite artist.
-    {
-      $set: {
-        minimumDuration: {
-          $cond: [{ $eq: ["$listeners", ids.length] }, "$minimumDuration", 0],
-        },
-      },
-    },
-    { $sort: { minimumDuration: -1, totalDuration: -1, _id: 1 } },
-    { $limit: 200 },
-  ]).option({ maxTimeMS: 15_000, allowDiskUse: true });
-  const metadata = await getStatisticsArtists(ranked.map((row) => row._id));
-  const byId = new Map(metadata.map((artist) => [artist.id, artist]));
-  return ranked.map((row) => ({
-    id: row._id,
-    name: byId.get(row._id)?.name ?? "Unknown artist",
-    image: byId.get(row._id)?.images.at(-1)?.url,
-    minimumHours: row.minimumDuration / 3_600_000,
-    totalHours: row.totalDuration / 3_600_000,
-  }));
-}
-
 export async function getTopTimeline(
   user: User,
   start: Date,
   end: Date,
-  kind: TopTimelineKind,
+  kind: ItemKind,
 ) {
   const Statistics = statisticsFor(user);
   const bounds = timelineBounds(start, end, 200);
-  const field = (
-    { songs: "id", albums: "albumId", artists: "primaryArtistId" } as const
-  )[kind];
+  const field = itemField[kind];
   const crownEnd = Math.min(end.getTime(), Date.now());
   const match = {
     owner: user._id,
@@ -144,56 +79,18 @@ export async function getTopTimeline(
         },
       ])
     : [];
-  const [rawTracks, rawAlbums, artists] = await Promise.all([
-    kind === "songs"
-      ? TrackModel.find({ id: { $in: ids } })
-          .select("id name album artists")
-          .lean()
-      : [],
-    kind === "albums"
-      ? AlbumModel.find({ id: { $in: ids } })
-          .select("id name images artists")
-          .lean()
-      : [],
-    kind === "artists" ? getStatisticsArtists(ids) : [],
-  ]);
-  const [tracks, albums] = await Promise.all([
-    normalizeArtistCredits(rawTracks),
-    normalizeArtistCredits(rawAlbums),
-  ]);
-  const [covers, credits] = await Promise.all([
-    tracks.length
-      ? AlbumModel.find({ id: { $in: tracks.map((track) => track.album) } })
-          .select("id images")
-          .lean()
-      : [],
-    kind !== "artists"
-      ? getStatisticsArtists(
-          [...tracks, ...albums].flatMap((item) => item.artists),
-        )
-      : [],
-  ]);
+  const details = await getItemDetails(kind, ids);
   return {
     ...bounds,
     timezone:
       user.settings.timezone ?? getWithDefault("TIMEZONE", "Europe/Paris"),
     series: top.map((item) => {
-      const track = tracks.find((value) => value.id === item._id);
-      const album = albums.find((value) => value.id === item._id);
-      const artist = artists.find((value) => value.id === item._id);
+      const { name, subtitle, images } = details(item._id);
       return {
         id: item._id,
-        name:
-          (track ?? album ?? artist)?.name ?? `Unknown ${kind.slice(0, -1)}`,
-        subtitle: (track ?? album)?.artists
-          .map((id) => credits.find((value) => value.id === id)?.name)
-          .filter(Boolean)
-          .join(", "),
-        images:
-          album?.images ??
-          artist?.images ??
-          covers.find((value) => value.id === track?.album)?.images ??
-          [],
+        name,
+        subtitle,
+        images,
         hours: cumulativeHours(
           denseHours(
             bounds,
@@ -226,7 +123,8 @@ export async function getCompetitionTimeline(
   start: Date,
   end: Date,
   metric: CompetitionMetric,
-  artistId?: string,
+  // Narrows the race to one song, album or artist.
+  item?: { kind: ItemKind; id: string },
 ) {
   const Statistics = statisticsFor(user);
   const bounds = timelineBounds(start, end, 200);
@@ -236,7 +134,7 @@ export async function getCompetitionTimeline(
     owner: { $in: ids.map((id) => new Types.ObjectId(id)) },
     blacklistedBy: { $exists: false },
     played_at: { $gte: start, $lt: end },
-    ...(artistId ? { primaryArtistId: artistId } : {}),
+    ...(item ? { [itemField[item.kind]]: item.id } : {}),
     ...(metric === "hours" ? { durationMs: validDuration } : {}),
   };
   const unique = metric === "differentTracks" || metric === "differentArtists";

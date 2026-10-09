@@ -3,7 +3,7 @@ const { test } = require("node:test");
 const { connectTestDb, dropTestDb } = require("./helpers.cjs");
 
 test(
-  "competition artists rank by the least-listening participant, including missing listeners",
+  "competition artists rank by the participant they matter least to, including missing listeners",
   { skip: !process.env.TIMELINE_TEST_MONGO_URI },
   async () => {
     const mongoose = require("mongoose");
@@ -13,9 +13,9 @@ test(
       UserModel,
     } = require("../src/database/Models");
     const {
-      getCompetitionArtists,
       getCompetitionTimeline,
     } = require("../src/database/queries/raceTimeline");
+    const { getTasteOverlap } = require("../src/database/queries/tasteOverlap");
     await connectTestDb("competition_artists_test");
     try {
       const ids = Array.from(
@@ -66,55 +66,44 @@ test(
         play(a, "missing-duration", 0, { durationMs: null }),
       ]);
       const pair = [String(a), String(b)];
-      const ranked = await getCompetitionArtists(pair, start, end);
+      const user = { _id: a, settings: { timezone: "Europe/Stockholm" } };
+      const artists = async (people, from = start) =>
+        (await getTasteOverlap(user, people, from, end)).items;
+      // Shares of 1255 h and 52 h: "uneven" is 16% and 4%, "shared" 3% and 67%.
+      const ranked = await artists(pair);
       assert.deepEqual(
-        ranked.map((artist) => [artist.id, artist.minimumHours]),
-        [
-          ["shared", 35],
-          ["three-way", 15],
-          ["uneven", 2],
-          ["solo", 0],
-        ],
+        ranked.map((artist) => artist.id),
+        ["uneven", "shared", "three-way", "solo"],
       );
-      assert.equal(ranked[0].totalHours, 75);
+      assert.equal(ranked[0].name, "uneven");
       assert.deepEqual(
-        await getCompetitionArtists(
-          [String(a).toUpperCase(), ...pair],
-          start,
-          end,
-        ),
+        await artists([String(a).toUpperCase(), ...pair]),
         ranked,
       );
-      const trio = await getCompetitionArtists(
-        [...pair, String(c)],
-        start,
-        end,
+      // The third person plays "shared" for 2% of 66 h and "uneven" for 76%.
+      assert.deepEqual(
+        (await artists([...pair, String(c)])).map((artist) => artist.id),
+        ["uneven", "shared", "three-way", "solo"],
       );
       assert.deepEqual(
-        trio.map((artist) => [artist.id, artist.minimumHours]),
-        [
-          ["three-way", 15],
-          ["uneven", 2],
-          ["shared", 1],
-          ["solo", 0],
-        ],
+        (await artists([String(a)])).map((artist) => artist.id),
+        ["solo", "uneven", "shared", "three-way"],
       );
-      const single = await getCompetitionArtists([String(a)], start, end);
-      assert.equal(single[0].id, "solo");
-      assert.equal(single[0].minimumHours, 1000);
       assert.deepEqual(
-        await getCompetitionArtists(
-          pair,
-          new Date(start.getTime() + 2 * day),
-          end,
-        ),
+        await artists(pair, new Date(start.getTime() + 2 * day)),
         [],
       );
-      assert.deepEqual(await getCompetitionArtists([], start, end), []);
-      const user = { _id: a, settings: { timezone: "Europe/Stockholm" } };
+      assert.deepEqual(await artists([]), []);
       const totals = async (artist) =>
         (
-          await getCompetitionTimeline(user, pair, start, end, "hours", artist)
+          await getCompetitionTimeline(
+            user,
+            pair,
+            start,
+            end,
+            "hours",
+            artist && { kind: "artists", id: artist },
+          )
         ).series.map((series) => series.values.at(-1));
       assert.deepEqual(await totals(), [1255, 52]);
       assert.deepEqual(await totals("shared"), [40, 35]);
@@ -125,13 +114,13 @@ test(
           play(a, `extra-${String(i).padStart(3, "0")}`, 1),
         ),
       );
-      const capped = await getCompetitionArtists(pair, start, end);
+      // Whatever only one of them plays follows by its size, then by ID.
+      const capped = await artists(pair);
       assert.equal(capped.length, 200);
       assert.deepEqual(
-        capped.slice(0, 4).map((artist) => artist.id),
-        ["shared", "three-way", "uneven", "solo"],
+        capped.slice(0, 5).map((artist) => artist.id),
+        ["uneven", "shared", "three-way", "solo", "extra-000"],
       );
-      assert.equal(capped[4].id, "extra-000");
     } finally {
       await dropTestDb();
     }

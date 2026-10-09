@@ -66,13 +66,15 @@ selected range and scrolls back through everything before it.
 Artist eras and Artists by hour are separate cards on All stats only; Home shows
 Artist distribution without them.
 
-Competition now has a fixed overall listening-time race and a separate artist
-race below it. Its searchable dropdown contains up to 200 artists, ranked by
-the minimum recorded hours across all selected participants in the selected
-period. Missing listeners count as zero; ties use combined hours, then artist
-ID. Changing people or dates selects the new highest-ranked artist. Changing
-the artist only refreshes the artist race. Both API routes require login and
-the existing affinity permission.
+Competition has a fixed overall listening-time race and, in the card below it,
+a race for one artist, album or song; a toggle in that card's header chooses
+which of the three. Its searchable dropdown contains up to 200 of them, ranked
+by the smallest share any selected participant gives it of their listening time
+in the selected period. Someone who never plays it counts as zero; ties use the
+combined shares, then the ID. Changing people or dates selects the new
+highest-ranked entry. Changing the entry only refreshes its race, and changing
+the kind keeps the card as it is until the new list arrives. All routes require
+login and the existing affinity permission.
 
 Top songs, artists and albums races keep the five highest listening-time totals
 in the selected range, then fill up to ten lines with entries that spent longest
@@ -235,17 +237,22 @@ of its exact trailing window across short, long and overlapping date ranges. It
 also covers warm-up history, expiry boundaries, empty windows, future dates and
 keeping the warm-up history out of the selected-period hourly histogram.
 
-With two or three people selected, Competition shows a taste overlap Venn
-diagram; with any other number the card is absent. Each circle is all of one
-person's selected-period listening time, split by primary artist. An artist
-counts as shared up to the smallest share among the people in a region, and the
-excess belongs to whoever plays it more, so every person's regions add up to
-100%. Two circles are drawn to scale; three use a fixed layout with the
-percentages written in. Hovering, focusing or selecting a region lists its top
-twelve artists. `/spotify/collaborative/taste-overlap` applies the same
-participant, blacklist and duration rules as the other competition queries and
-returns null when someone has no listening in the range.
-`test/tasteOverlap.test.cjs` covers the split, the region totals and those rules.
+With two or three people selected, the same card shows a taste overlap Venn
+diagram above the race; with any other number the diagram is absent. Each
+circle is all of one person's selected-period listening time, split by primary
+artist, album or song as the toggle says. An entry counts as shared up to the
+smallest share among the people in a region, and the excess belongs to whoever
+plays it more, so every person's regions add up to 100%. Two circles are drawn
+to scale; three use a fixed layout with the percentages written in. Hovering,
+focusing or selecting a region lists its top twelve entries, and the diagram
+opens on the region with the most people that holds anything. Choosing an entry
+from that list runs the race for it, as choosing it in the dropdown does.
+`/spotify/collaborative/taste-overlap` takes the kind, applies the same
+participant, blacklist and duration rules as the other competition queries, and
+returns the dropdown's list for any number of people, with the regions null
+unless two or three people all have listening in the range.
+`test/tasteOverlap.test.cjs` and `test/competitionArtists.test.cjs` cover the
+split, the region totals, the ranking and those rules.
 
 Home and All stats share zero-based listening-volume lines with gentle
 interpolation through the actual totals and a faint fill. There are no

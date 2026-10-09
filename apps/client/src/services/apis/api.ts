@@ -34,7 +34,6 @@ import type {
 } from "../listeningPatterns";
 import {
   ArtistTimeline,
-  CompetitionArtist,
   CompetitionMetric,
   CompetitionTimeline,
   TopMovement,
@@ -497,22 +496,17 @@ export const api = {
     start: Date,
     end: Date,
     metric: CompetitionMetric,
-    artistId?: string,
+    item?: { kind: TopTimelineKind; id: string },
   ) =>
     get<CompetitionTimeline>("/spotify/collaborative/listening-timeline", {
       userIds,
       start,
       end,
       metric,
-      artistId,
+      kind: item?.kind,
+      itemId: item?.id,
     }),
 
-  getCompetitionArtists: (userIds: string[], start: Date, end: Date) =>
-    get<CompetitionArtist[]>("/spotify/collaborative/competition-artists", {
-      userIds,
-      start,
-      end,
-    }),
   getCompetitionParticipants: () =>
     get<{ id: string; name: string }[]>(
       "/spotify/collaborative/competition-participants",
@@ -523,11 +517,17 @@ export const api = {
       start,
       end,
     }),
-  getTasteOverlap: (userIds: string[], start: Date, end: Date) =>
-    get<TasteOverlap | null>("/spotify/collaborative/taste-overlap", {
+  getTasteOverlap: (
+    userIds: string[],
+    start: Date,
+    end: Date,
+    kind: TopTimelineKind,
+  ) =>
+    get<TasteOverlap>("/spotify/collaborative/taste-overlap", {
       userIds,
       start,
       end,
+      kind,
     }),
 
   generatePublicToken: () => post<string>("/generate-public-token"),

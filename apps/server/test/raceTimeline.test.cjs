@@ -174,22 +174,30 @@ test(
             ),
           );
         });
-        const filtered = await getCompetitionTimeline(
-          user,
-          ids,
-          start,
-          end,
-          metric,
-          "artist-11",
-        );
-        assert.deepEqual(
-          filtered.series.map((item) => item.values.at(-1)),
-          metric === "hours"
-            ? [17, 9, 0]
-            : metric === "count"
-              ? [3, 2, 0]
-              : [1, 1, 0],
-        );
+        // The same plays, reached through their artist, album or song.
+        for (const item of [
+          { kind: "artists", id: "artist-11" },
+          { kind: "albums", id: "album-11" },
+          { kind: "songs", id: "song-11" },
+        ]) {
+          const filtered = await getCompetitionTimeline(
+            user,
+            ids,
+            start,
+            end,
+            metric,
+            item,
+          );
+          assert.deepEqual(
+            filtered.series.map((series) => series.values.at(-1)),
+            metric === "hours"
+              ? [17, 9, 0]
+              : metric === "count"
+                ? [3, 2, 0]
+                : [1, 1, 0],
+            item.kind,
+          );
+        }
       }
       // A narrowed range restarts uniqueness at zero, even for an old favourite.
       const narrowed = await getCompetitionTimeline(

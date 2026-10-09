@@ -40,7 +40,6 @@ import {
   getListeningHeatmaps,
 } from "../database/queries/listeningPatterns";
 import {
-  getCompetitionArtists,
   getCompetitionTimeline,
   getTopTimeline,
 } from "../database/queries/raceTimeline";
@@ -450,7 +449,8 @@ const competitionTimelineSchema = interval
     metric: z
       .enum(["hours", "count", "differentTracks", "differentArtists"])
       .default("hours"),
-    artistId: z.string().min(1).optional(),
+    kind: z.enum(["songs", "albums", "artists"]).default("artists"),
+    itemId: z.string().min(1).optional(),
   })
   .refine(({ start, end }) => start < end, {
     message: "Start must be before end",
@@ -482,38 +482,18 @@ router.get(
 );
 
 router.get(
-  "/collaborative/competition-artists",
-  logged,
-  affinityAllowed,
-  async (req, res) => {
-    const { start, end, userIds } = validate(
-      normalizeUserIdsQuery(req.query),
-      competitionTimelineSchema,
-    );
-    res
-      .status(200)
-      .send(
-        await getCompetitionArtists(
-          userIds,
-          start,
-          end,
-          (req as LoggedRequest).user,
-        ),
-      );
-  },
-);
-
-router.get(
   "/collaborative/taste-overlap",
   logged,
   affinityAllowed,
   async (req, res) => {
     const { user } = req as LoggedRequest;
-    const { start, end, userIds } = validate(
+    const { start, end, userIds, kind } = validate(
       normalizeUserIdsQuery(req.query),
       competitionTimelineSchema,
     );
-    res.status(200).json(await getTasteOverlap(user, userIds, start, end));
+    res
+      .status(200)
+      .json(await getTasteOverlap(user, userIds, start, end, kind));
   },
 );
 
@@ -523,7 +503,7 @@ router.get(
   affinityAllowed,
   async (req, res) => {
     const { user } = req as LoggedRequest;
-    const { start, end, userIds, metric, artistId } = validate(
+    const { start, end, userIds, metric, kind, itemId } = validate(
       normalizeUserIdsQuery(req.query),
       competitionTimelineSchema,
     );
@@ -536,7 +516,7 @@ router.get(
           start,
           end,
           metric,
-          artistId,
+          itemId ? { kind, id: itemId } : undefined,
         ),
       );
   },
