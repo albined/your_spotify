@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 
 import { YourSpotifyError } from "../../tools/errors/error";
+import { escapeRegExp } from "../../tools/utils";
 import { ArtistModel, UserModel } from "../Models";
 
 class VisibilityError extends YourSpotifyError {
@@ -33,7 +34,7 @@ export async function getArtistVisibility(owner: Types.ObjectId) {
 }
 
 export function searchVisibilityArtists(query: string) {
-  const pattern = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = escapeRegExp(query);
   return ArtistModel.find({ name: { $regex: pattern, $options: "i" } })
     .select("id name images")
     .sort({ name: 1, id: 1 })

@@ -6,6 +6,7 @@ import {
 } from "../../spotify/dbTools";
 import { SpotifyAPI } from "../apis/spotifyApi";
 import { longWriteDbLock } from "../lock";
+import { escapeRegExp } from "../utils";
 
 export function spotifyTrackId(input: string) {
   const value = input.trim();
@@ -77,7 +78,7 @@ export async function trackDescriptions(tracks: Track[]) {
 }
 
 export async function reviewCandidates(userId: string, query: string) {
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escaped = escapeRegExp(query);
   const local = await TrackModel.find({
     name: { $regex: escaped, $options: "i" },
   })
