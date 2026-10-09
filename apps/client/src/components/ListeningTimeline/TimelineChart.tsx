@@ -1,3 +1,4 @@
+import { ExpandMore } from "@mui/icons-material";
 import { useMediaQuery } from "@mui/material";
 import { MouseEvent, useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -90,6 +91,8 @@ interface Props {
   height?: number;
   // Lines read as spikes when a narrow chart is as tall as a wide one.
   phoneHeight?: number;
+  // On a phone the legend starts with this many series and can be opened.
+  phoneLegendLimit?: number;
   showLegend?: boolean;
   legendPosition?: "bottom" | "right";
   hoverSeriesOnly?: boolean;
@@ -107,6 +110,7 @@ export default function TimelineChart({
   bucketed = false,
   height = 280,
   phoneHeight,
+  phoneLegendLimit,
   showLegend = true,
   legendPosition = "bottom",
   hoverSeriesOnly = false,
@@ -114,6 +118,7 @@ export default function TimelineChart({
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
   const candidate = hovered ?? pinned;
   const highlighted = series.some((item) => item.id === candidate)
     ? candidate
@@ -153,6 +158,10 @@ export default function TimelineChart({
   // shares its edges with the legend.
   const phone = useMediaQuery("(max-width: 900px)");
   const inset = phone && !stacked && insetScale;
+  const legendLimit =
+    phone && phoneLegendLimit && series.length > phoneLegendLimit
+      ? phoneLegendLimit
+      : undefined;
   const single = hoverSeriesOnly ? hovered : tapToPick ? highlighted : null;
   const Chart = stacked
     ? series.some((item) => item.lineOnly)
@@ -319,7 +328,10 @@ export default function TimelineChart({
       </div>
       {showLegend && (
         <div className={s.legend} aria-label="Highlight a chart series">
-          {series.map((item, index) => (
+          {(legendLimit && !legendOpen
+            ? series.slice(0, legendLimit)
+            : series
+          ).map((item, index) => (
             <button
               key={item.id}
               type="button"
@@ -356,6 +368,19 @@ export default function TimelineChart({
             </button>
           ))}
         </div>
+      )}
+      {showLegend && legendLimit && (
+        <button
+          type="button"
+          className={s.legendToggle}
+          aria-expanded={legendOpen}
+          onClick={() => setLegendOpen(!legendOpen)}>
+          {legendOpen ? "Show fewer" : `Show all ${series.length}`}
+          <ExpandMore
+            fontSize="inherit"
+            sx={{ transform: legendOpen ? "rotate(180deg)" : undefined }}
+          />
+        </button>
       )}
     </div>
   );
