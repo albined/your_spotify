@@ -1,12 +1,56 @@
+import type { TopTimelineKind } from "./listeningTimeline";
+
+// A song, album or artist that a race can be run for.
+export interface OverlapItem {
+  id: string;
+  name: string;
+  // The credited artists of a song or album.
+  subtitle?: string;
+  image?: string;
+}
+
 export interface TasteOverlap {
   people: { id: string; name: string }[];
-  regions: {
-    // Indexes into people; a region belongs to exactly these people.
-    members: number[];
-    share: number;
-    artists: { id: string; name: string; image?: string; share: number }[];
-  }[];
+  // Present when two or three people all have listening to compare.
+  regions:
+    | {
+        // Indexes into people; a region belongs to exactly these people.
+        members: number[];
+        share: number;
+        items: (OverlapItem & { share: number })[];
+      }[]
+    | null;
+  // The most shared first.
+  items: OverlapItem[];
 }
+
+// The region shown before one is chosen: the most people who have something
+// in common, and of those the one where it is most.
+export function widestRegion(regions: NonNullable<TasteOverlap["regions"]>) {
+  let widest = regions.length - 1;
+  regions.forEach((region, index) => {
+    const best = regions[widest]!;
+    if (
+      region.items.length &&
+      (!best.items.length ||
+        region.members.length > best.members.length ||
+        (region.members.length === best.members.length &&
+          region.share > best.share))
+    )
+      widest = index;
+  });
+  return widest;
+}
+
+export const overlapKinds: {
+  kind: TopTimelineKind;
+  label: string;
+  one: string;
+}[] = [
+  { kind: "artists", label: "Artists", one: "Artist" },
+  { kind: "albums", label: "Albums", one: "Album" },
+  { kind: "songs", label: "Songs", one: "Song" },
+];
 
 // Distance between two equal circles whose lens covers `share` of each.
 export function overlapDistance(share: number, radius: number) {

@@ -1,15 +1,12 @@
-import { useCallback, useId, useState } from "react";
-import { Link } from "react-router-dom";
+import clsx from "clsx";
+import { useId, useState } from "react";
 
-import { RequestState } from "../../../components/ListeningPatterns/shared";
 import { seriesColor } from "../../../components/ListeningTimeline/TimelineChart";
-import TitleCard from "../../../components/TitleCard";
-import { api } from "../../../services/apis/api";
-import { useListeningRequest } from "../../../services/hooks/hooks";
 import {
   formatShare,
   overlapDistance,
   TasteOverlap as TasteOverlapData,
+  widestRegion,
 } from "../../../services/tasteOverlap";
 
 import s from "./index.module.css";
@@ -88,13 +85,18 @@ function trioLayout(): Layout {
   };
 }
 
+interface Overlap {
+  people: TasteOverlapData["people"];
+  regions: NonNullable<TasteOverlapData["regions"]>;
+}
+
 function Venn({
   data,
   active,
   preview,
   select,
 }: {
-  data: TasteOverlapData;
+  data: Overlap;
   active: number;
   preview: (region?: number) => void;
   select: (region: number) => void;
@@ -213,65 +215,69 @@ function Venn({
   );
 }
 
-function regionTitle(data: TasteOverlapData, members: number[]) {
+function regionTitle(data: Overlap, members: number[]) {
   const names = members.map((person) => data.people[person]!.name);
   return members.length === 1 ? `Only ${names[0]}` : names.join(" & ");
 }
 
+// The diagram and the list of what its chosen region holds. Picking from the
+// list is how the page chooses what the race below is run for.
 export default function TasteOverlap({
-  userIds,
-  start,
-  end,
-}: {
-  userIds: string[];
-  start: number;
-  end: number;
+  people,
+  regions,
+  round,
+  pickedId,
+  pick,
+}: Overlap & {
+  // Artists are shown round, covers square.
+  round: boolean;
+  pickedId: string;
+  pick: (id: string) => void;
 }) {
-  const request = useCallback(
-    () => api.getTasteOverlap(userIds, new Date(start), new Date(end)),
-    [userIds, start, end],
-  );
-  const { data, error, retry } = useListeningRequest(request);
   const [selected, setSelected] = useState<number>();
   const [previewed, setPreviewed] = useState<number>();
-  if (data === null) return null;
-  const active = previewed ?? selected ?? (data ? data.regions.length - 1 : 0);
-  const region = data?.regions[active];
+  const data = { people, regions };
+  const active = previewed ?? selected ?? widestRegion(regions);
+  const region = regions[active];
+  if (!region) return null;
   return (
-    <TitleCard title="Taste overlap" contentClassName={s.chartContent}>
-      {!data || !region ? (
-        <RequestState error={error} retry={retry} />
-      ) : (
-        <div className={s.overlap}>
-          <Venn
-            data={data}
-            active={active}
-            preview={setPreviewed}
-            select={setSelected}
-          />
-          <div className={s.overlapDetail} aria-live="polite">
-            <div className={s.overlapTitle}>
-              <strong>{regionTitle(data, region.members)}</strong>
-              <span>{formatShare(region.share)}</span>
-            </div>
-            <ol className={s.overlapArtists}>
-              {region.artists.map((artist) => (
-                <li key={artist.id}>
-                  {artist.image ? (
-                    <img src={artist.image} alt="" loading="lazy" />
-                  ) : (
-                    <span className={s.overlapNoImage} />
-                  )}
-                  <Link to={`/artist/${artist.id}`} title={artist.name}>
-                    {artist.name}
-                  </Link>
-                  <span>{formatShare(artist.share, 1)}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
+    <div className={s.overlap}>
+      <Venn
+        data={data}
+        active={active}
+        preview={setPreviewed}
+        select={setSelected}
+      />
+      <div className={s.overlapDetail} aria-live="polite">
+        <div className={s.overlapTitle}>
+          <strong>{regionTitle(data, region.members)}</strong>
+          <span>{formatShare(region.share)}</span>
         </div>
-      )}
-    </TitleCard>
+        <ol className={clsx(s.overlapItems, round && s.round)}>
+          {region.items.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                aria-pressed={item.id === pickedId}
+                title={
+                  item.subtitle ? `${item.name} · ${item.subtitle}` : item.name
+                }
+                onClick={() => pick(item.id)}>
+                {item.image ? (
+                  <img src={item.image} alt="" loading="lazy" />
+                ) : (
+                  <span className={s.overlapNoImage} />
+                )}
+                <span className={s.overlapName}>
+                  <span>{item.name}</span>
+                  {item.subtitle && <small>{item.subtitle}</small>}
+                </span>
+                <span>{formatShare(item.share, 1)}</span>
+              </button>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
   );
 }

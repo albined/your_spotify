@@ -45,22 +45,28 @@
   color: var(--text-on-light);
 }
 
-.artistSelector {
+.itemSelector {
   width: min(360px, 100%);
   margin-bottom: 20px;
 }
 
-.artistOption {
+.itemOption {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.artistOption img {
+.itemOption img {
   width: 28px;
   height: 28px;
   border-radius: 4px;
   object-fit: cover;
+}
+
+.itemOption small {
+  margin-left: 8px;
+  color: var(--text-secondary);
+  font-size: inherit;
 }
 
 .leaderboard {
@@ -93,6 +99,9 @@
   grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
   align-items: start;
   gap: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .venn {
@@ -151,47 +160,73 @@
 }
 
 .overlapTitle span,
-.overlapArtists span {
+.overlapItems button > :last-child {
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
-.overlapArtists {
+.overlapItems {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 2px 24px;
+  gap: 2px 16px;
   margin: 8px 0 0;
   padding: 0;
   list-style: none;
 }
 
-.overlapArtists li {
+.overlapItems button {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  padding: 4px 0;
+  width: 100%;
+  padding: 4px 8px 4px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.overlapArtists img,
+.overlapItems button:hover,
+.overlapItems button:focus-visible {
+  background: color-mix(in srgb, var(--text-on-light) 8%, transparent);
+}
+
+.overlapItems button[aria-pressed="true"] {
+  background: var(--surface-selected);
+}
+
+.overlapItems img,
 .overlapNoImage {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 4px;
   object-fit: cover;
   background: var(--border-subtle);
 }
 
-.overlapArtists a {
+.round img,
+.round .overlapNoImage {
+  border-radius: 50%;
+}
+
+.overlapName {
+  display: grid;
+  min-width: 0;
+}
+
+.overlapName > * {
   overflow: hidden;
-  color: inherit;
-  text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.overlapArtists a:hover {
-  text-decoration: underline;
+.overlapName small {
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 @media (max-width: 700px) {

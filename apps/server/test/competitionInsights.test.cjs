@@ -70,9 +70,9 @@ test(
       getCompetitionInsights,
     } = require("../src/database/queries/competitionInsights");
     const {
-      getCompetitionArtists,
       getCompetitionTimeline,
     } = require("../src/database/queries/raceTimeline");
+    const { getTasteOverlap } = require("../src/database/queries/tasteOverlap");
     const {
       listCompetitionParticipants,
     } = require("../src/database/queries/competitionParticipants");
@@ -187,7 +187,7 @@ test(
       const forbidden = [String(a), String(c)];
       for (const run of [
         () => getCompetitionInsights(user, forbidden, start, end),
-        () => getCompetitionArtists(forbidden, start, end),
+        () => getTasteOverlap(user, forbidden, start, end),
         () => getCompetitionTimeline(user, forbidden, start, end, "hours"),
         () =>
           getCompetitionInsights(
@@ -234,7 +234,7 @@ test(
       ids.forEach((id) => query.append("userIds[]", id));
       for (const route of [
         "competition-insights",
-        "competition-artists",
+        "taste-overlap",
         "listening-timeline",
       ]) {
         assert.equal(

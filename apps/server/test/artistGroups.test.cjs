@@ -44,9 +44,9 @@ test(
     } = require("../src/database/queries/stats");
     const {
       getTopTimeline,
-      getCompetitionArtists,
       getCompetitionTimeline,
     } = require("../src/database/queries/raceTimeline");
+    const { getTasteOverlap } = require("../src/database/queries/tasteOverlap");
     const {
       getCompetitionInsights,
     } = require("../src/database/queries/competitionInsights");
@@ -182,16 +182,16 @@ test(
           .every((row) => row.subtitle === "Together"),
       );
       const people = [String(a), String(b)];
-      const common = await getCompetitionArtists(people, start, end);
-      assert.equal(common[0].id, id);
-      assert(Math.abs(common[0].minimumHours - 0.15) < 1e-10);
+      const common = await getTasteOverlap(user, people, start, end);
+      assert.equal(common.items[0].id, id);
+      assert.equal(common.regions.at(-1).items[0].id, id);
       const competition = await getCompetitionTimeline(
         user,
         people,
         start,
         end,
         "hours",
-        id,
+        { kind: "artists", id },
       );
       assert(Math.abs(competition.series[0].values.at(-1) - 0.3) < 1e-10);
       const insights = await getCompetitionInsights(user, people, start, end);
