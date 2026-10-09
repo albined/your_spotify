@@ -168,7 +168,6 @@ test(
           new Date(to),
         );
         assert.equal(alone.overlap, null);
-        assert.deepEqual(data.series[1], alone.series[0]);
         assert.deepEqual(Object.keys(data.series[1]).sort(), [
           "hours",
           "id",
@@ -176,6 +175,22 @@ test(
           "percentages",
           "values",
         ]);
+        assert.equal(data.series[1].id, alone.series[0].id);
+        // The two queries add up the same plays in a different order, so a
+        // total can differ in its last digit.
+        for (const key of ["values", "hours", "percentages"]) {
+          const together = data.series[1][key];
+          const single = alone.series[0][key];
+          assert.equal(together.length, single.length);
+          together.forEach((value, i) =>
+            assert(
+              value === null || single[i] === null
+                ? value === single[i]
+                : Math.abs(value - single[i]) < 1e-9,
+              `${key} ${i} in ${from}..${to}: ${value} vs ${single[i]}`,
+            ),
+          );
+        }
       }
       const pair = await getCompetitionInsights(
         user,
