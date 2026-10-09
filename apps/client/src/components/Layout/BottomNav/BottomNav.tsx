@@ -16,6 +16,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useIsGuest } from "../../../services/hooks/hooks";
 import { selectAffinityEnabled } from "../../../services/redux/modules/settings/selector";
 import { compact } from "../../../services/tools";
+import { scrollToTop } from "../ScrollTop";
 
 import s from "./index.module.css";
 
@@ -85,6 +86,15 @@ export default function BottomNav() {
             key={tab.link}
             to={tab.link}
             className={s.tab}
+            // Pressing the tab of the page already open goes back to its top.
+            onClick={
+              pathname === tab.link
+                ? (event) => {
+                    event.preventDefault();
+                    scrollToTop();
+                  }
+                : undefined
+            }
             aria-current={active ? "page" : undefined}>
             {active ? tab.iconOn : tab.icon}
             <span>{tab.label}</span>

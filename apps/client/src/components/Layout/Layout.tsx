@@ -9,6 +9,7 @@ import {
 } from "../../services/redux/modules/user/selector";
 import Text from "../Text";
 import BottomNav from "./BottomNav";
+import ScrollTop from "./ScrollTop";
 import Sider from "./Sider";
 import { useSider } from "./useSider";
 
@@ -44,6 +45,10 @@ export default function Layout({ children }: LayoutProps) {
         )}
         {children}
       </section>
+      <ScrollTop
+        besideSider={siderAllowed && !siderIsDrawer}
+        aboveBottomNav={bottomNav}
+      />
       {bottomNav && <BottomNav />}
     </div>
   );
