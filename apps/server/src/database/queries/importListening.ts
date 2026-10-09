@@ -1,7 +1,6 @@
 import { Types } from "mongoose";
 
 import { ImportRecord } from "../../tools/importers/records";
-import { reviewHash } from "../../tools/importers/reviewIdentity";
 import { InfosModel, TrackModel } from "../Models";
 import { Infos } from "../schemas/info";
 import { Track } from "../schemas/track";
@@ -12,7 +11,6 @@ export type ImportOutcome = "added" | "updated" | "unchanged" | "ambiguous";
 export interface ReconcileResult {
   outcome: ImportOutcome;
   deltaMs: number;
-  stateHash?: string;
   estimated?: boolean;
 }
 const priority = { privacy: 1, "full-privacy": 2, deezer: 2 };
@@ -72,7 +70,6 @@ export async function reconcileImport(
   importId: string,
   rowIndex: number | string,
   identity = new ImportContext(),
-  dryRun = false,
   decision?: { existingId: string | null },
 ): Promise<ReconcileResult> {
   const manual =
@@ -274,19 +271,10 @@ export async function reconcileImport(
     !separateSpotifyListen
   )
     return { outcome: "ambiguous", deltaMs: 0 };
-  const previewState = () => ({
-    stateHash: reviewHash([
-      existing?.toObject() ?? null,
-      track.id,
-      track.duration_ms,
-      user.settings.blacklistedArtists,
-    ]),
-  });
   if (existing?.lastImportRow === rowId) {
     // Recover a row committed before its progress checkpoint was saved.
-    if (!dryRun) await identity.repairMembership(user, existing);
+    await identity.repairMembership(user, existing);
     return {
-      ...(dryRun ? previewState() : {}),
       outcome: existing.lastImportOutcome ?? "unchanged",
       deltaMs: existing.lastImportDeltaMs ?? 0,
       ...(row.deezerPolicy && existing.listenedMs == null
@@ -322,13 +310,8 @@ export async function reconcileImport(
     ) {
       // Repeated exports need no event write. A retry returns the same zero
       // delta without replacing the result of an earlier durable mutation.
-      if (!dryRun) await identity.repairMembership(user, existing);
-      return {
-        outcome: "unchanged",
-        deltaMs: 0,
-        ...estimated,
-        ...(dryRun ? previewState() : {}),
-      };
+      await identity.repairMembership(user, existing);
+      return { outcome: "unchanged", deltaMs: 0, ...estimated };
     }
     const deltaMs = changed
       ? (canCorrect
@@ -337,7 +320,6 @@ export async function reconcileImport(
         (existing.listenedMs ?? existing.durationMs)
       : 0;
     const outcome = changed ? "updated" : "unchanged";
-    if (dryRun) return { outcome, deltaMs, ...estimated, ...previewState() };
     const recomputeBlacklist =
       repairRecording && existing.primaryArtistId !== track.artists[0];
     const blacklist = user.settings.blacklistedArtists.includes(
@@ -412,8 +394,6 @@ export async function reconcileImport(
   const deltaMs = row.listenedMs ?? track.duration_ms;
   const estimated =
     row.deezerPolicy && row.listenedMs === null ? { estimated: true } : {};
-  if (dryRun)
-    return { outcome: "added", deltaMs, ...estimated, ...previewState() };
   const created = await InfosModel.create({
     ...(manual ? { recordingMappingId: manual.id } : {}),
     owner: user._id,

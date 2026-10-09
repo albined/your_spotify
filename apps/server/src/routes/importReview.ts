@@ -110,22 +110,13 @@ router.get("/imports/review/candidates", logged, async (req, res) => {
   );
 });
 router.post("/imports/review/apply", logged, async (req, res) => {
-  const value = validate(
-    req.body,
-    selection.extend({
-      token: z
-        .string()
-        .regex(/^[a-f0-9]{64}$/)
-        .optional(),
-    }),
-  );
+  const value = validate(req.body, selection);
   try {
     res.send(
       await applyReview(
         (req as LoggedRequest).user,
         value.group,
         spotifyTrackId(value.track),
-        value.token,
       ),
     );
   } catch (error) {

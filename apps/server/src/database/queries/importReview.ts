@@ -315,25 +315,6 @@ export async function listReviewGroups(user: User, category: ReviewView) {
   };
 }
 
-export async function getReviewRows(
-  user: User,
-  category: ReviewView,
-  groupKey: string,
-  offset = 0,
-) {
-  const filter = reviewFilter(user._id, category, groupKey);
-  const [rows, total] = await Promise.all([
-    ImportReviewModel.find(filter)
-      .sort({ "record.at": 1, key: 1 })
-      .skip(offset)
-      .limit(50)
-      .select("record category reason occurrences")
-      .lean(),
-    ImportReviewModel.countDocuments(filter),
-  ]);
-  return { rows, total };
-}
-
 export async function pendingRecording(user: User, key: string) {
   return ImportReviewModel.find(reviewFilter(user._id, "recording", key))
     .sort({ "record.at": 1, key: 1 })

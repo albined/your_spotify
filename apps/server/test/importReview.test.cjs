@@ -86,10 +86,8 @@ test(
     const {
       ReviewStore,
       listReviewGroups,
-      getReviewRows,
     } = require("../src/database/queries/importReview");
     const {
-      previewReview,
       applyReview,
       chooseNoMatch,
     } = require("../src/tools/importers/review");
@@ -134,6 +132,11 @@ test(
         duration_ms: 180000,
         external_ids: { isrc: "CORRECT" },
       });
+      // How many rows the review list shows for one group.
+      const pendingCount = async (account, category, group) =>
+        (await listReviewGroups(account, category)).groups.find(
+          (item) => item._id === group,
+        )?.count ?? 0;
       const row = (extra = {}) => ({
         source: "deezer",
         provider: "deezer",
@@ -194,14 +197,7 @@ test(
             assert.equal(groups.length, 1);
             assert.equal(groups[0].count, 125);
             assert.equal(groups[0].sourceRows, 125);
-            const page = await getReviewRows(
-              user,
-              "recording",
-              groups[0]._id,
-              100,
-            );
-            assert.equal(page.rows.length, 25);
-            assert.equal(page.rows[0].record.album, "Source release");
+            assert.equal(groups[0].album, "Source release");
           } finally {
             ImportResolver.prototype.resolve = old;
           }
@@ -213,17 +209,14 @@ test(
           0,
         );
         const group = (await listReviewGroups(user, "recording")).groups[0];
-        assert.equal(
-          (await getReviewRows(other, "recording", group._id)).total,
-          0,
-        );
+        assert.equal(await pendingCount(other, "recording", group._id), 0);
         await assert.rejects(
-          previewReview(other, group._id, targetId),
+          applyReview(other, group._id, targetId),
           /no pending/,
         );
       });
       await t.test(
-        "preview writes no plays; applying a group saves provenance and repeats safely",
+        "applying a group saves provenance and repeats safely",
         async () => {
           await save(row());
           await save(
@@ -231,16 +224,8 @@ test(
           );
           const group = recordingKey(row());
           const count = await InfosModel.countDocuments();
-          const preview = await previewReview(user, group, targetId);
-          assert.equal(preview.summary.added, 2);
-          assert.equal(await InfosModel.countDocuments(), count);
           assert.equal(await ImportMappingModel.countDocuments(), 0);
-          const result = await applyReview(
-            user,
-            group,
-            targetId,
-            preview.token,
-          );
+          const result = await applyReview(user, group, targetId);
           assert.equal(result.summary.added, 2);
           const mapping = await ImportMappingModel.findOne({
             owner: user._id,
@@ -254,12 +239,9 @@ test(
           assert.ok(
             plays.every((p) => p.id === targetId && p.provider === "deezer"),
           );
-          assert.equal(
-            (await getReviewRows(user, "recording", group)).total,
-            0,
-          );
+          assert.equal(await pendingCount(user, "recording", group), 0);
           await assert.rejects(
-            applyReview(user, group, targetId, preview.token),
+            applyReview(user, group, targetId),
             /no pending/,
           );
           assert.equal(await InfosModel.countDocuments(), count + 2);
@@ -331,13 +313,8 @@ test(
             artistIds: ["old-artist", "artist"],
             blacklistedBy: "artist",
           });
-          const preview = await previewReview(
-            user,
-            recordingKey(entry),
-            targetId,
-          );
-          assert.equal(preview.summary.updated, 1);
-          await applyReview(user, recordingKey(entry), targetId, preview.token);
+          const result = await applyReview(user, recordingKey(entry), targetId);
+          assert.equal(result.summary.updated, 1);
           const play = await InfosModel.findById(old._id).lean();
           assert.equal(play.id, targetId);
           assert.equal(play.primaryArtistId, "artist");
@@ -347,7 +324,7 @@ test(
         },
       );
       await t.test(
-        "stale preview and concurrent import are rejected",
+        "a concurrent import is rejected and a choice applies to current history",
         async () => {
           const entry = row({
             key: "stale",
@@ -356,7 +333,20 @@ test(
           });
           await save(entry);
           const group = recordingKey(entry);
-          const preview = await previewReview(user, group, targetId);
+          claimImportWork(String(user._id));
+          try {
+            await assert.rejects(
+              applyReview(user, group, targetId),
+              /already running/,
+            );
+          } finally {
+            releaseImportWork(String(user._id));
+          }
+          assert.equal(
+            await ImportMappingModel.countDocuments({ recordingKey: group }),
+            0,
+          );
+          // The same listen arrives from Spotify before the choice is made.
           await InfosModel.create({
             owner: user._id,
             id: targetId,
@@ -366,24 +356,16 @@ test(
             primaryArtistId: "artist",
             artistIds: ["artist"],
           });
-          await assert.rejects(
-            applyReview(user, group, targetId, preview.token),
-            /History changed/,
-          );
+          const result = await applyReview(user, group, targetId);
+          assert.equal(result.summary.added, 0);
           assert.equal(
-            await ImportMappingModel.countDocuments({ recordingKey: group }),
-            0,
+            await InfosModel.countDocuments({
+              owner: user._id,
+              id: targetId,
+              played_at: entry.at,
+            }),
+            1,
           );
-          claimImportWork(String(user._id));
-          try {
-            await assert.rejects(previewReview(user, group, targetId), /Wait/);
-            await assert.rejects(
-              applyReview(user, group, targetId, preview.token),
-              /already running/,
-            );
-          } finally {
-            releaseImportWork(String(user._id));
-          }
         },
       );
       await t.test(
@@ -396,7 +378,6 @@ test(
           });
           await save(entry);
           const group = recordingKey(entry);
-          const first = await previewReview(user, group, targetId);
           const update = ImportReviewModel.updateOne;
           let fail = true;
           ImportReviewModel.updateOne = function (...args) {
@@ -408,14 +389,13 @@ test(
           };
           try {
             await assert.rejects(
-              applyReview(user, group, targetId, first.token),
+              applyReview(user, group, targetId),
               /checkpoint/,
             );
           } finally {
             ImportReviewModel.updateOne = update;
           }
-          const second = await previewReview(user, group, targetId);
-          await applyReview(user, group, targetId, second.token);
+          await applyReview(user, group, targetId);
           assert.equal(
             await InfosModel.countDocuments({
               owner: user._id,
@@ -423,10 +403,7 @@ test(
             }),
             1,
           );
-          assert.equal(
-            (await getReviewRows(user, "recording", group)).total,
-            0,
-          );
+          assert.equal(await pendingCount(user, "recording", group), 0);
         },
       );
       await t.test(
@@ -449,15 +426,11 @@ test(
             artistIds: ["artist"],
           });
           const group = recordingKey(entry);
-          const preview = await previewReview(user, group, targetId);
-          assert.equal(preview.summary.ambiguous, 1);
           const before = await InfosModel.countDocuments();
-          await applyReview(user, group, targetId, preview.token);
+          const result = await applyReview(user, group, targetId);
+          assert.equal(result.summary.ambiguous, 1);
           assert.equal(await InfosModel.countDocuments(), before);
-          assert.equal(
-            (await getReviewRows(user, "recording", group)).total,
-            1,
-          );
+          assert.equal(await pendingCount(user, "recording", group), 1);
         },
       );
       await t.test(
@@ -483,7 +456,7 @@ test(
           assert.equal(group.count, 2);
           assert.equal(group.sourceRows, 3);
           await assert.rejects(
-            previewReview(user, group._id, targetId),
+            applyReview(user, group._id, targetId),
             /no pending/,
           );
         },
@@ -510,7 +483,7 @@ test(
         },
       );
       await t.test(
-        "multiple pending identities at one timestamp cannot inflate the preview or apply",
+        "multiple pending identities at one timestamp cannot inflate history",
         async () => {
           const a = row({
             key: "overlap-label-a",
@@ -525,11 +498,10 @@ test(
           await save(a);
           await save(b);
           const group = recordingKey(a);
-          const preview = await previewReview(user, group, targetId);
-          assert.equal(preview.summary.ambiguous, 2);
-          assert.equal(preview.summary.added, 0);
           const count = await InfosModel.countDocuments();
-          await applyReview(user, group, targetId, preview.token);
+          const result = await applyReview(user, group, targetId);
+          assert.equal(result.summary.ambiguous, 2);
+          assert.equal(result.summary.added, 0);
           assert.equal(await InfosModel.countDocuments(), count);
         },
       );
@@ -1126,16 +1098,9 @@ test(
             };
             for (const play of protectedPlays) {
               await assert.rejects(
-                reconcileImport(
-                  user,
-                  entry,
-                  track,
-                  "review",
-                  0,
-                  identity,
-                  false,
-                  { existingId: String(play._id) },
-                ),
+                reconcileImport(user, entry, track, "review", 0, identity, {
+                  existingId: String(play._id),
+                }),
                 /already linked/,
               );
             }
@@ -1494,10 +1459,7 @@ test(
             (await InfosModel.findById(existing._id)).listenedMs,
             45000,
           );
-          assert.equal(
-            (await getReviewRows(user, "recording", group)).total,
-            0,
-          );
+          assert.equal(await pendingCount(user, "recording", group), 0);
           assert.equal(
             await ImportMappingModel.countDocuments({
               owner: user._id,
@@ -1574,14 +1536,8 @@ test(
             );
             await chooseNoMatch(user, group);
             await chooseNoMatch(user, group);
-            assert.equal(
-              (await getReviewRows(user, "recording", group)).total,
-              0,
-            );
-            assert.equal(
-              (await getReviewRows(user, "no-match", group)).total,
-              2,
-            );
+            assert.equal(await pendingCount(user, "recording", group), 0);
+            assert.equal(await pendingCount(user, "no-match", group), 2);
             assert.equal(
               (await listReviewGroups(other, "no-match")).groups.length,
               0,
@@ -1612,19 +1568,13 @@ test(
               before,
             );
             await chooseNoMatch(other, group, true);
-            assert.equal(
-              (await getReviewRows(user, "no-match", group)).total,
-              3,
-            );
+            assert.equal(await pendingCount(user, "no-match", group), 3);
             const {
               up,
             } = require("../src/migrations/1790592000004-add_no_match_review");
             await up();
             await up();
-            assert.equal(
-              (await getReviewRows(user, "no-match", group)).total,
-              3,
-            );
+            assert.equal(await pendingCount(user, "no-match", group), 3);
 
             ImportReviewModel.updateMany = () => {
               throw new Error("Injected reopen checkpoint failure");
@@ -1639,14 +1589,8 @@ test(
             }
             await chooseNoMatch(user, group, true);
             await chooseNoMatch(user, group, true);
-            assert.equal(
-              (await getReviewRows(user, "no-match", group)).total,
-              0,
-            );
-            assert.equal(
-              (await getReviewRows(user, "recording", group)).total,
-              3,
-            );
+            assert.equal(await pendingCount(user, "no-match", group), 0);
+            assert.equal(await pendingCount(user, "recording", group), 3);
             assert.equal(
               await ImportMappingModel.countDocuments({
                 owner: user._id,
@@ -1703,7 +1647,7 @@ test(
             ),
             "timestamp",
           );
-          assert.equal((await getReviewRows(user, "no-match", group)).total, 0);
+          assert.equal(await pendingCount(user, "no-match", group), 0);
           const conflict = await ImportReviewModel.find({
             owner: user._id,
             recordingKey: group,
