@@ -8,6 +8,7 @@ import {
   saveArtistGroup,
 } from "../database/queries/artistGroups";
 import { admin, isLoggedOrGuest, logged, validate } from "../tools/middleware";
+import { escapeRegExp } from "../tools/utils";
 
 export const router = Router();
 const groupSchema = z.object({
@@ -34,7 +35,7 @@ router.get("/search", logged, admin, async (req, res) => {
     req.query,
     z.object({ query: z.string().trim().min(1).max(80) }),
   );
-  const pattern = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = escapeRegExp(query);
   res.json(
     await ArtistModel.find({ name: { $regex: pattern, $options: "i" } })
       .select("id name images")

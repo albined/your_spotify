@@ -1,4 +1,5 @@
 import { Timesplit } from "../../tools/types";
+import { escapeRegExp } from "../../tools/utils";
 import { InfosModel, TrackModel } from "../Models";
 import { User } from "../schemas/user";
 import {
@@ -17,7 +18,10 @@ export const getStatisticsTracks = async (tracksId: string[]) =>
 
 export const searchTrack = async (str: string) => {
   return populateStatisticsArtists(
-    await TrackModel.find({ name: { $regex: new RegExp(str, "i") } })
+    await TrackModel.find({
+      name: { $regex: escapeRegExp(str), $options: "i" },
+    })
+      .limit(50)
       .populate("full_album")
       .lean(),
   );

@@ -296,6 +296,11 @@ test(
       assert.equal((await searchTrack("Song a"))[0].full_artists.length, 1);
       assert.equal((await searchAlbum("Album b"))[0].full_artists[0].id, id);
       assert.equal((await searchArtist("Artist b"))[0].id, id);
+      // Typed punctuation is searched for as written, not run as a pattern.
+      for (const search of [searchTrack, searchAlbum, searchArtist]) {
+        assert.deepEqual(await search("("), []);
+        assert.deepEqual(await search(".*"), []);
+      }
       const uniqueRace = await getCompetitionTimeline(
         user,
         people,

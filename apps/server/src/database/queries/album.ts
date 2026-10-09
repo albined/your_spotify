@@ -1,3 +1,4 @@
+import { escapeRegExp } from "../../tools/utils";
 import { AlbumModel } from "../Models";
 import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
@@ -13,7 +14,11 @@ export const getAlbums = async (albumsId: string[]) =>
 
 export const searchAlbum = async (str: string) => {
   return populateStatisticsArtists(
-    await AlbumModel.find({ name: { $regex: new RegExp(str, "i") } }).lean(),
+    await AlbumModel.find({
+      name: { $regex: escapeRegExp(str), $options: "i" },
+    })
+      .limit(50)
+      .lean(),
   );
 };
 

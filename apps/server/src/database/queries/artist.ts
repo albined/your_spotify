@@ -1,4 +1,5 @@
 import { Timesplit } from "../../tools/types";
+import { escapeRegExp } from "../../tools/utils";
 import { statisticsFor } from "../listeningDuration";
 import { ArtistModel } from "../Models";
 import { User } from "../schemas/user";
@@ -9,7 +10,7 @@ export const getArtists = (artistIds: string[]) =>
   getStatisticsArtists(artistIds);
 
 export const searchArtist = async (str: string) => {
-  const pattern = new RegExp(str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  const pattern = new RegExp(escapeRegExp(str), "i");
   const originals = await ArtistModel.find({ name: { $regex: pattern } })
     .limit(50)
     .lean();
