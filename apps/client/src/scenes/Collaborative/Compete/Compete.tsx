@@ -184,12 +184,13 @@ export default function Compete() {
   const { interval } = useSelector(selectRawIntervalDetail);
   const [selection, setSelection] = useState<string[]>();
   const currentUserId = user?._id;
+  const selectedIds = (selection ?? (currentUserId ? [currentUserId] : []))
+    .filter((id) => participants?.some((person) => person.id === id))
+    .join(",");
+  // The same people on a refreshed list must not restart every comparison.
   const userIds = useMemo(
-    () =>
-      (selection ?? (currentUserId ? [currentUserId] : [])).filter((id) =>
-        participants?.some((person) => person.id === id),
-      ),
-    [selection, currentUserId, participants],
+    () => (selectedIds ? selectedIds.split(",") : []),
+    [selectedIds],
   );
   useEffect(() => {
     window.addEventListener("focus", refreshParticipants);
