@@ -4,9 +4,9 @@
 }
 
 @media screen and (max-width: 900px) {
-    .tabs {
-        margin-bottom: 8px;
-    }
+  .tabs {
+    margin-bottom: 8px;
+  }
 }
 
 .item {
