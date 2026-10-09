@@ -1,11 +1,12 @@
 import { ExpandMore } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
+import clsx from "clsx";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 
+import { artistColor } from "../../services/artistDistribution";
 import { selectUser } from "../../services/redux/modules/user/selector";
 import {
-  artistColor,
   ListeningSession,
   sessionArtwork,
   sessionArtistBlocks,
@@ -17,6 +18,8 @@ import InlineTrack from "../InlineTrack";
 import { usePlotWidth } from "../ListeningPatterns/shared";
 
 import s from "./index.module.css";
+
+const MINOR_SHARE = 0.1;
 
 export default function LongestSession({
   session,
@@ -40,7 +43,11 @@ export default function LongestSession({
   const timeZone = user?.statisticsTimezone;
   const date = new Intl.DateTimeFormat(locale, {
     timeZone,
-    year: "numeric",
+    // The year is only worth its width for a session from another year.
+    year:
+      new Date(timeline.start).getFullYear() === new Date().getFullYear()
+        ? undefined
+        : "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -61,18 +68,20 @@ export default function LongestSession({
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
         aria-controls={detailsId}>
-        <span className={s.date}>
-          <span className={s.rank}>#{rank}</span>
-          {date.formatRange(timeline.start, timeline.end)}
+        <span className={s.summary}>
+          <span className={s.figure}>
+            <span className={s.rank}>#{rank}</span>
+            <strong>{msToDuration(timeline.listened)}</strong>
+          </span>
+          <span className={s.detail}>
+            {date.formatRange(timeline.start, timeline.end)} · {tracks.length}{" "}
+            {tracks.length === 1 ? "song" : "songs"}
+          </span>
         </span>
-        <span className={s.stats}>
-          <strong>{msToDuration(timeline.listened)}</strong>
-          <span>{tracks.length} songs</span>
-          <ExpandMore
-            fontSize="small"
-            sx={{ transform: expanded ? "rotate(180deg)" : undefined }}
-          />
-        </span>
+        <ExpandMore
+          fontSize="small"
+          sx={{ transform: expanded ? "rotate(180deg)" : undefined }}
+        />
       </button>
       <div
         className={s.bar}
@@ -84,11 +93,15 @@ export default function LongestSession({
           const artist = artists.get(section.artist);
           const label = `${artist?.name ?? "Unknown artist"} · ${msToDuration(section.end - section.start)} · ${section.songs} songs`;
           const image = artist?.images.at(-1)?.url;
+          // Artists with a small share stay neutral, so the bar reads as a
+          // few artists and the rest instead of a strip of slivers.
+          const minor =
+            section.end - section.start < MINOR_SHARE * timeline.listened;
           return (
             <Tooltip title={label} key={index} arrow enterTouchDelay={0}>
               <button
                 type="button"
-                className={s.section}
+                className={clsx(s.section, minor && s.minor)}
                 aria-label={label}
                 tabIndex={index === focused ? 0 : -1}
                 onFocus={() => setFocused(index)}
@@ -109,9 +122,9 @@ export default function LongestSession({
                 style={{
                   left: `${(100 * section.start) / timeline.listened}%`,
                   width: `${(100 * (section.end - section.start)) / timeline.listened}%`,
-                  background: artistColor(section.artist),
+                  background: minor ? undefined : artistColor(section.artist),
                 }}>
-                {image && artwork.has(index) && (
+                {image && !minor && artwork.has(index) && (
                   <img src={image} alt="" loading="lazy" />
                 )}
               </button>

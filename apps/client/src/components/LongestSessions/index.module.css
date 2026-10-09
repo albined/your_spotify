@@ -1,6 +1,6 @@
 .sessions {
   display: grid;
-  gap: 24px;
+  gap: 18px;
 }
 .more {
   display: flex;
@@ -19,38 +19,44 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 4px 0 10px;
+  padding: 0 0 8px;
   border: 0;
   background: none;
-  color: var(--text-on-light);
+  color: var(--text-secondary);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.date,
-.stats {
+.summary {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.figure {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 15px;
 }
-.date {
-  font-size: 14px;
-}
-.stats {
-  font-size: 13px;
-  white-space: nowrap;
+.figure strong {
+  color: var(--text-strong);
+  font-weight: 600;
 }
 .rank {
-  opacity: 0.6;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+.detail {
+  font-size: 13px;
 }
 .bar {
   position: relative;
-  height: 40px;
+  height: 24px;
   min-width: 1px;
   border-radius: 6px;
   overflow: hidden;
-  background: rgba(var(--primary-tuple), 0.08);
+  background: var(--surface-raised);
 }
 .section {
   position: absolute;
@@ -69,10 +75,13 @@
   z-index: 1;
   filter: brightness(1.12);
 }
+.minor {
+  background: var(--surface-selected);
+}
 .section img {
-  width: 26px;
-  height: 26px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
   object-fit: cover;
   pointer-events: none;
@@ -89,11 +98,4 @@
 }
 .tracks li a {
   margin-right: 12px;
-}
-@media (max-width: 600px) {
-  .heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
-  }
 }
