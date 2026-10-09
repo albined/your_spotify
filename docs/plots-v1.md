@@ -196,6 +196,9 @@ bin merging, hourly normalization, item/owner isolation, DST, album ordering,
 invalid durations and lifetime behavior despite an All-time start preference.
 
 Longest sessions is a card at the end of All stats; `/sessions` redirects there.
+Each session's bar colours the artists holding at least a tenth of it, in the
+same per-artist colour as Artist distribution, and draws the rest as one
+neutral block.
 It starts with five horizontal bars on a shared listening-time scale: sessions
 are ranked by time spent in music, so pauses of up to ten minutes keep a session
 together without adding to its length.
@@ -359,6 +362,20 @@ between unrelated pages such as the bottom bar's tabs, a short push from the
 right into an artist, album or song page, and a full slide between the Top
 lists. Stepping between ranking neighbours keeps the page, dimmed, until the
 next has loaded.
+
+On a phone the line charts are shorter than on desktop so they do not read as
+spikes (`phoneHeight` on `TimelineChart`): 220px for the Competition races,
+200px for its diversity chart, 240px for the Top race and 180px for an artist's
+history. Artist distribution, Release years and Time of day shrink likewise.
+
+The Top race chart's legend starts with its first four series on a phone and
+opens to all of them (`phoneLegendLimit`). Ranks one to three in the Top lists
+are drawn as medals, as on the detail pages (`[data-medal]` in `index.css`).
+
+A Back to top pill appears at any width when the reader scrolls back up from
+more than a screen and a half down, and leaves again on scrolling down.
+Pressing the bottom bar's tab for the page already open also returns to its
+top.
 
 Changing the period keeps the previous period's figures, charts and lists on
 screen until the new ones arrive (`useHeldOverPeriod`), so the page does not
