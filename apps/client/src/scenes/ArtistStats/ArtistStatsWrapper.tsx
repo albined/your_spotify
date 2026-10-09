@@ -5,8 +5,7 @@ import { useParams } from "react-router-dom";
 import FullscreenCentered from "../../components/FullscreenCentered";
 import Text from "../../components/Text";
 import { api } from "../../services/apis/api";
-import { useLastLoaded } from "../../services/hooks/hooks";
-import { useListeningRequest } from "../../services/listeningTimeline";
+import { useLastLoaded, useListeningRequest } from "../../services/hooks/hooks";
 import ArtistStats from "./ArtistStats";
 
 export default function ArtistStatsWrapper() {

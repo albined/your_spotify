@@ -3,10 +3,10 @@ import { useCallback } from "react";
 import { useSelector } from "react-redux";
 
 import { api } from "../../services/apis/api";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import {
   cumulativeTimelinePoints,
   TopTimelineKind,
-  useListeningRequest,
 } from "../../services/listeningTimeline";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import TitleCard from "../TitleCard";

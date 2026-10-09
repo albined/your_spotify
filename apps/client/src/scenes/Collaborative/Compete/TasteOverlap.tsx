@@ -5,7 +5,7 @@ import { RequestState } from "../../../components/ListeningPatterns/shared";
 import { seriesColor } from "../../../components/ListeningTimeline/TimelineChart";
 import TitleCard from "../../../components/TitleCard";
 import { api } from "../../../services/apis/api";
-import { useListeningRequest } from "../../../services/listeningTimeline";
+import { useListeningRequest } from "../../../services/hooks/hooks";
 import {
   formatShare,
   overlapDistance,

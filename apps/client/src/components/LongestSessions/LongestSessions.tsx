@@ -55,9 +55,14 @@ function SessionList({ start, end }: { start: number; end: number }) {
           }));
         },
         () => {
-          if (active) {
-            setState((previous) => ({ ...previous, page, error: true }));
-          }
+          if (!active) return;
+          // A failed first page must not leave another period's sessions up.
+          setState((previous) => ({
+            data: page.offset ? previous.data : undefined,
+            hasMore: page.offset ? previous.hasMore : false,
+            page,
+            error: true,
+          }));
         },
       );
     return () => {

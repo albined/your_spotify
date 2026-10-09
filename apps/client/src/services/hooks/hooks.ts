@@ -3,6 +3,7 @@ import {
   RefObject,
   startTransition,
   TouchEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -49,7 +50,8 @@ export function useAPI<Fn extends (...ags: any[]) => Promise<{ data: D }>, D>(
 ): null | UnboxPromise<ReturnType<Fn>>["data"] {
   const [state, setState] = useState<{
     deps: unknown[];
-    data: UnboxPromise<ReturnType<Fn>>["data"];
+    data?: UnboxPromise<ReturnType<Fn>>["data"];
+    failed?: boolean;
   }>();
   const deps = [call, ...args];
   useEffect(() => {
@@ -60,7 +62,10 @@ export function useAPI<Fn extends (...ags: any[]) => Promise<{ data: D }>, D>(
       if (active) startTransition(() => setState({ deps, data: result.data }));
     }
 
-    fetch().catch(console.error);
+    fetch().catch((error) => {
+      console.error(error);
+      if (active) setState({ deps, failed: true });
+    });
     return () => {
       active = false;
     };
@@ -71,7 +76,52 @@ export function useAPI<Fn extends (...ags: any[]) => Promise<{ data: D }>, D>(
   const current =
     state?.deps.length === deps.length &&
     state.deps.every((dep, index) => Object.is(dep, deps[index]));
-  return useHeldOverPeriod(current ? state.data : undefined) ?? null;
+  const held = useHeldOverPeriod(current ? state.data : undefined) ?? null;
+  // After a failure the previous period's numbers must not pass as this one's.
+  return current && state.failed ? null : held;
+}
+
+// Keep stale responses from overwriting a newly selected artist/date range.
+export function useListeningRequest<T>(request: () => Promise<{ data: T }>) {
+  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<{
+    request: typeof request;
+    data?: T;
+    error?: boolean;
+  }>();
+  useEffect(() => {
+    let active = true;
+    // Asking again keeps an answer that is already shown; only a failed
+    // request goes back to loading.
+    setState((current) =>
+      current?.request === request && !current.error ? current : undefined,
+    );
+    request().then(
+      ({ data }) => {
+        // Chart rendering can yield to input while a response is displayed.
+        if (active) startTransition(() => setState({ request, data }));
+      },
+      () => {
+        if (!active) return;
+        // A refresh that fails leaves the answer already shown in place.
+        setState((current) =>
+          current?.request === request && !current.error
+            ? current
+            : { request, error: true },
+        );
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [request, attempt]);
+  const error = state?.request === request && state.error === true;
+  const held = useHeldOverPeriod(
+    state?.request === request ? state.data : undefined,
+  );
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
+  // After a failure the previous period's numbers must not pass as this one's.
+  return { data: error ? undefined : held, error, retry };
 }
 
 export function useConditionalAPI<

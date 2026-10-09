@@ -7,10 +7,10 @@ import TimelineChart, {
 } from "../../components/ListeningTimeline/TimelineChart";
 import TitleCard from "../../components/TitleCard";
 import { api } from "../../services/apis/api";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import {
   ArtistTimeline,
   cumulativeTimelinePoints,
-  useListeningRequest,
 } from "../../services/listeningTimeline";
 
 import s from "../../components/ListeningTimeline/index.module.css";

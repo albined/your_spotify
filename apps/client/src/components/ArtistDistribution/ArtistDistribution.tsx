@@ -15,7 +15,7 @@ import {
   buildArtistStream,
 } from "../../services/artistDistribution";
 import { calendarAxis } from "../../services/calendarAxis";
-import { useListeningRequest } from "../../services/listeningTimeline";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import TitleCard from "../TitleCard";
 

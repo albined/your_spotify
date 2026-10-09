@@ -3,7 +3,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { api } from "../../services/apis/api";
-import { useListeningRequest } from "../../services/listeningTimeline";
+import { useListeningRequest } from "../../services/hooks/hooks";
 import { HEATMAP_LABEL_WIDTH } from "../../services/matrixLayout";
 import { selectRawIntervalDetail } from "../../services/redux/modules/user/selector";
 import {
