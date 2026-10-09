@@ -216,6 +216,9 @@ unlock in a finally block. Reads remain available while writes wait. The databas
 account needs permission for `fsync` and `fsyncUnlock`. A dump timeout or failure
 blocks the import. A failed dump never replaces a completed archive. Retention
 only removes this application's completed archives after a successful backup.
+Every import takes its own backup. Review and timing choices are many small
+writes in one sitting, so they reuse a backup completed in the last 30 minutes
+instead of taking another.
 Use a backup directory outside the database volume and copy archives off the host
 if recovery from host/disk failure is required.
 

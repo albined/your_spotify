@@ -24,7 +24,11 @@ test(
     process.env.MONGO_ENDPOINT = `${uri}/${name}`;
     process.env.BACKUPS_ENABLED = "true";
     process.env.BACKUP_DIR = dir;
-    const { runBackup, backupStatus } = require("../src/tools/backups");
+    const {
+      runBackup,
+      backupBeforeReview,
+      backupStatus,
+    } = require("../src/tools/backups");
     const client = new MongoClient(uri);
     await client.connect();
     const originalPath = process.env.PATH;
@@ -37,6 +41,9 @@ test(
         { song: "b", durationMs: 240000 },
       ]);
       const archive = await runBackup("import");
+      // Review choices right after a backup share it instead of taking another.
+      assert.equal(await backupBeforeReview(), null);
+      assert.deepEqual(await readdir(dir), [archive]);
       await exec("mongorestore", [
         "--uri",
         uri,
