@@ -14,7 +14,7 @@ import {
 } from "../../database/queries/importTiming";
 import { Track } from "../../database/schemas/track";
 import { User } from "../../database/schemas/user";
-import { backupBeforeImport } from "../backups";
+import { backupBeforeReview } from "../backups";
 import { longWriteDbLock } from "../lock";
 import { selectedTrack, trackDescriptions } from "./reviewCatalog";
 import { reviewHash } from "./reviewIdentity";
@@ -98,7 +98,7 @@ export async function chooseNoMatch(user: User, group: string, reopen = false) {
   const userId = user._id.toString();
   claimImportWork(userId);
   try {
-    await backupBeforeImport();
+    await backupBeforeReview();
     await longWriteDbLock.lock();
     try {
       if (reopen) await reopenNoMatch(user, group);
@@ -141,8 +141,8 @@ export async function applyReview(
   claimImportWork(userId);
   try {
     const track = await selectedTrack(userId, id);
-    // Review changes use the same configured disaster-recovery policy as imports.
-    await backupBeforeImport();
+    // Review changes follow the import backup policy; one backup covers a sitting.
+    await backupBeforeReview();
     await longWriteDbLock.lock();
     try {
       const plan = await planReview(user, group, track);
@@ -224,7 +224,7 @@ export async function applyTimingChoice(
   const userId = user._id.toString();
   claimImportWork(userId);
   try {
-    await backupBeforeImport();
+    await backupBeforeReview();
     await longWriteDbLock.lock();
     try {
       return await resolveTimingReview(

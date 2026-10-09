@@ -21,7 +21,10 @@ import { logger } from "./logger";
 const exec = promisify(execFile);
 let active: Promise<string> | undefined;
 let lastError: string | null = null;
+let lastBackupAt = 0;
 let stopping = false;
+// Reviewing is many small writes in one sitting, so they share a backup.
+const REVIEW_BACKUP_REUSE_MS = 30 * 60 * 1000;
 const archivePattern =
   /^your-spotify-\d{4}-\d\d-\d\dT[\d-]+Z-(daily|import)\.archive\.gz$/;
 export const backupsEnabled = () => getWithDefault("BACKUPS_ENABLED", false);
@@ -118,7 +121,9 @@ export async function runBackup(reason: "daily" | "import") {
     throw new Error("Server is shutting down; retry the import after restart");
   active = createBackup(reason);
   try {
-    return await active;
+    const archive = await active;
+    lastBackupAt = Date.now();
+    return archive;
   } catch (error) {
     lastError = "Backup failed; check database permissions, tools and storage.";
     logger.error(lastError);
@@ -131,6 +136,15 @@ export async function runBackup(reason: "daily" | "import") {
 export async function backupBeforeImport() {
   if (!backupsEnabled() || !getWithDefault("BACKUP_BEFORE_IMPORT", true))
     return null;
+  return runBackup("import");
+}
+
+export async function backupBeforeReview() {
+  if (!backupsEnabled() || !getWithDefault("BACKUP_BEFORE_IMPORT", true))
+    return null;
+  // A backup already under way was started before this change is written.
+  if (active) await active.catch(() => {});
+  if (Date.now() - lastBackupAt < REVIEW_BACKUP_REUSE_MS) return null;
   return runBackup("import");
 }
 
