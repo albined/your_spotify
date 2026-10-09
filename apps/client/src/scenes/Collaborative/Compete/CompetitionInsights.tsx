@@ -84,6 +84,7 @@ export default function CompetitionInsights({
               series={data.series}
               unit="effective artists"
               height={280}
+              phoneHeight={200}
             />
           ))}
       </TitleCard>

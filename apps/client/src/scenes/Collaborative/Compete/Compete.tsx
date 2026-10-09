@@ -74,6 +74,7 @@ function CompetitionRace({
     <>
       <TimelineChart
         height={360}
+        phoneHeight={220}
         bounds={data}
         data={cumulativeTimelinePoints(
           data,

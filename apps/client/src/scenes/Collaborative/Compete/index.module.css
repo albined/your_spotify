@@ -83,6 +83,9 @@
   .content {
     grid-template-columns: minmax(0, 1fr);
   }
+  .hourChart {
+    height: 200px;
+  }
 }
 
 .overlap {
