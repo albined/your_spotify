@@ -61,12 +61,6 @@ export function sessionSections(tracks: TrackInfo[]) {
   return { start, end, duration: end - start, listened, sections };
 }
 
-export function artistColor(id: string) {
-  let hash = 2166136261;
-  for (const char of id) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
-  return `hsl(${(hash >>> 0) % 360} 52% 53%)`;
-}
-
 export function sessionArtistBlocks(
   timeline: ReturnType<typeof sessionSections>,
 ) {
