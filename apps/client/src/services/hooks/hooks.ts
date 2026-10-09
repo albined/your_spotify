@@ -239,20 +239,6 @@ export function useNavigateAndSearch() {
   };
 }
 
-export function useSheetState() {
-  const [open, setOpen] = useState(false);
-
-  const onClose = () => {
-    setOpen(false);
-  };
-
-  const onOpen = () => {
-    setOpen(true);
-  };
-
-  return [open, onOpen, onClose] as const;
-}
-
 export function useIsGuest() {
   const user = useSelector(selectUser);
 

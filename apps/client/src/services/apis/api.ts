@@ -61,7 +61,6 @@ import {
   TrackInfoWithFullArtistAlbum,
   SpotifyMe,
   CollaborativeMode,
-  UnboxPromise,
   TrackWithFullArtistAlbum,
   AlbumWithFullArtist,
 } from "../types";
@@ -531,29 +530,6 @@ export const api = {
       end,
     }),
 
-  competeTimePer: (
-    ids: string[],
-    start: Date,
-    end: Date,
-    timeSplit: Timesplit,
-    artistId?: string,
-  ) =>
-    get<
-      {
-        _id: DateId | null;
-        owner: string;
-        durationMs: number;
-        count: number;
-        differentTracks: number;
-        differentArtists: number;
-      }[]
-    >("/spotify/collaborative/time_per", {
-      userIds: ids,
-      start,
-      end,
-      timeSplit,
-      artistId,
-    }),
   generatePublicToken: () => post<string>("/generate-public-token"),
   deletePublicToken: () => post<string>("/delete-public-token"),
   getBestSongsOfHour: (start: Date, end: Date) =>
@@ -619,22 +595,3 @@ export const api = {
 };
 
 export const DEFAULT_ITEMS_TO_LOAD = 20;
-
-type ApiSignature = typeof api;
-
-export type RecordAsTuples<F, K extends keyof F = keyof F> = K extends K
-  ? [K, F[K]]
-  : never;
-type Signatures = RecordAsTuples<ApiSignature>;
-type TupleToUnbox<T extends [string, any]> = T extends [
-  string,
-  (...args: any[]) => Promise<{ data: any }>,
-]
-  ? [T[0], UnboxPromise<ReturnType<T[1]>>]
-  : never;
-
-type NamesAndReturns = TupleToUnbox<Signatures>;
-export type ApiData<T extends NamesAndReturns[0]> = Extract<
-  NamesAndReturns,
-  [T, any]
->[1]["data"];

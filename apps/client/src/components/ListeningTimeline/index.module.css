@@ -34,7 +34,6 @@
   color: var(--text-secondary);
 }
 
-.controls,
 .legend {
   display: flex;
   align-items: center;
@@ -148,18 +147,6 @@
     padding: 6px;
     font-size: 13px;
   }
-}
-
-.description {
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0 0 12px;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
-  gap: 16px;
 }
 
 .section {

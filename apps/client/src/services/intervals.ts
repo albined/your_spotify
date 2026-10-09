@@ -243,15 +243,6 @@ export function queryToIntervalDetail(
   return toReturn ?? defaultInterval;
 }
 
-export function useQueryToRawIntervalDetail(prefix: string) {
-  const [query] = useSearchParams();
-  const user = useSelector(selectUser);
-  return getRawIntervalDetail(
-    queryToIntervalDetail(query, prefix),
-    user ?? undefined,
-  );
-}
-
 export function useOldestListenedAtFromUsers(
   userIds: string[],
   prefix: string,
