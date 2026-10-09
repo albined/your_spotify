@@ -14,8 +14,6 @@ interface EnableAffinityProps {
 export default function EnableAffinity({ settings }: EnableAffinityProps) {
   const dispatch = useAppDispatch();
 
-  console.log("affiinity", settings);
-
   const handleEnable = () => {
     if (!settings) {
       return;
@@ -24,9 +22,9 @@ export default function EnableAffinity({ settings }: EnableAffinityProps) {
   };
 
   return (
-    <TitleCard title="Affinity">
+    <TitleCard title="Competition">
       <SettingLine
-        left={<Text size="normal">Enable affinity feature</Text>}
+        left={<Text size="normal">Enable competition</Text>}
         right={
           <Button onClick={handleEnable}>
             {settings.allowAffinity ? "YES" : "NO"}

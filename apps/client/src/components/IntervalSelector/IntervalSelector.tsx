@@ -1,13 +1,7 @@
 import { CalendarMonthOutlined } from "@mui/icons-material";
-import {
-  SelectProps,
-  Button,
-  IconButton,
-  MenuItem,
-  Select,
-} from "@mui/material";
+import { Button, IconButton } from "@mui/material";
 import { endOfDay, startOfDay } from "date-fns";
-import React, { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { getAppropriateTimesplitFromRange } from "../../services/date";
 import { IntervalDetail, selectorIntervals } from "../../services/intervals";
@@ -20,16 +14,9 @@ import s from "./index.module.css";
 interface IntervalSelectorProps {
   value: IntervalDetail;
   onChange: (newDetails: IntervalDetail) => void;
-  selectType?: SelectProps["variant"];
-  forceTiny?: boolean;
 }
 
-export function IntervalSelector({
-  value,
-  onChange,
-  selectType,
-  forceTiny,
-}: IntervalSelectorProps) {
+export function IntervalSelector({ value, onChange }: IntervalSelectorProps) {
   const groupName = useId();
   const options = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -53,71 +40,44 @@ export function IntervalSelector({
   }, [existingInterval]);
 
   const internOnChange = (index: number) => {
-    if (index === -1) {
-      setOpen(true);
-    } else {
-      const interval = selectorIntervals[index];
-      if (!interval) {
-        return;
-      }
-      onChange(interval);
+    const interval = selectorIntervals[index];
+    if (!interval) {
+      return;
     }
+    onChange(interval);
   };
 
-  let content: React.ReactNode;
-
-  if (forceTiny) {
-    content = (
-      <Select
-        variant={selectType ?? "outlined"}
-        size="small"
-        className={s.compact}
-        inputProps={{ "aria-label": "Listening period" }}
-        value={existingInterval}
-        onChange={(ev) => internOnChange(ev.target.value as number)}>
+  const content = (
+    <div className={s.segmented}>
+      <div
+        ref={options}
+        className={s.options}
+        role="radiogroup"
+        aria-label="Listening period">
         {selectorIntervals.map((inter, index) => (
-          <MenuItem key={inter.name} value={index}>
-            {inter.name}
-          </MenuItem>
+          <label key={inter.name} className={s.segment}>
+            <input
+              type="radio"
+              name={groupName}
+              value={index}
+              checked={existingInterval === index}
+              onChange={() => internOnChange(index)}
+            />
+            <span>{inter.name}</span>
+          </label>
         ))}
-        <MenuItem value={-1} onClick={() => setOpen(true)}>
-          Custom
-        </MenuItem>
-      </Select>
-    );
-  } else {
-    content = (
-      <div className={s.segmented}>
-        <div
-          ref={options}
-          className={s.options}
-          role="radiogroup"
-          aria-label="Listening period">
-          {selectorIntervals.map((inter, index) => (
-            <label key={inter.name} className={s.segment}>
-              <input
-                type="radio"
-                name={groupName}
-                value={index}
-                checked={existingInterval === index}
-                onChange={() => internOnChange(index)}
-              />
-              <span>{inter.name}</span>
-            </label>
-          ))}
-          <IconButton
-            size="small"
-            aria-label="Custom date range"
-            aria-haspopup="dialog"
-            aria-pressed={existingInterval === -1}
-            className={s.custom}
-            onClick={() => setOpen(true)}>
-            <CalendarMonthOutlined fontSize="small" />
-          </IconButton>
-        </div>
+        <IconButton
+          size="small"
+          aria-label="Custom date range"
+          aria-haspopup="dialog"
+          aria-pressed={existingInterval === -1}
+          className={s.custom}
+          onClick={() => setOpen(true)}>
+          <CalendarMonthOutlined fontSize="small" />
+        </IconButton>
       </div>
-    );
-  }
+    </div>
+  );
 
   const goodRange = Boolean(customIntervalDate[0] && customIntervalDate[1]);
 

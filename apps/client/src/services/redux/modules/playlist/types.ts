@@ -1,4 +1,4 @@
-import { CollaborativeMode, SpotifyImage } from "../../../types";
+import { SpotifyImage } from "../../../types";
 
 export interface Playlist {
   id: string;
@@ -10,14 +10,6 @@ export interface PlaylistTopSongsContext {
   type: "top";
   nb: number;
   interval: { start: number; end: number };
-}
-
-export interface PlaylistAffinityContext {
-  type: "affinity";
-  userIds: string[];
-  nb: number;
-  interval: { start: number; end: number };
-  mode: CollaborativeMode;
 }
 
 export interface PlaylistSingleSongContext {
@@ -34,7 +26,6 @@ export interface PlaylistTopArtistSongsContext {
 export type PlaylistContext =
   | PlaylistTopSongsContext
   | PlaylistSingleSongContext
-  | PlaylistAffinityContext
   | PlaylistTopArtistSongsContext;
 
 export type PlaylistContextFromType<T extends PlaylistContext["type"]> =

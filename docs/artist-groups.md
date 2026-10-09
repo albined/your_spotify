@@ -21,10 +21,10 @@ Grouping affects all users' definitions, while their histories remain separate.
 
 The same grouping is used by the home-page artist ranking, top-artist lists and
 races, distribution, eras, artist activity, sessions, artist detail statistics,
-calendars, listening milestones, song/album eras, artist affinity, competition
-artist selection, artist-filtered races and rolling diversity. Artist credits
-and navigation also use the group's name and image. A group member's artist
-link opens the combined detail page while grouping is enabled.
+calendars, listening milestones, song/album eras, competition artist selection,
+artist-filtered races and rolling diversity. Artist credits and navigation also
+use the group's name and image. A group member's artist link opens the combined
+detail page while grouping is enabled.
 
 Spotify track and album IDs remain separate. One play remains one play, and
 multiple credited aliases collapse to one credit while preserving primary-artist
@@ -68,7 +68,7 @@ modifying listening history. It is registered in `migrations.ts`.
 
 `test/artistGroups.test.cjs` uses a disposable database to exercise group totals
 before top-list limits, alias detail routes, eras, rankings, session artwork,
-affinity, competition minima, rolling diversity, deduplicated credits, future
+competition minima, rolling diversity, deduplicated credits, future
 ingestion, raw metadata access, reversibility, nested/overlapping membership,
 concurrent membership edits, stale revisions and admin authorization. It checks
 that stored plays and original artist documents are unchanged by group edits.

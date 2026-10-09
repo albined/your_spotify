@@ -117,10 +117,5 @@ export interface SpotifyMe {
   uri: string;
 }
 
-export enum CollaborativeMode {
-  AVERAGE = "average",
-  MINIMA = "minima",
-}
-
 export type HTMLTag = HTMLElementType;
 export type HTMLProps<T extends HTMLTag> = JSX.IntrinsicElements[T];

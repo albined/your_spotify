@@ -113,16 +113,6 @@ export const DateFormatter = {
   },
 };
 
-export function intervalToDisplay(start: Date, end: Date) {
-  const diff = end.getTime() - start.getTime();
-  const days = diff / (1000 * 60 * 60 * 24);
-
-  if (days < 60) {
-    return `${DateFormatter.toDayMonthYear(start)} to ${DateFormatter.toDayMonthYear(end)}`;
-  }
-  return `${DateFormatter.toMonthYear(start)} to ${DateFormatter.toMonthYear(end)}`;
-}
-
 export function intervalToHoursAndMinutes(start: Date, end: Date) {
   const minute = 60 * 1000;
   const hour = 60 * minute;

@@ -59,7 +59,6 @@ import {
   TrackInfo,
   TrackInfoWithFullArtistAlbum,
   SpotifyMe,
-  CollaborativeMode,
   TrackWithFullArtistAlbum,
   AlbumWithFullArtist,
 } from "../types";
@@ -454,38 +453,6 @@ export const api = {
     axios.post("/import/start", { existingStateId: id }),
   getImports: () => get<ImporterState[]>("/imports"),
   cleanupImport: (id: string) => delet(`/import/clean/${id}`),
-  collaborativeBestSongs: (
-    ids: string[],
-    start: Date,
-    end: Date,
-    mode: CollaborativeMode,
-  ) =>
-    get<
-      ({ track: Track; album: Album; artist: Artist } & Record<
-        string,
-        number
-      >)[]
-    >("/spotify/collaborative/top/songs", { otherIds: ids, start, end, mode }),
-  collaborativeBestAlbums: (
-    ids: string[],
-    start: Date,
-    end: Date,
-    mode: CollaborativeMode,
-  ) =>
-    get<({ album: Album; artist: Artist } & Record<string, number>)[]>(
-      "/spotify/collaborative/top/albums",
-      { otherIds: ids, start, end, mode },
-    ),
-  collaborativeBestArtists: (
-    ids: string[],
-    start: Date,
-    end: Date,
-    mode: CollaborativeMode,
-  ) =>
-    get<({ artist: Artist } & Record<string, number>)[]>(
-      "/spotify/collaborative/top/artists",
-      { otherIds: ids, start, end, mode },
-    ),
   getTopTimeline: (kind: TopTimelineKind, start: Date, end: Date) =>
     get<TopTimeline>("/spotify/top/listening-timeline", { kind, start, end }),
   getTopMovement: (kind: TopTimelineKind, start: Date, end: Date) =>

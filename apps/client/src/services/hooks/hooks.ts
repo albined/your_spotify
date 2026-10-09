@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import { useSelector } from "react-redux";
-import { useSearchParams } from "react-router-dom";
 
 import { detailIntervalToQuery } from "../intervals";
 import { alertMessage } from "../redux/modules/message/reducer";
@@ -20,7 +19,6 @@ import {
 } from "../redux/modules/user/selector";
 import { useAppDispatch } from "../redux/tools";
 import { UnboxPromise } from "../types";
-import { useNavigate } from "./useNavigate";
 
 // A value that is loading again because the period changed stays as it was
 // until the new one arrives, so the page does not blank between periods. Any
@@ -223,20 +221,6 @@ export function useSharePage() {
   };
 
   return { toCopy, onCopy };
-}
-
-export function useNavigateAndSearch() {
-  const navigate = useNavigate();
-  const [query] = useSearchParams();
-
-  return (url: string, params: Record<string, string | undefined>) => {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        query.set(key, value);
-      }
-    });
-    navigate(`${url}?${query.toString()}`);
-  };
 }
 
 export function useIsGuest() {

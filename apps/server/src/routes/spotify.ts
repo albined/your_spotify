@@ -24,12 +24,6 @@ import { getArtistDistribution } from "../database/queries/artistDistribution";
 import { getPersonalArtistDiversity } from "../database/queries/artistDiversity";
 import { getArtistEras } from "../database/queries/artistEras";
 import { getArtistHours } from "../database/queries/artistHours";
-import {
-  CollaborativeMode,
-  getCollaborativeBestAlbums,
-  getCollaborativeBestArtists,
-  getCollaborativeBestSongs,
-} from "../database/queries/collaborative";
 import { getCompetitionInsights } from "../database/queries/competitionInsights";
 import { listCompetitionParticipants } from "../database/queries/competitionParticipants";
 import { getDetailListening } from "../database/queries/detailListening";
@@ -347,89 +341,6 @@ router.get("/top/albums", isLoggedOrGuest, async (req, res) => {
   res.status(200).send(result);
 });
 
-const collaborativeSchema = intervalPerSchema.merge(
-  z.object({
-    otherIds: z.array(z.string()).min(1),
-    mode: z.nativeEnum(CollaborativeMode),
-  }),
-);
-
-export function normalizeOtherIdsQuery(query: any) {
-  if (query["otherIds[]"]) {
-    query.otherIds = Array.isArray(query["otherIds[]"])
-      ? query["otherIds[]"]
-      : [query["otherIds[]"]];
-    delete query["otherIds[]"];
-  }
-  return query;
-}
-
-router.get(
-  "/collaborative/top/songs",
-  logged,
-  affinityAllowed,
-  async (req, res) => {
-    const normalizedQuery = normalizeOtherIdsQuery(req.query);
-    const { user } = req as LoggedRequest;
-    const { start, end, otherIds, mode } = validate(
-      normalizedQuery,
-      collaborativeSchema,
-    );
-    const result = await getCollaborativeBestSongs(
-      [user._id.toString(), ...otherIds.filter((e) => e.length > 0)],
-      start,
-      end,
-      mode,
-      50,
-    );
-    res.status(200).send(result);
-  },
-);
-
-router.get(
-  "/collaborative/top/albums",
-  logged,
-  affinityAllowed,
-  async (req, res) => {
-    const normalizedQuery = normalizeOtherIdsQuery(req.query);
-    const { user } = req as LoggedRequest;
-    const { start, end, otherIds, mode } = validate(
-      normalizedQuery,
-      collaborativeSchema,
-    );
-
-    const result = await getCollaborativeBestAlbums(
-      [user._id.toString(), ...otherIds],
-      start,
-      end,
-      mode,
-    );
-    res.status(200).send(result);
-  },
-);
-
-router.get(
-  "/collaborative/top/artists",
-  logged,
-  affinityAllowed,
-  async (req, res) => {
-    const normalizedQuery = normalizeOtherIdsQuery(req.query);
-    const { user } = req as LoggedRequest;
-    const { start, end, otherIds, mode } = validate(
-      normalizedQuery,
-      collaborativeSchema,
-    );
-
-    const result = await getCollaborativeBestArtists(
-      [user._id.toString(), ...otherIds],
-      start,
-      end,
-      mode,
-    );
-    res.status(200).send(result);
-  },
-);
-
 export function normalizeUserIdsQuery(query: any) {
   if (query["userIds[]"]) {
     query.userIds = Array.isArray(query["userIds[]"])
@@ -605,20 +516,6 @@ const createPlaylistFromTop = z.object({
   nb: z.number(),
 });
 
-const createPlaylistFromAffinity = z.object({
-  type: z.literal("affinity"),
-  interval: z.object({
-    start: z.preprocess(toDate, z.date()),
-    end: z.preprocess(
-      toDate,
-      z.date().default(() => new Date()),
-    ),
-  }),
-  nb: z.number(),
-  userIds: z.array(z.string()),
-  mode: z.nativeEnum(CollaborativeMode),
-});
-
 const createPlaylistFromSpecific = z.object({
   type: z.literal("specific"),
   songIds: z.array(z.string()),
@@ -633,7 +530,6 @@ const createPlaylistFromArtistTop = z.object({
 const createPlaylist = z.discriminatedUnion("type", [
   createPlaylistBase.merge(createPlaylistFromTop),
   createPlaylistBase.merge(createPlaylistFromSpecific),
-  createPlaylistBase.merge(createPlaylistFromAffinity),
   createPlaylistBase.merge(createPlaylistFromArtistTop),
 ]);
 
@@ -666,18 +562,6 @@ router.post("/playlist/create", logged, withHttpClient, async (req, res) => {
         intervalData.end,
       )}`;
     }
-  } else if (body.type === "affinity") {
-    if (!playlistName) {
-      playlistName = `Your Spotify Playlist • ${DateFormatter.toDayMonthYear(user.settings.dateFormat, new Date())}`;
-    }
-    const affinity = await getCollaborativeBestSongs(
-      body.userIds,
-      body.interval.start,
-      body.interval.end,
-      body.mode,
-      body.nb,
-    );
-    spotifyIds = affinity.map((item) => item.track.id);
   } else if (body.type === "top-artist") {
     const [artist] = await getArtists([body.artistId]);
     if (!artist) {

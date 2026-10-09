@@ -1,9 +1,4 @@
-import {
-  ChevronRight,
-  ExitToApp,
-  PeopleAltOutlined,
-  SettingsOutlined,
-} from "@mui/icons-material";
+import { ChevronRight, ExitToApp, SettingsOutlined } from "@mui/icons-material";
 import { ReactNode, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link, Navigate } from "react-router-dom";
@@ -11,15 +6,10 @@ import { Link, Navigate } from "react-router-dom";
 import Header from "../../components/Header";
 import { useSider } from "../../components/Layout/useSider";
 import SiderSearch from "../../components/SiderSearch";
-import { useIsGuest } from "../../services/hooks/hooks";
 import { useNavigate } from "../../services/hooks/useNavigate";
-import {
-  selectAffinityEnabled,
-  selectVersion,
-} from "../../services/redux/modules/settings/selector";
+import { selectVersion } from "../../services/redux/modules/settings/selector";
 import { getVersion } from "../../services/redux/modules/settings/thunk";
 import { useAppDispatch } from "../../services/redux/tools";
-import { compact } from "../../services/tools";
 
 import s from "./index.module.css";
 
@@ -32,9 +22,7 @@ interface Row {
 export default function More() {
   const { siderIsDrawer } = useSider();
   const navigate = useNavigate();
-  const affinityEnabled = useSelector(selectAffinityEnabled);
   const version = useSelector(selectVersion);
-  const isGuest = useIsGuest();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -45,21 +33,14 @@ export default function More() {
     return <Navigate to="/" replace />;
   }
 
-  const rows: Row[] = compact([
-    affinityEnabled && !isGuest
-      ? {
-          label: "Affinity",
-          link: "/collaborative/affinity",
-          icon: <PeopleAltOutlined />,
-        }
-      : undefined,
+  const rows: Row[] = [
     {
       label: "Settings",
       link: "/settings/account",
       icon: <SettingsOutlined />,
     },
     { label: "Logout", link: "/logout", icon: <ExitToApp /> },
-  ]);
+  ];
 
   return (
     <div>

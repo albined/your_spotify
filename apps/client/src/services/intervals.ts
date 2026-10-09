@@ -5,13 +5,8 @@ import {
   startOfYear,
   subDays,
 } from "date-fns";
-import { useSelector } from "react-redux";
-import { useSearchParams } from "react-router-dom";
 
 import { getAppropriateTimesplitFromRange } from "./date";
-import { selectAccounts } from "./redux/modules/admin/selector";
-import { selectUser } from "./redux/modules/user/selector";
-import { getMinOfArray } from "./tools";
 import { Timesplit } from "./types";
 import { getFirstListenedAt } from "./user";
 
@@ -241,33 +236,4 @@ export function queryToIntervalDetail(
     // Do nothing
   }
   return toReturn ?? defaultInterval;
-}
-
-export function useOldestListenedAtFromUsers(
-  userIds: string[],
-  prefix: string,
-): RawIntervalDetail {
-  const user = useSelector(selectUser);
-  const users = useSelector(selectAccounts);
-  const [query] = useSearchParams();
-
-  const detail = queryToIntervalDetail(query, prefix);
-
-  if (detail.type === "userbased" && user?.allTimeStartAt) {
-    return getRawIntervalDetail(detail, user);
-  }
-
-  const filtered = users.filter((us) =>
-    [user?._id, ...userIds].includes(us.id),
-  );
-  const mins = getMinOfArray(filtered, (item) =>
-    new Date(item.firstListenedAt).getTime(),
-  );
-  const account = filtered[mins?.minIndex ?? 0];
-  const accountInterval = getRawIntervalDetail(detail, account);
-
-  if (!account && detail.type === "userbased") {
-    return getRawIntervalDetail(defaultInterval, undefined);
-  }
-  return accountInterval;
 }
