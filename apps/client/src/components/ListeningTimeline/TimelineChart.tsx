@@ -88,6 +88,8 @@ interface Props {
   unit?: string;
   bucketed?: boolean;
   height?: number;
+  // Lines read as spikes when a narrow chart is as tall as a wide one.
+  phoneHeight?: number;
   showLegend?: boolean;
   legendPosition?: "bottom" | "right";
   hoverSeriesOnly?: boolean;
@@ -104,6 +106,7 @@ export default function TimelineChart({
   unit = "h",
   bucketed = false,
   height = 280,
+  phoneHeight,
   showLegend = true,
   legendPosition = "bottom",
   hoverSeriesOnly = false,
@@ -161,7 +164,7 @@ export default function TimelineChart({
       <div
         ref={chart}
         className={s.chart}
-        style={{ height }}
+        style={{ height: (phone && phoneHeight) || height }}
         onClick={tapToPick ? pickNearest : undefined}
         role="img"
         aria-label={`Listening timeline: ${series.map((item) => item.name).join(", ")}. Values in ${percent ? "percent" : unit}.`}>

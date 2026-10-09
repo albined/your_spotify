@@ -92,7 +92,8 @@
 }
 
 @media (width <= 600px) {
-  .viewport {
-    height: 260px;
+  .viewport,
+  .loading {
+    height: 200px;
   }
 }

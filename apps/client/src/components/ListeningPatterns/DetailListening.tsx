@@ -1,4 +1,3 @@
-import { useMediaQuery } from "@mui/material";
 import { useCallback, useMemo } from "react";
 
 import { api } from "../../services/apis/api";
@@ -35,7 +34,6 @@ export function DetailListeningCharts({
 }) {
   const { data, error, retry } = request;
   // A tall plot on a narrow screen turns the history into spikes.
-  const phone = useMediaQuery("(max-width: 900px)");
   const rate = useMemo(
     () => (data && kind === "artist" ? listeningRate(data) : []),
     [data, kind],
@@ -61,7 +59,8 @@ export function DetailListeningCharts({
             unit="h/day"
             showLegend={false}
             insetScale={false}
-            height={phone ? 180 : 300}
+            height={300}
+            phoneHeight={180}
           />
         </TitleCard>
       )}

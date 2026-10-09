@@ -39,6 +39,7 @@ export default function TopListeningRace({ kind }: { kind: TopTimelineKind }) {
         ) : (
           <TimelineChart
             height={360}
+            phoneHeight={240}
             legendPosition="right"
             bounds={data}
             data={cumulativeTimelinePoints(

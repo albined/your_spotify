@@ -44,11 +44,14 @@ function Histogram({
     { length: Math.floor(last / tickStep) - Math.ceil(first / tickStep) + 1 },
     (_, i) => (Math.ceil(first / tickStep) + i) * tickStep,
   );
+  // Shorter on a phone, where the bars are too thin to carry the height.
+  const plot = width < 500 ? 130 : 206;
+  const base = plot + 32;
   return (
     <div className={s.scroll}>
       <svg
         width={plotWidth + 54}
-        height={282}
+        height={base + 44}
         role="group"
         aria-label="Listening hours by release year"
         className={s.histogram}>
@@ -57,11 +60,11 @@ function Histogram({
             <line
               x1={48}
               x2={plotWidth + 48}
-              y1={238 - part * 206}
-              y2={238 - part * 206}
+              y1={base - part * plot}
+              y2={base - part * plot}
               className={s.gridline}
             />
-            <text x={40} y={242 - part * 206} textAnchor="end">
+            <text x={40} y={base + 4 - part * plot} textAnchor="end">
               {(maximum * part).toLocaleString(undefined, {
                 maximumFractionDigits: 1,
                 notation: "compact",
@@ -80,9 +83,9 @@ function Histogram({
             enterTouchDelay={0}>
             <rect
               x={48 + (row.year - first) * step + 0.5}
-              y={238 - (row.hours / maximum) * 206}
+              y={base - (row.hours / maximum) * plot}
               width={Math.max(1, step - 1)}
-              height={(row.hours / maximum) * 206}
+              height={(row.hours / maximum) * plot}
               rx={Math.min(2, step / 4)}
               fill={decadeColor(row.year)}
               tabIndex={0}
@@ -96,7 +99,7 @@ function Histogram({
           <text
             key={year}
             x={48 + (year - first + 0.5) * step}
-            y={261}
+            y={base + 23}
             textAnchor="middle">
             {year}
           </text>
