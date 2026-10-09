@@ -16,3 +16,10 @@ export function diversityWindowDays(start: Date, end: Date) {
   if (end.getTime() <= afterMonths(120)) return 90;
   return 180;
 }
+
+// What two people share swings on a single artist while a window holds little
+// listening, so their overlap is taken over a longer one than diversity.
+export function overlapWindowDays(start: Date, end: Date) {
+  const days: Record<number, number> = { 7: 30, 14: 60, 30: 90, 90: 180 };
+  return days[diversityWindowDays(start, end)] ?? 365;
+}
