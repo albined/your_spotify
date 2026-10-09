@@ -69,7 +69,3 @@ export interface ImporterState {
   createdAt?: Date;
   updatedAt?: Date;
 }
-export type ImporterStateType = ImportSource;
-export type ImporterStateFromType<T extends ImportSource> = ImporterState & {
-  type: T;
-};

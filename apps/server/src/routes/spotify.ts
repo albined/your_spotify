@@ -29,7 +29,6 @@ import {
   getCollaborativeBestAlbums,
   getCollaborativeBestArtists,
   getCollaborativeBestSongs,
-  getCollaborativeTimePer,
 } from "../database/queries/collaborative";
 import { getCompetitionInsights } from "../database/queries/competitionInsights";
 import { listCompetitionParticipants } from "../database/queries/competitionParticipants";
@@ -442,16 +441,6 @@ export function normalizeUserIdsQuery(query: any) {
   return query;
 }
 
-const competeTimePerSchema = intervalPerSchema.merge(
-  z.object({
-    userIds: z
-      .array(z.string().regex(/^[a-f\d]{24}$/i))
-      .min(1)
-      .max(100),
-    artistId: z.string().optional(),
-  }),
-);
-
 const competitionTimelineSchema = interval
   .extend({
     userIds: z
@@ -550,28 +539,6 @@ router.get(
           artistId,
         ),
       );
-  },
-);
-
-router.get(
-  "/collaborative/time_per",
-  logged,
-  affinityAllowed,
-  async (req, res) => {
-    const normalizedQuery = normalizeUserIdsQuery(req.query);
-    const { start, end, userIds, timeSplit, artistId } = validate(
-      normalizedQuery,
-      competeTimePerSchema,
-    );
-    const result = await getCollaborativeTimePer(
-      userIds,
-      start,
-      end,
-      timeSplit,
-      artistId,
-      (req as LoggedRequest).user,
-    );
-    res.status(200).send(result);
   },
 );
 

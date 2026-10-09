@@ -19,7 +19,10 @@ test(
     const {
       getArtistDistribution,
     } = require("../src/database/queries/artistDistribution");
-    const { getTopTimeline } = require("../src/database/queries/raceTimeline");
+    const {
+      getTopTimeline,
+      getCompetitionTimeline,
+    } = require("../src/database/queries/raceTimeline");
     const { getSongs } = require("../src/database/queries/user");
     const {
       getDetailListening,
@@ -33,13 +36,11 @@ test(
       ItemType,
     } = require("../src/database/queries/stats");
     const {
-      getCollaborativeTimePer,
       getCollaborativeBestSongs,
       getCollaborativeBestAlbums,
       getCollaborativeBestArtists,
       CollaborativeMode,
     } = require("../src/database/queries/collaborative");
-    const { Timesplit } = require("../src/tools/types");
     const {
       saveArtistGroup,
       invalidateArtistGroups,
@@ -160,20 +161,17 @@ test(
           (row) => row.id === "song-a",
         ),
       );
-      const race = await getCollaborativeTimePer(
+      const race = await getCompetitionTimeline(
+        user,
         [String(a), String(b)],
         start,
         end,
-        Timesplit.month,
+        "count",
       );
-      assert.equal(
-        race.find((row) => String(row.owner) === String(a)).count,
-        2,
-      );
-      assert.equal(
-        race.find((row) => String(row.owner) === String(b)).count,
-        1,
-      );
+      const plays = (owner) =>
+        race.series.find((row) => row.id === String(owner)).values.at(-1);
+      assert.equal(plays(a), 2);
+      assert.equal(plays(b), 1);
       // Opening an artist explicitly still shows their complete saved history.
       const detail = await getDetailListening(user, "artist", "a");
       assert.equal(

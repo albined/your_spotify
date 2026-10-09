@@ -1,18 +1,11 @@
 import mongoose from "mongoose";
 
-import { Timesplit } from "../../tools/types";
-import { statisticsFor } from "../listeningDuration";
-import { User } from "../schemas/user";
 import { StatisticsInfosModel } from "../StatisticsInfos";
-import { requireCompetitionParticipants } from "./competitionParticipants";
 import {
   basicMatchUsers,
   lightAlbumLookupPipeline,
   lightArtistLookupPipeline,
   lightTrackLookupPipeline,
-  getGroupByDateProjection,
-  getGroupingByTimeSplit,
-  sortByTimeSplit,
 } from "./statsTools";
 
 function fromPairs<K extends string, V>(pairs: [K, V][]) {
@@ -291,51 +284,5 @@ export const getCollaborativeBestArtists = (
     { $limit: 50 },
     { $lookup: lightArtistLookupPipeline("_id", false) },
     { $unwind: "$artist" },
-  ]);
-};
-
-export const getCollaborativeTimePer = async (
-  userIds: string[],
-  start: Date,
-  end: Date,
-  timeSplit: Timesplit,
-  artistId?: string,
-  viewer?: User,
-) => {
-  await requireCompetitionParticipants(userIds);
-  const match: any = basicMatchUsers(userIds, start, end);
-  if (artistId) {
-    match.primaryArtistId = artistId;
-  }
-  return statisticsFor(viewer).aggregate([
-    { $match: match },
-    {
-      $project: {
-        ...getGroupByDateProjection(undefined),
-        durationMs: 1,
-        owner: 1,
-        id: 1,
-        primaryArtistId: 1,
-      },
-    },
-    {
-      $group: {
-        _id: { ...getGroupingByTimeSplit(timeSplit), owner: "$owner" },
-        durationMs: { $sum: "$durationMs" },
-        count: { $sum: 1 },
-        trackIds: { $addToSet: "$id" },
-        artistIds: { $addToSet: "$primaryArtistId" },
-      },
-    },
-    {
-      $project: {
-        owner: "$_id.owner",
-        durationMs: 1,
-        count: 1,
-        differentTracks: { $size: "$trackIds" },
-        differentArtists: { $size: "$artistIds" },
-      },
-    },
-    ...sortByTimeSplit(timeSplit, "_id"),
   ]);
 };

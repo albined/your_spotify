@@ -191,28 +191,3 @@ export const getMostListenedAlbumOfArtist = async (
   ]);
   return res;
 };
-
-export const getDayRepartitionOfArtist = (user: User, artistId: string) =>
-  // Non sense to compute blacklist here
-  statisticsFor(user, { includeHiddenArtists: true }).aggregate([
-    { $match: { owner: user._id, primaryArtistId: artistId } },
-    { $addFields: getGroupByDateProjection(user.settings.timezone) },
-    ...getArtistInfos(artistId),
-    {
-      $lookup: {
-        from: "tracks",
-        localField: "artistInfos.trackId",
-        foreignField: "id",
-        as: "track",
-      },
-    },
-    { $unwind: "$track" },
-    {
-      $group: {
-        _id: "$hour",
-        count: { $sum: 1 },
-        duration: { $sum: "$durationMs" },
-      },
-    },
-    { $sort: { _id: 1 } },
-  ]);

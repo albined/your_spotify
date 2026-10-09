@@ -1,15 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
 
-import {
-  getReviewRows,
-  listReviewGroups,
-} from "../database/queries/importReview";
+import { listReviewGroups } from "../database/queries/importReview";
 import {
   applyReview,
   applyTimingChoice,
   chooseNoMatch,
-  previewReview,
   reviewTiming,
 } from "../tools/importers/review";
 import {
@@ -101,24 +97,6 @@ router.get("/imports/review", logged, async (req, res) => {
   const query = validate(req.query, z.object({ category }));
   res.send(await listReviewGroups((req as LoggedRequest).user, query.category));
 });
-router.get("/imports/review/rows", logged, async (req, res) => {
-  const query = validate(
-    req.query,
-    z.object({
-      category,
-      group,
-      offset: z.coerce.number().int().min(0).default(0),
-    }),
-  );
-  res.send(
-    await getReviewRows(
-      (req as LoggedRequest).user,
-      query.category,
-      query.group,
-      query.offset,
-    ),
-  );
-});
 router.get("/imports/review/candidates", logged, async (req, res) => {
   const query = validate(
     req.query,
@@ -130,27 +108,6 @@ router.get("/imports/review/candidates", logged, async (req, res) => {
       query.query,
     ),
   );
-});
-router.post("/imports/review/preview", logged, async (req, res) => {
-  const value = validate(req.body, selection);
-  try {
-    res.send(
-      await previewReview(
-        (req as LoggedRequest).user,
-        value.group,
-        spotifyTrackId(value.track),
-      ),
-    );
-  } catch (error) {
-    res
-      .status(409)
-      .send({
-        message:
-          error instanceof Error
-            ? error.message
-            : "Could not preview this choice",
-      });
-  }
 });
 router.post("/imports/review/apply", logged, async (req, res) => {
   const value = validate(

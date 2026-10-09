@@ -77,9 +77,6 @@ test(
       listCompetitionParticipants,
     } = require("../src/database/queries/competitionParticipants");
     const {
-      getCollaborativeTimePer,
-    } = require("../src/database/queries/collaborative");
-    const {
       up,
     } = require("../src/migrations/1790035200001-add_competition_preference");
     const { router } = require("../src/routes/index");
@@ -192,7 +189,6 @@ test(
         () => getCompetitionInsights(user, forbidden, start, end),
         () => getCompetitionArtists(forbidden, start, end),
         () => getCompetitionTimeline(user, forbidden, start, end, "hours"),
-        () => getCollaborativeTimePer(forbidden, start, end, "day"),
         () =>
           getCompetitionInsights(
             user,
@@ -240,7 +236,6 @@ test(
         "competition-insights",
         "competition-artists",
         "listening-timeline",
-        "time_per",
       ]) {
         assert.equal(
           (

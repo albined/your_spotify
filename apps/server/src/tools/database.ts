@@ -1,10 +1,4 @@
 import {
-  getAllUsers,
-  getPossibleDuplicates,
-  deleteInfos,
-  getUserInfoCount,
-} from "../database";
-import {
   getCompatibilityVersion,
   getMongoInfos,
   setFeatureCompatibilityVersion,
@@ -95,37 +89,6 @@ export class Database {
       logger.info(`Database fixed ${total} missing entries`);
     }
     longWriteDbLock.unlock();
-  }
-
-  static async deletePossibleDuplicates() {
-    const users = await getAllUsers(false);
-    const allToDelete = new Set<string>();
-
-    const duplicateBatch = 50_000;
-
-    for (const user of users) {
-      const infoCountForUser = await getUserInfoCount(user._id.toString());
-      for (let i = 0; i < infoCountForUser; i += duplicateBatch) {
-        const duplicates = await getPossibleDuplicates(
-          user._id.toString(),
-          30,
-          duplicateBatch,
-          i,
-        );
-        const nbDuplicates = duplicates.reduce((acc, curr) => {
-          curr.duplicates.forEach((duplicate: any) => {
-            allToDelete.add(duplicate[1]._id.toString());
-          });
-          return acc + curr.duplicates.length;
-        }, 0);
-        if (nbDuplicates > 0) {
-          console.log(
-            `Removing ${nbDuplicates} duplicates for user ${user.username}`,
-          );
-        }
-      }
-    }
-    await deleteInfos([...allToDelete.values()]);
   }
 
   static async startup() {
