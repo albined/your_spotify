@@ -1,6 +1,6 @@
 import { CircularProgress } from "@mui/material";
 import { useSelector } from "react-redux";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import ButtonsHeader from "../../components/ButtonsHeader";
 import FullscreenCentered from "../../components/FullscreenCentered";
@@ -30,7 +30,6 @@ import EnableAffinity from "./EnableAffinity";
 import Importer from "./Importer";
 import ListeningTime from "./ListeningTime";
 import PublicToken from "./PublicToken";
-import RelogToSpotify from "./RelogToSpotify";
 import SetAdmin from "./SetAdmin";
 import SpotifyAccountInfos from "./SpotifyAccountInfos";
 import { StatMeasurement } from "./StatMeasurement";
@@ -59,12 +58,15 @@ export default function Settings() {
     return null;
   }
 
+  // Someone viewing through a public link can only change how it looks.
   const tabs = compact([
-    { url: "/settings/account", label: "Account" },
+    conditionalEntry({ url: "/settings/account", label: "Account" }, !isPublic),
+    { url: "/settings/display", label: "Display" },
     conditionalEntry(
       { url: "/settings/statistics", label: "Statistics" },
       !isPublic,
     ),
+    conditionalEntry({ url: "/settings/import", label: "Import" }, !isPublic),
     conditionalEntry(
       { url: "/settings/admin", label: "Admin" },
       user.admin && !isPublic,
@@ -84,23 +86,44 @@ export default function Settings() {
           <Route
             path="/account"
             element={
-              <Masonry>
-                {!isPublic && (
-                  <AccountInfos
-                    user={user}
-                    settings={settings}
-                    isPublic={isPublic}
-                  />
-                )}
-                {sme && !isPublic && (
+              isPublic ? (
+                <Navigate to="/settings/display" replace />
+              ) : (
+                <Masonry>
+                  <AccountInfos user={user} isPublic={isPublic} />
                   <SpotifyAccountInfos spotifyAccount={sme} />
-                )}
+                  <PublicToken />
+                  <CompetitionParticipation />
+                </Masonry>
+              )
+            }
+          />
+          <Route
+            path="/display"
+            element={
+              <Masonry>
                 <DarkMode />
-                {!isPublic && <RelogToSpotify />}
-                {!isPublic && <Importer />}
-                {!isPublic && <PublicToken />}
-                {!isPublic && <CompetitionParticipation />}
+                {!isPublic && <Timezone />}
+                {!isPublic && <DateFormat />}
+                {!isPublic && <StatMeasurement />}
               </Masonry>
+            }
+          />
+          <Route
+            path="/statistics"
+            element={
+              <Masonry>
+                {!isPublic && <ListeningTime />}
+                {!isPublic && <AllTimeStartDate />}
+                {!isPublic && <ArtistVisibility />}
+                {!isPublic && <BlacklistArtist />}
+              </Masonry>
+            }
+          />
+          <Route
+            path="/import"
+            element={
+              <div className={s.single}>{!isPublic && <Importer />}</div>
             }
           />
           <Route
@@ -120,20 +143,6 @@ export default function Settings() {
                   )}
                 </Masonry>
               </div>
-            }
-          />
-          <Route
-            path="/statistics"
-            element={
-              <Masonry>
-                {!isPublic && <ListeningTime />}
-                {!isPublic && <AllTimeStartDate />}
-                {!isPublic && <ArtistVisibility />}
-                {!isPublic && <BlacklistArtist />}
-                {!isPublic && <Timezone />}
-                {!isPublic && <DateFormat />}
-                {!isPublic && <StatMeasurement />}
-              </Masonry>
             }
           />
         </Routes>
