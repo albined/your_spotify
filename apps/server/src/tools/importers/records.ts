@@ -1,8 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-// @ts-ignore -- SheetJS distributes this ESM entry without a declaration.
-import * as XLSX from "xlsx/xlsx.mjs";
+import * as XLSX from "xlsx";
 import { z } from "zod";
 
 export type ImportSource = "privacy" | "full-privacy" | "deezer";
