@@ -20,6 +20,7 @@ import {
   getMostListenedSongOfArtist,
   getArtists,
 } from "../database";
+import { getArtistBattle } from "../database/queries/artistBattle";
 import { getArtistDistribution } from "../database/queries/artistDistribution";
 import { getPersonalArtistDiversity } from "../database/queries/artistDiversity";
 import { getArtistEras } from "../database/queries/artistEras";
@@ -405,6 +406,40 @@ router.get(
     res
       .status(200)
       .json(await getTasteOverlap(user, userIds, start, end, kind));
+  },
+);
+
+const battleSchema = z.object({
+  userIds: z
+    .array(z.string().regex(/^[a-f\d]{24}$/i))
+    .length(2)
+    .refine(
+      ([first, second]) => first?.toLowerCase() !== second?.toLowerCase(),
+      { message: "A battle needs two different people" },
+    ),
+  day: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((day) => {
+      // Dates such as February 30 would otherwise roll over into March.
+      const date = new Date(`${day}T00:00:00Z`);
+      return (
+        !Number.isNaN(date.getTime()) && date.toISOString().startsWith(day)
+      );
+    })
+    .optional(),
+});
+
+router.get(
+  "/collaborative/battle",
+  logged,
+  affinityAllowed,
+  async (req, res) => {
+    const { userIds, day } = validate(
+      normalizeUserIdsQuery(req.query),
+      battleSchema,
+    );
+    res.status(200).json(await getArtistBattle(userIds, day));
   },
 );
 

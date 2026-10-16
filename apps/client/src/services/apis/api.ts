@@ -10,6 +10,7 @@ import type {
   ArtistVisibilityEntry,
   VisibilityArtist,
 } from "../artistVisibility";
+import type { ArtistBattle } from "../battle";
 import type { CompetitionInsights } from "../competitionInsights";
 import type {
   DetailListeningData,
@@ -496,6 +497,8 @@ export const api = {
       end,
       kind,
     }),
+  getArtistBattle: (userIds: string[], day?: string) =>
+    get<ArtistBattle>("/spotify/collaborative/battle", { userIds, day }),
 
   generatePublicToken: () => post<string>("/generate-public-token"),
   deletePublicToken: () => post<string>("/delete-public-token"),

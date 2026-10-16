@@ -31,6 +31,7 @@ import {
   TasteOverlap as TasteOverlapData,
   widestRegion,
 } from "../../../services/tasteOverlap";
+import Battle from "./Battle/Battle";
 import CompetitionInsights from "./CompetitionInsights";
 import TasteOverlap from "./TasteOverlap";
 
@@ -320,6 +321,7 @@ export default function Compete() {
           <TitleCard title="Listening time" contentClassName={s.chartContent}>
             <CompetitionRace userIds={userIds} start={start} end={end} />
           </TitleCard>
+          <Battle userIds={userIds} people={participants ?? []} />
           <ItemCompetition
             key={scope}
             userIds={userIds}
