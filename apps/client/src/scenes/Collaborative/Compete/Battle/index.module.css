@@ -1,0 +1,939 @@
+.scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.side {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.side[data-side="right"] {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.side span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side strong {
+  font-size: 1.6em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.date {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.arena {
+  position: relative;
+  width: 100%;
+  height: clamp(270px, 36vw, 380px);
+  overflow: hidden;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(
+      ellipse 45% 70% at 0% 70%,
+      color-mix(in srgb, var(--left), transparent 84%),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 45% 70% at 100% 70%,
+      color-mix(in srgb, var(--right), transparent 84%),
+      transparent
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 38%,
+      color-mix(in srgb, var(--text-on-light), transparent 95%)
+    );
+  user-select: none;
+}
+
+.arena::after {
+  position: absolute;
+  inset: auto 6% 5% 6%;
+  height: 52%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--text-on-light), transparent 94%),
+    transparent 70%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.fighter {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: filter 400ms;
+}
+
+.offstage {
+  opacity: 0;
+}
+
+.dimmed {
+  filter: brightness(0.6) saturate(0.6);
+}
+
+/* The fall waits for the blow; the idle bob sits on its own element, since
+   ending an animation on the same element would skip the transition. */
+.pose {
+  width: 100%;
+  transform-origin: 50% 92%;
+  transition:
+    transform 450ms cubic-bezier(0.5, 0, 0.75, 0) var(--fall, 0ms),
+    filter 450ms var(--fall, 0ms),
+    opacity 450ms var(--fall, 0ms);
+}
+
+.bob {
+  animation: bob 1.8s ease-in-out infinite;
+}
+
+.sprite {
+  width: 100%;
+}
+
+.figure {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.down .pose {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.down:not(.falling) .bob {
+  animation: none;
+}
+
+/* Lies flat on the spot it stood, above its name. */
+.fighter[data-side="left"].down .pose {
+  transform: translate(58%, -34%) rotate(-90deg);
+}
+
+.fighter[data-side="right"].down .pose {
+  transform: translate(-58%, -34%) rotate(90deg);
+}
+
+.cheer .bob {
+  animation: cheer 640ms cubic-bezier(0.3, 0, 0.6, 1) 4 alternate;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3%);
+  }
+}
+
+@keyframes cheer {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-18%);
+  }
+}
+
+.weapon {
+  transform-box: view-box;
+  transform-origin: 70px 98px;
+}
+
+.orb {
+  filter: drop-shadow(0 0 3px #8fe3ff);
+}
+
+.halo {
+  filter: drop-shadow(0 0 2px #ffd75e);
+}
+
+.shadow {
+  fill: rgba(0, 0, 0, 0.22);
+}
+
+.initial {
+  fill: white;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.health {
+  width: 80%;
+  height: 5px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-on-light), transparent 85%);
+}
+
+.health span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 350ms ease-out;
+}
+
+.name {
+  max-width: 140%;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 300ms var(--fall, 0ms);
+}
+
+.down .name {
+  opacity: 0.5;
+}
+
+.down .health {
+  opacity: 0;
+  transition: opacity 300ms calc(var(--fall, 0ms) + 250ms);
+}
+
+/* While a team is presented, each fighter's class covers its health bar. */
+.presented .health {
+  opacity: 0;
+}
+
+.role {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  padding: 1px 7px;
+  translate: -50% 0;
+  border-radius: 999px;
+  color: var(--background);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  animation: role 320ms cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+
+@keyframes role {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.spotlight {
+  --x: 25%;
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: spotlight var(--phase) ease-out forwards;
+}
+
+.spotlight[data-side="right"] {
+  --x: 75%;
+}
+
+.spotlight::before,
+.spotlight::after {
+  position: absolute;
+  content: "";
+}
+
+/* The rest of the arena goes dark around a beam on the team. */
+.spotlight::before {
+  inset: 0;
+  background: radial-gradient(
+    ellipse 30% 75% at var(--x) 72%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.32)
+  );
+}
+
+.spotlight::after {
+  top: 0;
+  bottom: 6%;
+  left: calc(var(--x) - 24%);
+  width: 48%;
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color), transparent 62%),
+    color-mix(in srgb, var(--color), transparent 90%) 70%,
+    transparent
+  );
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+  }
+  12%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.herald {
+  position: absolute;
+  top: 8%;
+  left: var(--x);
+  z-index: 1001;
+  translate: -50% 0;
+  color: var(--color);
+  font-size: clamp(22px, 6vw, 30px);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 12px var(--background);
+  white-space: nowrap;
+  animation: herald var(--phase) ease-out forwards;
+}
+
+@keyframes herald {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(1.3);
+  }
+  14%,
+  84% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.start {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 26px 10px 18px;
+  translate: -50% -50%;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(100deg, var(--left), var(--right));
+  box-shadow: 0 4px 22px color-mix(in srgb, var(--left), transparent 55%);
+  color: var(--background);
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  animation: ready 1.6s ease-in-out infinite;
+  transition: scale 150ms;
+}
+
+.start:hover {
+  scale: 1.06;
+}
+
+.start:focus-visible {
+  outline: 2px solid var(--text-on-light);
+  outline-offset: 3px;
+}
+
+@keyframes ready {
+  0%,
+  100% {
+    box-shadow: 0 4px 22px color-mix(in srgb, var(--left), transparent 55%);
+  }
+  50% {
+    box-shadow: 0 4px 30px color-mix(in srgb, var(--right), transparent 40%);
+  }
+}
+
+.effects > span > span,
+.effects > span {
+  position: absolute;
+  pointer-events: none;
+}
+
+.effects {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.number {
+  translate: -50% 0;
+  opacity: 0;
+  color: var(--text-on-light);
+  font-size: 15px;
+  font-weight: 800;
+  text-shadow:
+    0 0 3px var(--background),
+    0 0 6px var(--background);
+  white-space: nowrap;
+  animation: rise calc(var(--beat) * 0.75) ease-out var(--impact) forwards;
+}
+
+.crit {
+  color: #ffb52e;
+  font-size: 21px;
+}
+
+.miss {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.healed {
+  color: #3ccf7c;
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.15);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1);
+  }
+}
+
+.slash,
+.stab,
+.burst,
+.heal,
+.aura {
+  translate: -50% -50%;
+  opacity: 0;
+}
+
+.slash {
+  border-radius: 50%;
+  border-top: 4px solid white;
+  border-right: 2px solid transparent;
+  filter: drop-shadow(0 0 4px white);
+  animation: slash calc(var(--beat) * 0.3) ease-out var(--impact) forwards;
+}
+
+@keyframes slash {
+  0% {
+    opacity: 0;
+    transform: rotate(-70deg) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(60deg) scale(1.1);
+  }
+}
+
+.stab {
+  background:
+    linear-gradient(
+      45deg,
+      transparent 46%,
+      white 48%,
+      white 52%,
+      transparent 54%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 46%,
+      white 48%,
+      white 52%,
+      transparent 54%
+    );
+  filter: drop-shadow(0 0 3px white);
+  animation: stab calc(var(--beat) * 0.3) ease-out var(--impact) forwards;
+}
+
+@keyframes stab {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+.bolt {
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, white 15%, #8fe3ff 45%, transparent 72%);
+  box-shadow: 0 0 14px 4px rgba(143, 227, 255, 0.7);
+  animation: bolt calc(var(--beat) * 0.32) ease-in
+    calc(var(--impact) - var(--beat) * 0.32) forwards;
+}
+
+@keyframes bolt {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) scale(1.2);
+  }
+}
+
+.burst {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.95) 0 18%,
+    rgba(143, 227, 255, 0.75) 32%,
+    transparent 68%
+  );
+  animation: burst calc(var(--beat) * 0.38) ease-out var(--impact) forwards;
+}
+
+@keyframes burst {
+  0% {
+    opacity: 1;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+.beam {
+  translate: -50% 0;
+  transform-origin: top;
+  opacity: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 224, 120, 0.9) 40%,
+    #fff6d5
+  );
+  border-radius: 0 0 50% 50%;
+  filter: drop-shadow(0 0 8px #ffd75e);
+  animation: beam calc(var(--beat) * 0.42) ease-out
+    calc(var(--impact) - var(--beat) * 0.12) forwards;
+}
+
+@keyframes beam {
+  0% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1) scaleX(0.3);
+  }
+}
+
+.heal {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 70%, #b8ffd2 0 4%, transparent 5%),
+    radial-gradient(circle at 70% 60%, #b8ffd2 0 3%, transparent 4%),
+    radial-gradient(circle at 50% 40%, #b8ffd2 0 4%, transparent 5%),
+    radial-gradient(circle, rgba(110, 240, 160, 0.45), transparent 65%);
+  animation: heal calc(var(--beat) * 0.6) ease-out
+    calc(var(--impact) - var(--beat) * 0.1) forwards;
+}
+
+@keyframes heal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1.2);
+  }
+}
+
+.aura {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    transparent 40%,
+    rgba(143, 227, 255, 0.55) 55%,
+    transparent 70%
+  );
+  animation: aura calc(var(--beat) * 0.8) ease-in-out forwards;
+}
+
+@keyframes aura {
+  0% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+.versus {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 1001;
+  translate: -50% -50%;
+  color: var(--text-on-light);
+  font-size: 44px;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 12px var(--background);
+  animation: versus var(--phase) ease-out forwards;
+}
+
+@keyframes versus {
+  0% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.result {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  font-weight: 700;
+  white-space: nowrap;
+  animation: result 500ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes result {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+}
+
+.controls {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1002;
+  display: flex;
+  gap: 2px;
+  color: var(--text-secondary);
+}
+
+.controls button {
+  color: inherit;
+}
+
+.controls .active {
+  color: var(--text-on-light);
+}
+
+.month {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.monthName {
+  min-width: 2.6em;
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  text-align: center;
+}
+
+.days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.day {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text-on-light), transparent 88%);
+  cursor: pointer;
+}
+
+.day:disabled {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--text-on-light), transparent 85%);
+  cursor: default;
+}
+
+.day[aria-pressed="true"] {
+  outline: 2px solid var(--text-on-light);
+  outline-offset: 2px;
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--text-on-light);
+  outline-offset: 2px;
+}
+
+.sideLabel {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.side[data-side="right"] .sideLabel {
+  flex-direction: row-reverse;
+}
+
+.teamHealth {
+  height: 6px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-on-light), transparent 88%);
+}
+
+.side[data-side="right"] .teamHealth {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.teamHealth span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 400ms ease-out;
+}
+
+.crown {
+  position: absolute;
+  top: -14%;
+  left: 50%;
+  z-index: 1;
+  width: 38%;
+  translate: -50% 0;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+  animation: crown 600ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes crown {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.4);
+  }
+}
+
+.turn {
+  position: absolute;
+  z-index: 0;
+  translate: -50% -50%;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor, transparent 80%);
+  pointer-events: none;
+  animation: turn calc(var(--beat) * 0.9) ease-out forwards;
+}
+
+@keyframes turn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+.puff {
+  translate: -50% -50%;
+  opacity: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 35% 40%,
+      rgba(200, 200, 210, 0.9) 0 18%,
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 65% 45%,
+      rgba(200, 200, 210, 0.85) 0 16%,
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 50% 65%,
+      rgba(200, 200, 210, 0.8) 0 20%,
+      transparent 32%
+    );
+  animation: puff calc(var(--beat) * 0.7) ease-out
+    calc(var(--impact) + var(--beat) * 0.12) forwards;
+}
+
+@keyframes puff {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4) translateY(-10%);
+  }
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti span {
+  position: absolute;
+  top: -12px;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti 1.9s cubic-bezier(0.3, 0.6, 0.6, 1) forwards;
+}
+
+@keyframes confetti {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(300px) rotate(540deg);
+  }
+}
+
+.scarf {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: flutter 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes flutter {
+  from {
+    transform: rotate(-8deg) scaleX(0.9);
+  }
+  to {
+    transform: rotate(6deg) scaleX(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bob,
+  .cheer .bob,
+  .start,
+  .scarf,
+  .crown,
+  .result {
+    animation: none;
+  }
+
+  .pose {
+    transition: none;
+  }
+
+  .confetti {
+    display: none;
+  }
+}

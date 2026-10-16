@@ -266,6 +266,42 @@ no listening in the window. The series comes with
 `/spotify/collaborative/competition-insights`; `test/rollingOverlap.test.cjs`
 compares every sample with an independent calculation.
 
+With two or more people selected, a Battle card below the listening-time race
+has two people's artists fight once a day; with more than two, a toggle picks
+the opponent, or the pair when the viewer is not selected. Every artist either
+person played in the 30 days before the UTC day joins one team, and an artist
+both played goes to whoever played it on more days in the past year. Each team
+sends four of its ten most played artists: the most played is the knight, the
+most loyal of the rest heals as the cleric, the one with the most different
+songs casts at the whole enemy team as the wizard, and the one whose listening
+is most recent strikes the weakest enemy as the rogue. Strength grows with the
+square root of the share of listening, so an artist who dominates someone's
+listening leads as a towering boss with small helpers, and stronger fighters are
+drawn taller. Each team's total hit points times total attack is scaled to what
+its size and the spread of its strength allow: power held by one fighter is
+worth more than the same power spread out, as the weak soak up blows, so a
+smaller team or one carried by a single fighter gets a measured fraction and
+still wins about half of its fights against an ordinary team of four. The draft
+and the fight depend only on the plays before the day, with the viewer's
+duration setting left out, and a seed made from the day and both IDs, so both
+people see the same fight and nothing is stored; a new day starts 15 minutes
+after midnight UTC, once the last plays of the night are in. Imports,
+blacklisting, artist groups and changes to these rules can still change past
+battles. The server plays the fight and
+returns its events. A Fight button starts it: each team steps into a spotlight
+with its fighters' classes, and the page animates the events with double speed,
+skip and replay, or shows the result at once with reduced motion. A battle
+played to the end is remembered in the browser and opens on its result the next
+time. The scoreboard counts the month's wins, and a row of days below the
+arena replays any of them; the shown battle's result stays out of both until
+it has played, and a day without a battle shows the closest one of the month.
+`/spotify/collaborative/battle` takes exactly two IDs and applies the
+participant, blacklist and duration rules of the other competition queries.
+`test/artistBattle.test.cjs` covers the draft and its sliding windows against
+one made from scratch for each day, the classes, team power and the chances of
+a smaller team and of one carried by a single artist, deterministic and self-consistent fights, the ordering of the
+people, the late start of a day and the route.
+
 Home and All stats share zero-based listening-volume lines with gentle
 interpolation through the actual totals and a faint fill. There are no
 gridlines. One `/spotify/listening-overview` request supplies both hours and
